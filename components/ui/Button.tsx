@@ -1,0 +1,71 @@
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { ReactNode } from 'react';
+
+type ButtonBaseProps = {
+  variant?: 'primary' | 'outline' | 'ghost';
+  size?: 'md' | 'lg';
+  withArrow?: boolean;
+  children: ReactNode;
+  className?: string;
+};
+
+type ButtonProps = ButtonBaseProps & { href: string };
+
+const variants = {
+  primary:
+    'bg-gradient-brand text-white shadow-[0_4px_20px_rgba(99,102,241,0.35)] hover:shadow-[0_8px_30px_rgba(99,102,241,0.5)] hover:-translate-y-0.5',
+  outline:
+    'border border-line-glow text-ink-primary backdrop-blur-md hover:bg-accent-primary/10 hover:border-accent-primary hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]',
+  ghost:
+    'text-ink-secondary hover:text-ink-primary',
+};
+
+const sizes = {
+  md: 'px-6 py-3 text-[0.9375rem]',
+  lg: 'px-8 py-4 text-base',
+};
+
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  withArrow = false,
+  href,
+  children,
+  className,
+}: ButtonProps) {
+  const isExternal = href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:');
+  const content = (
+    <>
+      <span>{children}</span>
+      {withArrow && (
+        <ArrowRight
+          className="h-[1.125rem] w-[1.125rem] transition-transform group-hover:translate-x-1"
+          aria-hidden
+        />
+      )}
+    </>
+  );
+
+  const classes = cn(
+    'group inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-[0.01em] transition-all duration-300 whitespace-nowrap',
+    variants[variant],
+    sizes[size],
+    className,
+  );
+
+  if (isExternal) {
+    return (
+      <a href={href} className={classes}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={classes}>
+      {content}
+    </Link>
+  );
+}
