@@ -10,10 +10,14 @@ export const siteConfig = {
   legalName: 'Ensaar Global Pvt. Ltd.',
   url: 'https://ensaar.com',
   description:
-    'Ensaar Global is an AI-powered engineering design and technology services company based in Hyderabad, India. We build intelligent solutions, deliver business excellence training, and advance enterprises into the AI era.',
-  tagline: 'Technology Meets Design',
+    'Ensaar Global teaches you to build a profitable AI business — through a paid community, live cohort programs, and 1:1 coaching. Operator-led: ten years building production AI for companies across seven countries.',
+  tagline: 'Become an AI millionaire.',
+  taglineLong: 'Three paths — community, cohorts, 1:1 coaching — to build a profitable AI business.',
   email: 'hr@ensaar.com',
+  // Admissions / applications inbox (relabeled in UI from prior "training enquiries" usage).
   trainingEmail: 'Trainings@ensaar.com',
+  disclaimerUrl: '/legal/earnings-disclaimer',
+  refundUrl: '/legal/refund-policy',
   locality: 'Begumpet',
   region: 'Hyderabad',
   state: 'Telangana',

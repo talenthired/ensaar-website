@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
+import { useTheme } from '@/components/theme/ThemeProvider';
 
 type Node = { id: number; x: number; y: number; r: number; phase: number };
 
@@ -14,9 +15,16 @@ type Node = { id: number; x: number; y: number; r: number; phase: number };
  */
 export function NeuralBackground() {
   const reducedMotion = useReducedMotion();
+  const { theme } = useTheme();
   const ref = useRef<SVGSVGElement>(null);
   const [dims, setDims] = useState({ w: 1200, h: 800 });
   const [mobile, setMobile] = useState(false);
+
+  const isDark = theme === 'dark';
+  const nodeColor = isDark ? 'rgba(129,140,248,0.95)' : 'rgba(99,102,241,0.7)';
+  const glowStop = isDark ? 'rgba(129,140,248,0.9)' : 'rgba(99,102,241,0.45)';
+  const lineFromColor = isDark ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.3)';
+  const lineToColor = isDark ? 'rgba(6,182,212,0.5)' : 'rgba(6,182,212,0.25)';
 
   useEffect(() => {
     const update = () => {
@@ -81,13 +89,13 @@ export function NeuralBackground() {
     >
       <defs>
         <radialGradient id="nodeGlow">
-          <stop offset="0%" stopColor="rgba(129,140,248,0.9)" />
-          <stop offset="60%" stopColor="rgba(99,102,241,0.3)" />
+          <stop offset="0%" stopColor={glowStop} />
+          <stop offset="60%" stopColor={lineFromColor} />
           <stop offset="100%" stopColor="rgba(99,102,241,0)" />
         </radialGradient>
         <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(99,102,241,0.5)" />
-          <stop offset="100%" stopColor="rgba(6,182,212,0.5)" />
+          <stop offset="0%" stopColor={lineFromColor} />
+          <stop offset="100%" stopColor={lineToColor} />
         </linearGradient>
       </defs>
 
@@ -139,7 +147,7 @@ export function NeuralBackground() {
               delay: n.phase,
             }}
           />
-          <circle cx={n.x} cy={n.y} r={n.r} fill="rgba(129,140,248,0.95)" />
+          <circle cx={n.x} cy={n.y} r={n.r} fill={nodeColor} />
         </motion.g>
       ))}
     </svg>

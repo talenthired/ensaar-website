@@ -3,13 +3,15 @@ import { Inter, Archivo_Black, JetBrains_Mono } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { JsonLd } from '@/components/seo/JsonLd';
-import {
-  organizationSchema,
-  websiteSchema,
-  localBusinessSchema,
-} from '@/components/seo/schemas';
+import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { organizationSchema, websiteSchema } from '@/components/seo/schemas';
 import { siteConfig, ogImage } from '@/lib/utils';
 import './globals.css';
+
+// Inline script to apply theme before paint.
+const themeBootstrap = `
+(function(){try{var t=localStorage.getItem('ensaar-theme');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
+`;
 
 const inter = Inter({
   subsets: ['latin'],
@@ -39,21 +41,23 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — AI-Powered Engineering & Technology Services`,
-    template: `%s — ${siteConfig.name}`,
+    default: `${siteConfig.name} - Managed AI Execution Pods`,
+    template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [
-    'AI solutions',
-    'AI consulting',
+    'AI execution pods',
+    'AI cost reduction',
+    'managed AI delivery',
+    'AI automation',
+    'AI staffing',
     'Claude AI integration',
     'LLM integration',
-    'engineering design',
-    'technology services',
-    'product engineering',
+    'AI support desk',
+    'AI research desk',
+    'software cost reduction',
     'business excellence program',
     'BCEP',
-    'leadership training',
     'corporate training',
     'Hyderabad',
     'Ensaar Global',
@@ -66,7 +70,7 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: `${siteConfig.name} — AI-Powered Engineering & Technology`,
+    title: `${siteConfig.name} - Managed AI Execution Pods`,
     description: siteConfig.description,
     images: [{ url: ogImage, width: 1200, height: 630, alt: siteConfig.name }],
   },
@@ -101,16 +105,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en-IN"
+      data-theme="light"
       className={`${inter.variable} ${archivoBlack.variable} ${jetBrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>
-        <JsonLd data={[organizationSchema(), websiteSchema(), localBusinessSchema()]} />
+        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+        <JsonLd data={[organizationSchema(), websiteSchema()]} />
       </head>
       <body>
-        <Header />
-        <main id="main">{children}</main>
-        <Footer />
+        <ThemeProvider>
+          <Header />
+          <main id="main">{children}</main>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

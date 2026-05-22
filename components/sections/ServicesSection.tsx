@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowRight, Brain, Cpu, Cog } from 'lucide-react';
+import { ArrowRight, Brain, Users, GraduationCap } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Section, SectionHeader } from '@/components/ui/Section';
 import { GradientBorder } from '@/components/ui/GradientBorder';
@@ -11,8 +11,8 @@ import { fadeUp, stagger, viewportOnce } from '@/lib/motion';
 
 const ICONS = {
   'ai-solutions': Brain,
-  engineering: Cog,
-  technology: Cpu,
+  staffing: Users,
+  'corporate-training': GraduationCap,
 } as const;
 
 const ACCENT_COLORS = {

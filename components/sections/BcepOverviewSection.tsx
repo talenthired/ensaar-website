@@ -42,7 +42,7 @@ export function BcepOverviewSection() {
               Ensaar's Business <span className="gradient-text">Excellence Program</span>
             </>
           }
-          lede="Workshops · Training Interventions · Capability Building — uniquely integrating corporate know-how with structured skill development. We don't just teach; we build sustained behavioral change that reflects in real workplace performance."
+          lede="Workshops | Training Interventions | Capability Building - uniquely integrating corporate know-how with structured skill development. We don't just teach; we build sustained behavioral change that reflects in real workplace performance."
         />
 
         <motion.div
@@ -72,7 +72,7 @@ export function BcepOverviewSection() {
         <div className="text-center mb-10">
           <h3 className="text-[clamp(1.5rem,3vw,2rem)] mb-3">Four Core Training Tracks</h3>
           <p className="text-ink-secondary max-w-[560px] mx-auto">
-            Each track is designed to move people and teams forward — grounded in real workplace scenarios.
+            Each track is designed to move people and teams forward - grounded in real workplace scenarios.
           </p>
         </div>
 
@@ -107,7 +107,7 @@ export function BcepOverviewSection() {
                   ))}
                 </ul>
                 <Link
-                  href={`/bcep/${track.slug}`}
+                  href={`/services/corporate-training/${track.slug}`}
                   className="inline-flex items-center gap-2 text-sm font-semibold text-accent-secondary hover:text-accent-cyan-soft transition-colors group/cta"
                 >
                   Explore {track.name}

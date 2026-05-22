@@ -10,7 +10,7 @@ const LINES: Array<{ text: string; kind?: 'success' | 'prompt' }> = [
   { text: '$ ensaar analyze --input customer-data.json', kind: 'prompt' },
   { text: '  > Loading Claude Sonnet 4.6 context...' },
   { text: '  > Analyzing 127,000 customer interactions...' },
-  { text: '  > Prompt caching enabled · cache hit rate 94%' },
+  { text: '  > Prompt caching enabled | cache hit rate 94%' },
   { text: '  [OK] Pattern detection: 94.2% accuracy' },
   { text: '  [OK] Deployment ready in 2.3s' },
   { text: '$ ensaar deploy --production', kind: 'prompt' },
@@ -52,7 +52,7 @@ export function AICapabilitiesSection() {
           eyebrow="AI Capabilities"
           title={
             <>
-              We Don't Just Talk About AI — <span className="gradient-text">We Build With It.</span>
+              We Don't Just Talk About AI - <span className="gradient-text">We Build With It.</span>
             </>
           }
           lede="Every solution we ship leverages AI where it creates real value. Our team actively develops with Claude Code, its plugins, and the broader AI tooling ecosystem."

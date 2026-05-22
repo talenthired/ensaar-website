@@ -19,7 +19,7 @@ export default function ContactPage() {
       <JsonLd
         data={webPageSchema({
           name: 'Contact',
-          description: 'Get in touch with Ensaar Global — general and training enquiries.',
+          description: 'Get in touch with Ensaar Global - general and training enquiries.',
           url: `${siteConfig.url}/contact`,
         })}
       />

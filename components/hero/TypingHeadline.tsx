@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 
 const PHRASES = [
-  'AI Solutions',
-  'Engineering Design',
-  'Technology Services',
-  'Intelligent Automation',
-  'Product Innovation',
+  'software backlog',
+  'manual operations',
+  'support workload',
+  'research cycles',
+  'staffing gaps',
+  'knowledge work',
 ];
 
 export function TypingHeadline() {
@@ -46,7 +47,7 @@ export function TypingHeadline() {
 
   return (
     <span className="inline-flex items-baseline text-accent-cyan-soft font-semibold">
-      <span className="min-w-[12ch] text-left" aria-live="polite">
+      <span className="min-w-[14ch] text-left" aria-live="polite">
         {text}
       </span>
       <motion.span

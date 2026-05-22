@@ -1,7 +1,7 @@
 export type FaqItem = {
   question: string;
   answer: string;
-  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement';
+  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement' | 'pricing';
 };
 
 export const FAQ: FaqItem[] = [
@@ -10,7 +10,7 @@ export const FAQ: FaqItem[] = [
     category: 'company',
     question: 'What does Ensaar Global do?',
     answer:
-      'Ensaar Global Pvt. Ltd. is an engineering design and technology services company based in Hyderabad, India. We deliver AI solutions, engineering design services, technology services, and a dedicated corporate training practice called the Business Excellence Program (BCEP). Ensaar has been operating since 2014.',
+      'Ensaar Global Pvt. Ltd. is a managed AI execution partner based in Hyderabad, India. We help companies reduce software, staffing, support, research, and operations cost through AI Solutions, Staffing, and Corporate Training. Ensaar has been operating since 2014.',
   },
   {
     category: 'company',
@@ -22,7 +22,7 @@ export const FAQ: FaqItem[] = [
     category: 'company',
     question: 'When was Ensaar Global founded?',
     answer:
-      'Ensaar Global was founded in 2014. Since then, we have delivered IT projects, consumer product engineering, business communications training, and trading/loyalty platforms — and are now advancing into AI-powered implementations.',
+      'Ensaar Global was founded in 2014. Since then, we have delivered IT projects, consumer product engineering, business communications training, and trading/loyalty platforms - and are now advancing into AI-powered implementations.',
   },
   {
     category: 'company',
@@ -36,13 +36,13 @@ export const FAQ: FaqItem[] = [
     category: 'services',
     question: 'What services does Ensaar Global offer?',
     answer:
-      'We offer four core service areas: (1) AI Solutions — strategy, LLM integration, intelligent automation, custom AI tools; (2) Engineering Design — product design, CAD/CAE, prototyping; (3) Technology Services — custom software, web and mobile, cloud; and (4) BCEP — corporate training in leadership, soft skills, professional skills, and train-the-trainer programs.',
+      'Ensaar offers three core services: (1) AI Solutions for managed AI pods, automation, RAG, product features, and AI software builds; (2) Staffing for managed AI-augmented capacity; and (3) Corporate Training (BCEP) for leadership, soft skills, professional skills, and train-the-trainer programs.',
   },
   {
     category: 'services',
-    question: 'Does Ensaar build custom software?',
+    question: 'Does Ensaar provide staffing or talent placement?',
     answer:
-      'Yes. Ensaar builds custom software including web platforms, mobile applications, system integrations, and cloud solutions. Our technology services practice has been delivering production systems since 2014.',
+      'Yes. Ensaar provides managed AI-augmented contributors, senior engineers, AI specialists, product talent, and architects. It is not a resume marketplace. Ensaar handles vetting, workflow setup, senior review paths, and reporting cadence.',
   },
 
   // AI
@@ -91,6 +91,50 @@ export const FAQ: FaqItem[] = [
       'Email our dedicated training inbox at Trainings@ensaar.com with your organization, target audience, and the outcomes you are trying to achieve. We will follow up with a structured proposal.',
   },
 
+  // Pricing
+  {
+    category: 'pricing',
+    question: 'How much does it cost to work with Ensaar?',
+    answer:
+      'Ensaar offers managed AI pods and hourly tiers. Productized offers include AI Cost Reduction Audit ($299), Knowledge Automation Pod ($1,499), AI Feature Pod ($2,499), AI Software Pod ($4,999), Embedded AI Desk ($999/month), and AI Staffing Pod from $7/hr. All prices are USD.',
+  },
+  {
+    category: 'pricing',
+    question: 'What does $7/hr really get me?',
+    answer:
+      'The $7/hr tier is execution capacity inside a managed system. It is a capable contributor using Claude Code, Copilot, reusable prompts, delivery checklists, and senior review. The offer is not anonymous cheap labor. It is AI-assisted execution capacity governed by Ensaar.',
+  },
+  {
+    category: 'pricing',
+    question: 'Why is Ensaar cheaper than other firms?',
+    answer:
+      'Ensaar combines a Hyderabad cost base, AI-augmented workflows, reusable delivery systems, and senior review. The target is lower cost per shipped outcome, not just a lower hourly rate.',
+  },
+  {
+    category: 'pricing',
+    question: 'Are your hourly rates fixed, or do they change?',
+    answer:
+      'Hourly rates are published on the pricing page. If a request needs a senior tier, AI specialist, or architect, we say that up front instead of hiding the real cost later.',
+  },
+  {
+    category: 'pricing',
+    question: 'Can I start with a small project to test the partnership?',
+    answer:
+      'Yes. The AI Cost Reduction Audit ($299) and Knowledge Automation Pod ($1,499) are designed as low-commitment first steps. They let you test the working relationship before committing to larger pods.',
+  },
+  {
+    category: 'pricing',
+    question: 'Do you offer fixed-price packages or only hourly?',
+    answer:
+      'Both. Fixed-price managed pods cover common outcomes. Hourly tiers cover ongoing capacity. Many clients start with a fixed-scope pod, then scale the work through an AI Staffing Pod or Embedded AI Desk.',
+  },
+  {
+    category: 'pricing',
+    question: 'Do you offer a free consultation or trial?',
+    answer:
+      'Yes. Initial scoping calls are free and lead to a structured cost reduction plan. The calculator also gives a fast estimate before you speak with anyone.',
+  },
+
   // Engagement
   {
     category: 'engagement',
@@ -108,6 +152,6 @@ export const FAQ: FaqItem[] = [
     category: 'engagement',
     question: 'How does a typical Ensaar engagement start?',
     answer:
-      'Most engagements start with a short scoping conversation to understand the business outcome you are trying to achieve. From there, we propose a focused first engagement — often a time-boxed prototype or pilot — before committing to larger phases. Contact hr@ensaar.com to start the conversation.',
+      'Most engagements start with a short scoping conversation to understand the business outcome you are trying to achieve. From there, we propose a focused first engagement - often a time-boxed prototype or pilot - before committing to larger phases. Contact hr@ensaar.com to start the conversation.',
   },
 ];

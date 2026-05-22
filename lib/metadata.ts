@@ -9,7 +9,7 @@ type PageMetaParams = {
 
 export function pageMetadata({ title, description, path }: PageMetaParams): Metadata {
   const url = `${siteConfig.url}${path}`;
-  const fullTitle = title === siteConfig.name ? title : `${title} — ${siteConfig.name}`;
+  const fullTitle = title === siteConfig.name ? title : `${title} - ${siteConfig.name}`;
   return {
     title: fullTitle,
     description,

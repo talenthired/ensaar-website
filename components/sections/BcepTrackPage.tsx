@@ -18,8 +18,9 @@ export function BcepTrackPage({ track }: { track: BcepTrack }) {
         <Container>
           <Breadcrumbs
             items={[
-              { name: 'BCEP', href: '/bcep' },
-              { name: track.name, href: `/bcep/${track.slug}` },
+              { name: 'Services', href: '/services' },
+              { name: 'Corporate Training', href: '/services/corporate-training' },
+              { name: track.name, href: `/services/corporate-training/${track.slug}` },
             ]}
           />
           <motion.div

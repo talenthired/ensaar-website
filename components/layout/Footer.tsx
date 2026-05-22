@@ -1,38 +1,34 @@
 import Link from 'next/link';
-import { LogoMark } from '@/components/icons/LogoMark';
+import Image from 'next/image';
 import { siteConfig } from '@/lib/utils';
 
 export function Footer() {
   return (
     <footer className="relative border-t border-line-subtle bg-gradient-to-b from-transparent to-accent-primary/[0.03] pt-16 pb-8">
       <div className="container-page">
-        <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr] mb-12">
+        <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr] mb-12">
           <div>
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <LogoMark animated={false} />
-              <span className="font-display text-lg tracking-[0.15em] gradient-text">ENSAAR</span>
+            <Link href="/" className="inline-flex items-center mb-5" aria-label="Ensaar Global home">
+              <Image
+                src="/ensaar-logo.png"
+                alt="Ensaar Global"
+                width={938}
+                height={259}
+                className="h-10 w-auto"
+              />
             </Link>
             <p className="text-ink-secondary text-[0.9375rem] max-w-[320px]">
-              {siteConfig.tagline} — now powered by AI. Engineering design and technology services since {siteConfig.foundedYear}.
+              {siteConfig.tagline} Operating since {siteConfig.foundedYear}.
             </p>
           </div>
 
           <FooterCol
-            heading="Services"
-            links={[
-              { label: 'AI Solutions', href: '/services/ai-solutions' },
-              { label: 'Engineering', href: '/services/engineering' },
-              { label: 'Technology', href: '/services/technology' },
-              { label: 'BCEP', href: '/bcep' },
-            ]}
-          />
-
-          <FooterCol
             heading="Explore"
             links={[
+              { label: 'Home', href: '/' },
               { label: 'About', href: '/about' },
-              { label: 'Our Work', href: '/work' },
-              { label: 'AI Capabilities', href: '/ai' },
+              { label: 'Pricing', href: '/pricing' },
+              { label: 'Events', href: '/events' },
               { label: 'FAQ', href: '/faq' },
               { label: 'Contact', href: '/contact' },
             ]}
@@ -65,7 +61,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-8 border-t border-line-subtle text-xs text-ink-muted">
-          <p>© {siteConfig.foundedYear} — {new Date().getFullYear()} {siteConfig.legalName}. All rights reserved.</p>
+          <p>Copyright {siteConfig.foundedYear} - {new Date().getFullYear()} {siteConfig.legalName}. All rights reserved.</p>
           <p className="font-mono tracking-[0.1em]">Crafted with AI.</p>
         </div>
       </div>

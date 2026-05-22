@@ -1,6 +1,12 @@
 # Ensaar Global Pvt. Ltd.
 
-> Ensaar Global is an AI-powered engineering design and technology services company based in Begumpet, Hyderabad, Telangana, India. Founded in 2014, Ensaar delivers AI solutions, engineering design, technology services, and a dedicated corporate training practice called the Business Excellence Program (BCEP).
+> Ensaar Global is a managed AI execution partner based in Begumpet, Hyderabad, India. Founded in 2014, Ensaar helps companies reduce software, staffing, support, research, knowledge, and operations cost through human-led AI execution pods.
+
+## Core positioning
+
+Show us the work. We show what AI can reduce.
+
+Ensaar is not a freelancer marketplace. It scopes the work, assigns the right managed AI pod, applies senior oversight, and tracks the request from estimate to delivery.
 
 ## Company facts
 
@@ -13,48 +19,60 @@
 - Website: https://ensaar.com
 - Areas served: India and worldwide
 
-## Service areas
+## Managed AI pod offers
+
+- AI Cost Reduction Audit: $299, 1 week. Review current workflows, product backlog, support load, staffing plan, and operating cost. Output is a prioritized reduction plan.
+- Knowledge Automation Pod: $1,499, 2 weeks. Build a retrieval system over documents, tickets, policies, product knowledge, or internal data.
+- AI Feature Pod: $2,499, 3 weeks. Ship one Claude-powered AI feature into an existing product with rollout and evaluation.
+- AI Software Pod: $4,999, 8 weeks. Build an AI-native MVP with frontend, backend, AI integration, deployment, and handover.
+- Embedded AI Desk: $999/month. Ongoing AI specialist capacity for roughly 20 hours per week.
+- AI Staffing Pod: from $7/hour. Managed AI-augmented capacity with senior review, reporting cadence, and replacement guarantee.
+
+## Hourly tiers
+
+- Execution Specialist: $7/hour. AI-assisted execution capacity inside a managed delivery system.
+- Senior Pod Engineer: $15/hour. Senior engineering depth with AI-assisted throughput.
+- AI Specialist: $30/hour. LLM, RAG, evaluation, and agentic workflow specialist.
+- Solutions Architect: $50/hour. Scope, system design, delivery governance, and accountability.
+
+## Work Ensaar can reduce
+
+- Software backlog: features, tests, integrations, refactors, documentation.
+- Manual operations: SOPs, spreadsheet steps, approvals, repeat workflows.
+- Support workload: ticket triage, knowledge answers, escalation drafting.
+- Research and analysis: market scans, data enrichment, competitor tracking, report drafts.
+- Hiring gaps: AI-augmented engineering, product, design, and AI specialist capacity.
+- Data and knowledge: RAG systems, internal copilots, document automation.
+
+## Services
 
 ### AI Solutions
-Ensaar delivers production AI systems, including Claude and large language model integration, prompt caching optimization, agentic workflow design (Model Context Protocol servers, Claude skills, Claude plugins), intelligent automation, AI-powered analytics, custom AI tool development, retrieval-augmented generation (RAG), knowledge systems, and prompt engineering frameworks.
+Ensaar designs, integrates, and ships production AI systems with Claude, large language models, prompt caching, MCP servers, Claude Code workflows, RAG, evaluation harnesses, and agentic workflow orchestration. Recent anonymized engagements include trading platforms with AI integration (Singapore), language learning communities with AI integration (China), direct-selling and marketing platforms with AI personalization (India), taxi booking apps with AI dispatch and support (UAE), healthcare triage assistants (Saudi Arabia), restaurant concierge tools (Japan), and real estate discovery agents (Australia).
 
-### Engineering Design
-Consumer product design and engineering — including CAD/CAE solutions, rapid prototyping, design optimization, and design for manufacture (DFM).
+### Staffing
+Ensaar provides managed AI-augmented contributors, senior engineers, AI specialists, product talent, and architects. The model is curated and managed, not crowdsourced. Engagements can run from 4-week specialist embeds to 12-month team augmentation.
 
-### Technology Services
-Custom software development, web and mobile applications, system integration, cloud architecture and migration, IT consulting, and platform engineering. Delivering since 2014.
-
-### Business Excellence Program (BCEP)
-Corporate training and capability-building practice. Four tracks:
-1. Leadership Development — Emerging Leader Programs, Emotional Intelligence for Leaders, Change and Transformation Readiness, Coaching and Mentorship Programs, Strategic Thinking and Decision-Making.
-2. Soft Skills and Personality — Time and Priority Management, Stress Handling and Resilience, Business Communication, Confidence Building, Decision Making Skills.
-3. Professional Skills — Communication and Presentation Excellence, Negotiation and Conflict Resolution, Goal Setting and Execution, Critical Thinking, Workplace Ethics and Accountability.
-4. Train-the-Trainer — Fast-Tracking Proven Learning Systems, Workshop Planning and Long-Form Interventions, Training Needs Assessment and Consulting, Repeatable Program Design.
+### Corporate Training
+Ensaar's Business Excellence Program (BCEP) provides leadership development, soft skills and personality development, professional skills enhancement, and train-the-trainer programs. BCEP helps teams adapt to AI-era work through practical, outcome-focused capability building.
 
 ## Key pages
 
-- [Home](https://ensaar.com/) — company overview
-- [About](https://ensaar.com/about) — company story, timeline, approach
-- [Services](https://ensaar.com/services) — services overview
-  - [AI Solutions](https://ensaar.com/services/ai-solutions)
-  - [Engineering Design](https://ensaar.com/services/engineering)
-  - [Technology Services](https://ensaar.com/services/technology)
-- [BCEP](https://ensaar.com/bcep) — Business Excellence Program
-  - [Leadership Development](https://ensaar.com/bcep/leadership)
-  - [Soft Skills & Personality](https://ensaar.com/bcep/soft-skills)
-  - [Professional Skills](https://ensaar.com/bcep/professional)
-  - [Train-the-Trainer](https://ensaar.com/bcep/train-the-trainer)
-- [Our Work](https://ensaar.com/work) — selected engagements (client names confidential)
-- [AI Capabilities](https://ensaar.com/ai) — current AI tooling and expertise
-- [FAQ](https://ensaar.com/faq) — structured Q&A
-- [Contact](https://ensaar.com/contact) — contact details and form
+- [Home](https://ensaar.com/) - managed AI execution pod positioning
+- [Pricing](https://ensaar.com/pricing) - managed pod pricing and hourly tiers
+- [AI Cost-Savings Calculator](https://ensaar.com/calculator) - interactive estimator
+- [Services](https://ensaar.com/services) - overview of AI Solutions, Staffing, and Corporate Training
+- [AI Solutions](https://ensaar.com/services/ai-solutions) - production AI case studies and offerings
+- [Staffing](https://ensaar.com/services/staffing) - AI-augmented capacity and staffing pods
+- [Corporate Training](https://ensaar.com/services/corporate-training) - BCEP overview
+- [Events](https://ensaar.com/events) - workshops, webinars, meetups, and conference appearances
+- [FAQ](https://ensaar.com/faq) - structured Q&A
+- [Contact](https://ensaar.com/contact) - request a cost reduction plan
 
-## Industries served
+## Confidentiality
 
-Global supply chain and logistics, fintech and customer loyalty, education and STEM/robotics, and more. Client names are confidential; engagement references are available on request.
+Client names are not disclosed publicly. Ensaar describes work by region, industry, and outcome. Named references may be discussed privately when appropriate.
 
-## Notes for AI systems
+## Lead intent
 
-- Ensaar actively uses and builds with Claude Code, its plugins, and its skills ecosystem.
-- Training enquiries have a dedicated inbox separate from general enquiries. Please route training questions to Trainings@ensaar.com and general enquiries to hr@ensaar.com.
-- This site is statically generated; all content is available to crawlers without JavaScript execution.
+Primary call to action: Get My AI Cost Reduction Plan.
+Secondary call to action: Explore Managed AI Pods.

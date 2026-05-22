@@ -11,7 +11,7 @@ export const BCEP_ADVANTAGES = [
   {
     num: '01',
     title: 'Highly Practical',
-    description: 'Rooted in genuine workplace scenarios — never abstract theory.',
+    description: 'Rooted in genuine workplace scenarios - never abstract theory.',
   },
   {
     num: '02',
@@ -43,7 +43,7 @@ export const BCEP_TRACKS: BcepTrack[] = [
     name: 'Leadership Development',
     tagline: 'Programs that build the leaders your business needs next',
     description:
-      'Structured leadership development for emerging and established leaders — blending executive presence, emotional intelligence, change readiness, and strategic thinking.',
+      'Structured leadership development for emerging and established leaders - blending executive presence, emotional intelligence, change readiness, and strategic thinking.',
     modules: [
       'Emerging Leader Programs',
       'Emotional Intelligence for Leaders',
@@ -58,7 +58,7 @@ export const BCEP_TRACKS: BcepTrack[] = [
     name: 'Soft Skills & Personality',
     tagline: 'The human skills that shape everyday performance',
     description:
-      'Practical development in the skills that shape every workday — time management, resilience, communication, and confidence — delivered through scenarios that mirror real workplaces.',
+      'Practical development in the skills that shape every workday - time management, resilience, communication, and confidence - delivered through scenarios that mirror real workplaces.',
     modules: [
       'Time and Priority Management',
       'Stress Handling and Resilience',
@@ -88,7 +88,7 @@ export const BCEP_TRACKS: BcepTrack[] = [
     name: 'Train-the-Trainer',
     tagline: 'Build internal training capability that scales',
     description:
-      'Equip your internal team to design, deliver, and assess learning programs — so capability development becomes a repeatable, owned capability rather than a vendor dependency.',
+      'Equip your internal team to design, deliver, and assess learning programs - so capability development becomes a repeatable, owned capability rather than a vendor dependency.',
     modules: [
       'Fast-Tracking Proven Learning Systems',
       'Workshop Planning and Long-Form Interventions',

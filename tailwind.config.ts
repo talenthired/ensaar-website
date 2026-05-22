@@ -1,5 +1,8 @@
 import type { Config } from 'tailwindcss';
 
+const withVar = (name: string) => `rgb(var(--color-${name}) / <alpha-value>)`;
+const withVarRaw = (name: string) => `rgb(var(--color-${name}))`;
+
 const config: Config = {
   content: [
     './app/**/*.{ts,tsx}',
@@ -10,27 +13,27 @@ const config: Config = {
     extend: {
       colors: {
         bg: {
-          primary: '#0a0a0f',
-          secondary: '#12121a',
-          tertiary: '#1a1a26',
-          glass: 'rgba(18,18,26,0.6)',
-          'glass-strong': 'rgba(18,18,26,0.85)',
+          primary: withVar('bg-primary'),
+          secondary: withVar('bg-secondary'),
+          tertiary: withVar('bg-tertiary'),
+          glass: withVarRaw('bg-glass'),
+          'glass-strong': withVarRaw('bg-glass-strong'),
         },
         accent: {
-          primary: '#6366f1',
-          secondary: '#818cf8',
-          glow: '#4f46e5',
-          cyan: '#06b6d4',
-          'cyan-soft': '#22d3ee',
+          primary: withVar('accent-primary'),
+          secondary: withVar('accent-secondary'),
+          glow: withVar('accent-glow'),
+          cyan: withVar('accent-cyan'),
+          'cyan-soft': withVar('accent-cyan-soft'),
         },
         ink: {
-          primary: '#f1f5f9',
-          secondary: '#94a3b8',
-          muted: '#64748b',
+          primary: withVar('ink-primary'),
+          secondary: withVar('ink-secondary'),
+          muted: withVar('ink-muted'),
         },
         line: {
-          subtle: 'rgba(99,102,241,0.15)',
-          glow: 'rgba(99,102,241,0.35)',
+          subtle: withVarRaw('line-subtle'),
+          glow: withVarRaw('line-glow'),
         },
       },
       fontFamily: {
@@ -41,11 +44,13 @@ const config: Config = {
       backgroundImage: {
         'gradient-brand': 'linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)',
         'gradient-brand-soft': 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(6,182,212,0.15) 100%)',
+        'gradient-mesh':
+          'radial-gradient(at 20% 10%, rgba(99,102,241,0.10) 0%, transparent 50%), radial-gradient(at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%)',
       },
       boxShadow: {
-        glow: '0 0 40px rgba(99,102,241,0.25)',
-        'glow-strong': '0 0 60px rgba(99,102,241,0.4)',
-        card: '0 10px 40px rgba(0,0,0,0.4)',
+        glow: '0 8px 30px rgba(99,102,241,0.18)',
+        'glow-strong': '0 12px 50px rgba(99,102,241,0.3)',
+        card: '0 4px 24px rgba(15,23,42,0.08)',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',

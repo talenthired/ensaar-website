@@ -2,6 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   Theme tokens - defined as CSS custom properties
+   Tailwind tokens reference these via tailwind.config.ts
+   ============================================ */
+
+:root,
+[data-theme="light"] {
+  /* surfaces */
+  --color-bg-primary: 250 250 252;          /* #fafafc */
+  --color-bg-secondary: 255 255 255;
+  --color-bg-tertiary: 248 250 252;          /* slate-50 */
+  --color-bg-glass: 255 255 255 / 0.65;
+  --color-bg-glass-strong: 255 255 255 / 0.85;
+
+  /* ink / text */
+  --color-ink-primary: 15 23 42;             /* slate-900 */
+  --color-ink-secondary: 71 85 105;          /* slate-600 */
+  --color-ink-muted: 100 116 139;            /* slate-500 */
+
+  /* lines */
+  --color-line-subtle: 99 102 241 / 0.18;
+  --color-line-glow: 99 102 241 / 0.4;
+
+  /* accents (indigo/cyan stay the same in both modes; brand colors) */
+  --color-accent-primary: 99 102 241;
+  --color-accent-secondary: 79 70 229;
+  --color-accent-glow: 79 70 229;
+  --color-accent-cyan: 6 182 212;
+  --color-accent-cyan-soft: 8 145 178;
+
+  /* shadows */
+  --shadow-glow: 0 8px 30px rgba(99, 102, 241, 0.18);
+  --shadow-card: 0 4px 24px rgba(15, 23, 42, 0.08);
+
+  /* page-level radial accents */
+  --bg-radial-1: rgba(99, 102, 241, 0.10);
+  --bg-radial-2: rgba(6, 182, 212, 0.08);
+
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --color-bg-primary: 10 10 15;
+  --color-bg-secondary: 18 18 26;
+  --color-bg-tertiary: 26 26 38;
+  --color-bg-glass: 18 18 26 / 0.6;
+  --color-bg-glass-strong: 18 18 26 / 0.85;
+
+  --color-ink-primary: 241 245 249;
+  --color-ink-secondary: 148 163 184;
+  --color-ink-muted: 100 116 139;
+
+  --color-line-subtle: 99 102 241 / 0.18;
+  --color-line-glow: 99 102 241 / 0.4;
+
+  --color-accent-primary: 99 102 241;
+  --color-accent-secondary: 129 140 248;
+  --color-accent-glow: 79 70 229;
+  --color-accent-cyan: 6 182 212;
+  --color-accent-cyan-soft: 34 211 238;
+
+  --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.25);
+  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.4);
+
+  --bg-radial-1: rgba(99, 102, 241, 0.12);
+  --bg-radial-2: rgba(6, 182, 212, 0.08);
+
+  color-scheme: dark;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -12,20 +82,26 @@
     @apply bg-bg-primary text-ink-primary font-sans antialiased;
     overflow-x: hidden;
     background:
-      radial-gradient(ellipse at 20% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-      #0a0a0f;
+      radial-gradient(ellipse at 20% 10%, var(--bg-radial-1) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, var(--bg-radial-2) 0%, transparent 50%),
+      rgb(var(--color-bg-primary));
     background-attachment: fixed;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   ::selection {
-    @apply bg-accent-primary text-ink-primary;
+    @apply bg-accent-primary text-white;
   }
 
   h1, h2, h3, h4 {
     @apply font-display;
     letter-spacing: -0.02em;
     line-height: 1.15;
+  }
+
+  /* prevent FOUC on theme load */
+  html.theme-loading * {
+    transition: none !important;
   }
 }
 
@@ -39,11 +115,17 @@
   }
 
   .glass {
-    @apply bg-bg-glass backdrop-blur-md border border-line-subtle;
+    background: rgb(var(--color-bg-glass));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(var(--color-line-subtle));
   }
 
   .glass-strong {
-    @apply bg-bg-glass-strong backdrop-blur-lg border border-line-glow;
+    background: rgb(var(--color-bg-glass-strong));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgb(var(--color-line-glow));
   }
 
   .eyebrow {
@@ -53,15 +135,15 @@
   .section-padding {
     @apply py-[clamp(5rem,10vw,8rem)];
   }
+
+  .card-shadow {
+    box-shadow: var(--shadow-card);
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-
-  .will-change-transform {
-    will-change: transform;
   }
 
   .gpu {
@@ -70,7 +152,6 @@
   }
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

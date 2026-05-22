@@ -12,7 +12,7 @@ import { siteConfig } from '@/lib/utils';
 export const metadata: Metadata = pageMetadata({
   title: 'Frequently Asked Questions',
   description:
-    'Answers about Ensaar Global — our services, AI capabilities, the Business Excellence Program (BCEP), industries we serve, and how to start an engagement.',
+    'Answers about Ensaar Global - our services, AI capabilities, the Business Excellence Program (BCEP), industries we serve, and how to start an engagement.',
   path: '/faq',
 });
 
@@ -20,7 +20,7 @@ const CATEGORIES: Array<{ key: typeof FAQ[number]['category']; label: string }> 
   { key: 'company', label: 'About Ensaar' },
   { key: 'services', label: 'Services' },
   { key: 'ai', label: 'AI Capabilities' },
-  { key: 'bcep', label: 'BCEP — Training' },
+  { key: 'bcep', label: 'BCEP - Training' },
   { key: 'engagement', label: 'Engagement' },
 ];
 

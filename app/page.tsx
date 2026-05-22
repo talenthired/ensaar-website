@@ -2,8 +2,13 @@ import type { Metadata } from 'next';
 import { Hero } from '@/components/hero/Hero';
 import { AboutSection } from '@/components/sections/AboutSection';
 import { ServicesSection } from '@/components/sections/ServicesSection';
-import { BcepOverviewSection } from '@/components/sections/BcepOverviewSection';
-import { PortfolioSection } from '@/components/sections/PortfolioSection';
+import { WorkReductionSection } from '@/components/sections/WorkReductionSection';
+import { PricingStripSection } from '@/components/sections/PricingStripSection';
+import { CostComparisonSection } from '@/components/sections/CostComparisonSection';
+import { CalculatorPreviewSection } from '@/components/sections/CalculatorPreviewSection';
+import { IndustriesSection } from '@/components/sections/IndustriesSection';
+import { AICaseStudiesSection } from '@/components/sections/AICaseStudiesSection';
+import { TestimonialsSection } from '@/components/sections/TestimonialsSection';
 import { AICapabilitiesSection } from '@/components/sections/AICapabilitiesSection';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { JsonLd } from '@/components/seo/JsonLd';
@@ -12,9 +17,9 @@ import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Ensaar Global — AI-Powered Engineering & Technology Services',
+  title: 'Ensaar Global - Managed AI Execution Pods',
   description:
-    'Ensaar Global is an AI-powered engineering design and technology services company based in Hyderabad, India. We build intelligent solutions, deliver business excellence training, and advance enterprises into the AI era.',
+    'Show Ensaar the work you want to reduce. We turn software backlogs, operations, support, research, staffing, and knowledge tasks into managed AI execution pods with senior oversight.',
   path: '/',
 });
 
@@ -30,10 +35,15 @@ export default function HomePage() {
       />
       <Hero />
       <div id="below-hero" />
+      <WorkReductionSection />
+      <PricingStripSection />
       <AboutSection />
       <ServicesSection />
-      <BcepOverviewSection />
-      <PortfolioSection />
+      <CostComparisonSection />
+      <CalculatorPreviewSection />
+      <IndustriesSection />
+      <AICaseStudiesSection limit={4} />
+      <TestimonialsSection />
       <AICapabilitiesSection />
       <ContactSection />
     </>

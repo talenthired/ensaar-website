@@ -14,15 +14,15 @@ const TIMELINE = [
     active: false,
   },
   {
-    year: '2014 — 2023',
+    year: '2014 - 2023',
     title: 'Delivery Across Industries',
     body: 'Successfully delivered IT projects, business communications training, trading and loyalty platforms, and robotics education programs across multiple industries.',
     active: false,
   },
   {
-    year: '2024 — Present',
+    year: '2024 - Present',
     title: 'The AI Advance',
-    body: 'Actively building AI-powered implementations using Claude, Claude Code, and its ecosystem of plugins and skills — transforming how our clients operate.',
+    body: 'Actively building AI-powered implementations using Claude, Claude Code, and its ecosystem of plugins and skills - transforming how our clients operate.',
     active: true,
   },
 ];

@@ -40,7 +40,7 @@ export function ContactSection() {
     );
     window.location.href = `mailto:${siteConfig.email}?subject=${subject}&body=${body}`;
     setStatus('success');
-    setMessage('Opening your email client — thank you!');
+    setMessage('Opening your email client - thank you!');
   }
 
   return (
@@ -58,7 +58,7 @@ export function ContactSection() {
               Let's Build <span className="gradient-text">Something Intelligent.</span>
             </h2>
             <p className="text-[1.0625rem] text-ink-secondary mb-10">
-              Whether you're exploring what AI can do for your business, planning an engineering engagement, or considering a BCEP training intervention — we'd love to hear from you.
+              Whether you're exploring what AI can do for your business, planning an engineering engagement, or considering a BCEP training intervention - we'd love to hear from you.
             </p>
 
             <ul className="flex flex-col gap-6">
@@ -82,7 +82,7 @@ export function ContactSection() {
               <ContactDetail
                 Icon={Clock}
                 label="Hours"
-                value="Mon — Fri · 9am — 5pm · Sat by appointment"
+                value="Mon - Fri | 9am - 5pm | Sat by appointment"
               />
             </ul>
           </motion.div>
