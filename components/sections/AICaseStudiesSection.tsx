@@ -1,7 +1,7 @@
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Section, SectionHeader } from '@/components/ui/Section';
@@ -13,105 +13,74 @@ type Props = {
   limit?: number;
 };
 
-/**
- * Case studies presented as enterprise-style content cards.
- * No illustrations - typography, region badge, clear hierarchy, clean accent line.
- */
 export function AICaseStudiesSection({ showHeader = true, limit }: Props) {
   const reducedMotion = useReducedMotion();
   const cases = limit ? AI_CASES.slice(0, limit) : AI_CASES;
 
   return (
-    <Section id="case-studies">
+    <Section id="case-studies" className="bg-bg-primary">
       <Container>
         {showHeader && (
           <SectionHeader
             eyebrow="Selected Engagements"
             title={
               <>
-                AI in production. <span className="gradient-text">Across continents.</span>
+                Technology applied to <span className="gradient-text">real operating contexts.</span>
               </>
             }
-            lede="A snapshot of recent engagements where Ensaar threaded AI through the customer experience - from trading desks in Singapore to ride-hailing in the UAE."
+            lede="An anonymized view of international work across trading, learning, marketing, and mobility. Client identities remain confidential."
           />
         )}
 
         <motion.div
-          className="grid gap-5 md:grid-cols-2"
+          className="border-t border-line-subtle"
           initial={reducedMotion ? 'visible' : 'hidden'}
           whileInView="visible"
           viewport={viewportOnce}
           variants={stagger}
         >
-          {cases.map((c) => (
+          {cases.map((item, index) => (
             <motion.article
-              key={c.id}
+              key={item.id}
               variants={fadeUp}
-              whileHover={{ y: -4 }}
-              transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-              className="group relative bg-bg-secondary border border-line-subtle rounded-2xl p-8 hover:border-line-glow hover:shadow-card transition-all overflow-hidden"
+              className="group grid gap-6 border-b border-line-subtle py-9 lg:grid-cols-[0.65fr_1.15fr_1fr_auto] lg:items-start lg:gap-10 lg:py-11"
             >
-              {/* top accent line - Scadea-style */}
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-brand opacity-80" />
-
-              {/* region row */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2.5">
-                  <span className="inline-flex items-center justify-center min-w-[34px] h-[22px] px-2 rounded-md bg-accent-primary/[0.08] border border-line-subtle font-mono text-[0.6875rem] font-semibold tracking-[0.1em] text-accent-secondary">
-                    {c.flag}
-                  </span>
-                  <span className="font-mono text-xs uppercase tracking-[0.12em] text-ink-muted">
-                    {c.region}
-                  </span>
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-xs text-accent-secondary">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="font-mono text-xs uppercase tracking-[0.1em] text-ink-muted">{item.region}</span>
                 </div>
-                <span className="font-mono text-[0.6875rem] uppercase tracking-[0.15em] text-ink-muted">
-                  {c.client}
-                </span>
+                <p className="mt-3 text-xs uppercase tracking-[0.08em] text-ink-muted">{item.client}</p>
               </div>
 
-              <h3 className="text-xl md:text-[1.375rem] font-display mb-3 text-ink-primary text-balance leading-tight">
-                {c.title}
-              </h3>
+              <div>
+                <h3 className="text-2xl leading-tight md:text-3xl">{item.title}</h3>
+                <p className="mt-4 leading-relaxed text-ink-secondary">{item.summary}</p>
+                <p className="mt-5 font-mono text-[0.6875rem] uppercase tracking-[0.08em] text-accent-secondary">
+                  {item.tech.slice(0, 3).join(' / ')}
+                </p>
+              </div>
 
-              <p className="text-ink-secondary text-[0.9375rem] leading-relaxed mb-6">
-                {c.summary}
-              </p>
-
-              <ul className="flex flex-col gap-2.5 mb-6 pl-0">
-                {c.highlights.slice(0, 3).map((h) => (
-                  <li key={h} className="flex items-start gap-3 text-[0.9375rem] text-ink-secondary">
-                    <span className="mt-[0.55rem] h-[2px] w-3 rounded-sm bg-gradient-brand shrink-0" />
-                    <span>{h}</span>
+              <ul className="space-y-4">
+                {item.highlights.slice(0, 3).map((highlight) => (
+                  <li key={highlight} className="border-l-2 border-accent-cyan pl-4 text-sm leading-relaxed text-ink-secondary">
+                    {highlight}
                   </li>
                 ))}
               </ul>
 
-              <div className="flex items-center justify-between gap-3 pt-5 border-t border-line-subtle">
-                <div className="flex flex-wrap gap-2">
-                  {c.tech.slice(0, 3).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[0.6875rem] uppercase tracking-[0.08em] px-2.5 py-1 rounded-full bg-bg-tertiary border border-line-subtle text-ink-secondary"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-accent-primary/[0.08] border border-line-subtle text-accent-primary group-hover:bg-gradient-brand group-hover:border-transparent group-hover:text-white transition-all shrink-0"
-                  aria-label={`Discuss a similar engagement to ${c.title}`}
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </div>
+              <Link
+                href="/contact"
+                className="flex h-11 w-11 items-center justify-center border border-line-subtle text-accent-primary transition hover:border-accent-primary hover:bg-accent-primary hover:text-white"
+                aria-label={`Discuss a similar engagement to ${item.title}`}
+              >
+                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" aria-hidden />
+              </Link>
             </motion.article>
           ))}
         </motion.div>
 
-        <p className="text-center text-sm text-ink-muted mt-10">
-          Client names are confidential. Engagement details available on request.
-        </p>
+        <p className="mt-8 text-sm text-ink-muted">Client names are confidential. Additional context is available during a qualified conversation.</p>
       </Container>
     </Section>
   );

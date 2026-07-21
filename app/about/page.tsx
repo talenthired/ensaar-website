@@ -14,7 +14,7 @@ import { siteConfig } from '@/lib/utils';
 export const metadata: Metadata = pageMetadata({
   title: 'About Ensaar Global',
   description:
-    'Ensaar Global is an engineering design and technology services company founded in 2014, based in Hyderabad, India. Learn about our history, our AI-first pivot, and our approach to delivering intelligent solutions.',
+    'Ensaar Global is an enterprise AI enablement and software engineering company founded in 2014, with locations in Hyderabad and Noida.',
   path: '/about',
 });
 
@@ -25,7 +25,7 @@ export default function AboutPage() {
         data={webPageSchema({
           name: 'About Ensaar Global',
           description:
-            'Ensaar Global is an engineering design and technology services company founded in 2014, based in Hyderabad, India.',
+            'Ensaar Global helps students, engineers, and organizations adopt enterprise-grade AI from Hyderabad and Noida.',
           url: `${siteConfig.url}/about`,
         })}
       />
@@ -44,7 +44,7 @@ export default function AboutPage() {
                 Two decades of building. <span className="gradient-text">One AI-first future.</span>
               </h1>
               <p className="text-lg md:text-xl text-ink-secondary">
-                Ensaar Global was founded in 2014 as an engineering design and technology services company, backed by two decades of prior experience in IT and consumer product design. Today we are actively advancing into AI - not as a marketing pivot, but as a deliberate expansion of what we can build for our clients.
+                Ensaar Global was founded in 2014 as an engineering design and technology services company. Today, from Hyderabad and Noida, we help students, engineers, and organizations adopt enterprise-grade AI with practical support across technology and human capability.
               </p>
             </div>
             <HeroImage
@@ -60,14 +60,14 @@ export default function AboutPage() {
 
       <section className="py-20">
         <Container>
-          <div className="max-w-3xl mx-auto glass-strong rounded-3xl p-12 text-center">
+          <div className="mx-auto max-w-3xl border-y border-line-glow bg-bg-secondary p-8 text-center md:p-12">
             <h2 className="text-3xl md:text-4xl mb-4">Our approach</h2>
             <div className="text-ink-secondary text-lg space-y-4 text-left">
               <p>
-                <strong className="text-ink-primary">We start with outcomes, not technology.</strong> Every engagement begins with a clear business problem - not a pre-selected toolchain.
+                <strong className="text-ink-primary">We start with people and outcomes.</strong> Every engagement begins with the audience, the work, and the controls that matter, not a pre-selected toolchain.
               </p>
               <p>
-                <strong className="text-ink-primary">We build durable capability.</strong> Our AI work leaves clients with internal expertise, documentation, and ownership - not vendor lock-in.
+                <strong className="text-ink-primary">We build durable capability.</strong> Our AI work leaves clients with internal expertise, documentation, and ownership, not vendor lock-in.
               </p>
               <p>
                 <strong className="text-ink-primary">We respect confidentiality.</strong> Our client names are not listed publicly. Engagement references available on request.

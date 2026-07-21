@@ -5,101 +5,125 @@ export type BcepTrack = {
   description: string;
   modules: string[];
   audience: string;
+  credential: string;
+  assessment: string;
 };
 
 export const BCEP_ADVANTAGES = [
   {
     num: '01',
-    title: 'Highly Practical',
-    description: 'Rooted in genuine workplace scenarios - never abstract theory.',
+    title: 'Learn',
+    description: 'Build the frameworks and working methods required for the selected certification track, including AI readiness where the role demands it.',
   },
   {
     num: '02',
-    title: 'Structured & Scalable',
-    description: 'Effective for diverse roles across the organization.',
+    title: 'Apply',
+    description: 'Use the methods on realistic workplace scenarios, AI-assisted work situations, and role-relevant assignments.',
   },
   {
     num: '03',
-    title: 'Outcome-Focused',
-    description: 'Delivering tangible, measurable improvement.',
+    title: 'Demonstrate',
+    description: 'Complete an applied assessment against a defined capability rubric.',
   },
   {
     num: '04',
-    title: 'Deeply Personalized',
-    description: 'Tailored to both individual and organizational needs.',
+    title: 'Certify',
+    description: 'Receive the relevant Ensaar BCEP credential after meeting the assessment standard.',
   },
 ] as const;
 
 export const BCEP_OUTCOMES = [
-  'Building confidence in communication',
-  'Enhancing clarity in thought and action',
-  'Fostering professional presence',
-  'Driving accountability and ownership',
+  'Evidence of applied workplace capability',
+  'AI readiness for modern workplace execution',
+  'Stronger emotional intelligence and self-awareness',
+  'A defined assessment and completion standard',
+  'An Ensaar-issued BCEP credential',
+  'Enterprise cohort reporting when required',
 ] as const;
 
 export const BCEP_TRACKS: BcepTrack[] = [
   {
     slug: 'leadership',
-    name: 'Leadership Development',
-    tagline: 'Programs that build the leaders your business needs next',
+    name: 'Leadership Execution',
+    tagline: 'Turn leadership intent into clear decisions and accountable execution',
     description:
-      'Structured leadership development for emerging and established leaders - blending executive presence, emotional intelligence, change readiness, and strategic thinking.',
+      'An applied certification pathway for managers and leaders responsible for decisions, change, team alignment, and measurable delivery.',
     modules: [
-      'Emerging Leader Programs',
-      'Emotional Intelligence for Leaders',
-      'Change and Transformation Readiness',
-      'Coaching and Mentorship Programs',
-      'Strategic Thinking and Decision-Making',
+      'Emotional intelligence and self-aware leadership',
+      'AI readiness for leaders and managers',
+      'Leadership communication and alignment',
+      'Decision quality and strategic thinking',
+      'Leading AI-augmented teams',
+      'Leading change and transformation',
+      'Accountability and operating cadence',
+      'Stakeholder influence and executive presence',
     ],
-    audience: 'First-time managers, mid-level leaders, senior leaders in transition.',
+    audience: 'First-time managers, mid-level leaders, and senior leaders in transition.',
+    credential: 'BCEP Certificate in Leadership Execution',
+    assessment: 'Scenario-based leadership review and an applied workplace action plan.',
   },
   {
-    slug: 'soft-skills',
-    name: 'Soft Skills & Personality',
-    tagline: 'The human skills that shape everyday performance',
+    slug: 'business-communication',
+    name: 'Business Communication',
+    tagline: 'Communicate with clarity when business outcomes depend on it',
     description:
-      'Practical development in the skills that shape every workday - time management, resilience, communication, and confidence - delivered through scenarios that mirror real workplaces.',
+      'A professional certification pathway focused on high-stakes workplace communication, structured thinking, presentations, and stakeholder alignment.',
     modules: [
-      'Time and Priority Management',
-      'Stress Handling and Resilience',
-      'Business Communication',
-      'Confidence Building and Personality',
-      'Decision Making Skills',
+      'Emotional intelligence in workplace communication',
+      'Communicating AI-assisted work clearly',
+      'Structured business communication',
+      'Executive writing and message design',
+      'Presentations and decision narratives',
+      'AI-era stakeholder alignment',
+      'Cross-functional and client communication',
+      'Difficult conversations and issue resolution',
     ],
-    audience: 'All professionals, early-career through experienced individual contributors.',
+    audience: 'Professionals, client-facing teams, project leads, and cross-functional managers.',
+    credential: 'BCEP Certificate in Business Communication',
+    assessment: 'Written and live communication assignments evaluated against a capability rubric.',
   },
   {
     slug: 'professional',
-    name: 'Professional Skills',
-    tagline: 'Sharpen the skills that drive professional outcomes',
+    name: 'Professional Excellence',
+    tagline: 'Build the operating disciplines behind dependable performance',
     description:
-      'Professional skill enhancement focused on the moments that matter: presentations, negotiations, goal execution, and ethical decision-making.',
+      'An assessed pathway for professionals who need stronger execution, prioritization, negotiation, critical thinking, and commercial effectiveness.',
     modules: [
-      'Communication and Presentation Excellence',
-      'Negotiation and Conflict Resolution',
-      'Goal Setting and Execution',
-      'Critical Thinking',
-      'Workplace Ethics and Accountability',
+      'Emotional intelligence and professional self-management',
+      'AI readiness and responsible tool use',
+      'Priority management and execution',
+      'Negotiation and conflict resolution',
+      'Critical thinking and problem framing',
+      'Verification habits for AI-assisted output',
+      'Commercial awareness and stakeholder value',
+      'Workplace ethics and accountability',
     ],
-    audience: 'Client-facing professionals, project leads, business development teams.',
+    audience: 'Individual contributors, project owners, business teams, and emerging managers.',
+    credential: 'BCEP Certificate in Professional Excellence',
+    assessment: 'A role-relevant business case and evidence-based execution review.',
   },
   {
-    slug: 'train-the-trainer',
-    name: 'Train-the-Trainer',
-    tagline: 'Build internal training capability that scales',
+    slug: 'facilitator',
+    name: 'Enterprise Facilitator',
+    tagline: 'Create internal capability programs that are rigorous and repeatable',
     description:
-      'Equip your internal team to design, deliver, and assess learning programs - so capability development becomes a repeatable, owned capability rather than a vendor dependency.',
+      'A certification pathway for internal facilitators and capability leaders who design, deliver, measure, and improve enterprise learning programs.',
     modules: [
-      'Fast-Tracking Proven Learning Systems',
-      'Workshop Planning and Long-Form Interventions',
-      'Training Needs Assessment and Consulting',
-      'Repeatable, Scalable Program Design',
-      'Research-Learning-Results Loop',
+      'Emotionally intelligent facilitation',
+      'AI readiness program design',
+      'Capability needs diagnosis',
+      'Program architecture and outcome design',
+      'Enterprise facilitation methods',
+      'Assessment and evidence collection',
+      'Measuring AI capability across cohorts',
+      'Program measurement and continuous improvement',
     ],
-    audience: 'L&D teams, internal trainers, HR business partners.',
+    audience: 'Capability teams, internal facilitators, functional leaders, and HR business partners.',
+    credential: 'BCEP Certified Enterprise Facilitator',
+    assessment: 'Design and delivery of an assessed capability intervention for a defined audience.',
   },
 ];
 
 export function getBcepTrack(slug: string) {
-  return BCEP_TRACKS.find((t) => t.slug === slug);
+  return BCEP_TRACKS.find((track) => track.slug === slug);
 }

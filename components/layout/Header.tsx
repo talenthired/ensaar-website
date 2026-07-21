@@ -3,19 +3,36 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
-import { Menu, X } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { motion } from 'framer-motion';
+import { ChevronDown, Menu, X } from 'lucide-react';
+import { AdvisorTrigger } from '@/components/marketing/AdvisorTrigger';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { cn } from '@/lib/utils';
+import { INDUSTRIES } from '@/lib/content/trust';
 
-type NavChild = { label: string; href: string; description?: string };
+type NavChild = { label: string; href: string; description?: string; group?: 'Services' | 'Industries' };
 type NavItem = { label: string; href: string; children?: NavChild[] };
 
 const NAV: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'About', href: '/about' },
-  { label: 'Pricing', href: '/pricing' },
+  {
+    label: 'What We Do',
+    href: '/services',
+    children: [
+      { label: 'Enterprise AI Enablement', href: '/services/ai-solutions', description: 'Adoption, engineering support, and governance', group: 'Services' },
+      { label: 'Software Development', href: '/services/software-development', description: 'Web, mobile, SaaS, and enterprise applications', group: 'Services' },
+      { label: 'AI-Ready Engineering Teams', href: '/services/staffing', description: 'Supported AI-fluent delivery capacity', group: 'Services' },
+      { label: 'Corporate Training', href: '/services/corporate-training', description: 'BCEP certification, AI readiness, and industry readiness', group: 'Services' },
+      ...INDUSTRIES.map((industry) => ({
+        label: industry.name,
+        href: `/#industry-${industry.id}`,
+        group: 'Industries' as const,
+      })),
+    ],
+  },
+  { label: 'DailyByte™', href: '/ai-work-lab' },
+  { label: 'Insights', href: '/insights' },
   { label: 'Events', href: '/events' },
   { label: 'Contact', href: '/contact' },
 ];
@@ -23,7 +40,6 @@ const NAV: NavItem[] = [
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     let ticking = false;
@@ -43,6 +59,9 @@ export function Header() {
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
+    window.dispatchEvent(
+      new CustomEvent('ensaar:navigation-state', { detail: { open: menuOpen } }),
+    );
     return () => {
       document.body.style.overflow = '';
     };
@@ -50,14 +69,13 @@ export function Header() {
 
   return (
     <motion.header
-      initial={reducedMotion ? false : { y: -20, opacity: 0 }}
+      initial={false}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       className={cn(
-        'fixed top-0 inset-x-0 z-50 transition-all duration-300',
-        scrolled
-          ? 'py-3 bg-bg-primary/75 backdrop-blur-xl border-b border-line-subtle'
-          : 'py-5',
+        'fixed top-0 inset-x-0 z-50 border-t-[3px] border-t-accent-primary transition-all duration-300',
+        scrolled ? 'py-2.5 shadow-card' : 'py-3.5',
+        'bg-bg-primary/95 backdrop-blur-xl border-b border-line-subtle',
       )}
     >
       <div className="container-page flex items-center justify-between gap-8">
@@ -68,11 +86,11 @@ export function Header() {
             width={938}
             height={259}
             priority
-            className="h-9 w-auto md:h-10"
+            className="h-8 w-auto md:h-9"
           />
         </Link>
 
-        <nav className="hidden lg:flex items-center gap-7" aria-label="Primary">
+        <nav className="hidden lg:flex items-center gap-5" aria-label="Primary">
           {NAV.map((item) =>
             item.children ? (
               <NavDropdown key={item.href} item={item} />
@@ -88,15 +106,16 @@ export function Header() {
             ),
           )}
           <ThemeToggle />
-          <Button href="/contact" size="md" className="px-5 py-2 text-sm">
-            Get Cost Plan
-          </Button>
+          <AdvisorTrigger source="header" variant="primary" className="px-5 py-2.5">
+            Find Your AI Fit
+          </AdvisorTrigger>
         </nav>
 
         <div className="lg:hidden flex items-center gap-2">
           <ThemeToggle />
           <button
             type="button"
+            suppressHydrationWarning
             className="p-2 text-ink-primary"
             aria-label={menuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={menuOpen}
@@ -112,7 +131,7 @@ export function Header() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="lg:hidden fixed inset-0 top-0 pt-20 bg-bg-primary/97 backdrop-blur-2xl z-40 overflow-y-auto"
+          className="absolute inset-x-0 top-full z-40 h-[calc(100svh-4.25rem)] overflow-y-auto bg-bg-primary lg:hidden"
         >
           <nav className="container-page flex flex-col items-center gap-5 pt-10 pb-12 text-center">
             {NAV.map((item, i) => (
@@ -131,16 +150,25 @@ export function Header() {
                   {item.label}
                 </Link>
                 {item.children && (
-                  <div className="flex flex-col gap-2 mt-3">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className="text-base text-ink-secondary hover:text-accent-secondary"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        {child.label}
-                      </Link>
+                  <div className="mx-auto mt-4 grid w-[calc(100%-1rem)] max-w-sm gap-5 rounded-xl border border-line-subtle bg-bg-secondary/70 p-5 text-left sm:grid-cols-2">
+                    {(['Services', 'Industries'] as const).map((group) => (
+                      <div key={group}>
+                        <div className="mb-2 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent-secondary">
+                          {group}
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          {item.children?.filter((child) => child.group === group).map((child) => (
+                            <Link
+                              key={child.href}
+                              href={child.href}
+                              className="text-sm text-ink-secondary hover:text-accent-secondary"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -153,9 +181,9 @@ export function Header() {
               className="mt-4"
               onClick={() => setMenuOpen(false)}
             >
-              <Button href="/contact" size="lg">
-                Get Cost Plan
-              </Button>
+              <AdvisorTrigger source="mobile-menu" variant="primary">
+                Find Your AI Fit
+              </AdvisorTrigger>
             </motion.div>
           </nav>
         </motion.div>
@@ -171,25 +199,25 @@ function NavDropdown({ item }: { item: NavItem }) {
       className="relative"
       onMouseEnter={() => setOpen(true)}
       onMouseLeave={() => setOpen(false)}
+      onFocusCapture={() => setOpen(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
     >
       <Link
         href={item.href}
+        aria-haspopup="menu"
+        aria-expanded={open}
         className="relative inline-flex items-center gap-1 text-[0.9375rem] font-medium text-ink-secondary hover:text-ink-primary transition-colors group"
       >
         {item.label}
-        <svg
+        <ChevronDown
           className={cn(
             'w-3.5 h-3.5 transition-transform duration-200',
             open && 'rotate-180',
           )}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
           aria-hidden
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        />
         <span className="absolute left-0 -bottom-1 h-[1px] w-0 bg-gradient-brand transition-all duration-300 group-hover:w-[calc(100%-1.25rem)]" />
       </Link>
 
@@ -198,24 +226,31 @@ function NavDropdown({ item }: { item: NavItem }) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.15 }}
-          className="absolute left-1/2 -translate-x-1/2 top-full pt-3 w-[320px]"
+          className="absolute left-1/2 top-full w-[720px] -translate-x-1/2 pt-3"
         >
-          <div className="glass-strong rounded-2xl p-2 shadow-glow">
-            {item.children.map((child) => (
-              <Link
-                key={child.href}
-                href={child.href}
-                className="block px-4 py-3 rounded-xl hover:bg-accent-primary/[0.08] transition-colors group/child"
-              >
-                <div className="font-display text-base text-ink-primary group-hover/child:text-accent-primary transition-colors">
-                  {child.label}
+          <div className="grid grid-cols-[1.15fr_0.85fr] overflow-hidden rounded-lg border border-line-glow bg-bg-secondary shadow-card">
+            {(['Services', 'Industries'] as const).map((group) => (
+              <div key={group} className="border-r border-line-subtle p-4 last:border-r-0">
+                <div className="px-3 pb-3 pt-1 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent-secondary">
+                  {group}
                 </div>
-                {child.description && (
-                  <div className="text-[0.8125rem] text-ink-secondary mt-0.5">
-                    {child.description}
-                  </div>
-                )}
-              </Link>
+                {item.children?.filter((child) => child.group === group).map((child) => (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className="group/child block border-t border-line-subtle px-3 py-2.5 transition-colors hover:bg-accent-primary/[0.06]"
+                  >
+                    <div className="font-display text-sm text-ink-primary transition-colors group-hover/child:text-accent-primary">
+                      {child.label}
+                    </div>
+                    {child.description && (
+                      <div className="mt-0.5 text-[0.75rem] text-ink-secondary">
+                        {child.description}
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
             ))}
           </div>
         </motion.div>

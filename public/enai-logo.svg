@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">EnAI logo mark</title>
+  <desc id="desc">A stylized segmented E paired with a four-point AI sparkle.</desc>
+
+  <defs>
+    <linearGradient id="brandGradient" x1="210" y1="250" x2="790" y2="760" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#29E7F2"/>
+      <stop offset="48%" stop-color="#2196F3"/>
+      <stop offset="100%" stop-color="#3157E8"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0 0 0 0 0.05
+                0 0 0 0 0.65
+                0 0 0 0 1
+                0 0 0 0.30 0"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g fill="url(#brandGradient)" filter="url(#softGlow)">
+    <!-- Segmented E -->
+    <path d="M305 255
+             H560
+             C578 255 586 274 578 291
+             L548 348
+             C540 363 525 372 508 372
+             H272
+             L296 290
+             C301 271 317 255 337 255
+             Z"/>
+    <path d="M286 410
+             H474
+             C492 410 501 429 493 446
+             L469 496
+             C461 511 446 520 429 520
+             H258
+             L276 447
+             C280 426 292 410 311 410
+             Z"/>
+    <path d="M273 558
+             H520
+             C540 558 558 569 568 587
+             L610 668
+             H345
+             C311 668 284 647 272 617
+             L258 582
+             C253 570 262 558 273 558
+             Z"/>
+
+    <!-- AI sparkle -->
+    <path d="M619 292
+             C619 395 660 444 754 468
+             C660 492 619 541 619 654
+             C619 541 578 492 484 468
+             C578 444 619 395 619 292
+             Z"/>
+  </g>
+</svg>

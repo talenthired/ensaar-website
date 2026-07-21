@@ -52,14 +52,14 @@ export const AI_CASES: AICase[] = [
     flag: 'IN',
     title: 'AI-Driven Distribution & Marketing Platform',
     summary:
-      'Built a direct-selling and marketing distribution platform for a leading India-based client. AI underpins distributor matching, content personalization, sales coaching, and territory analytics.',
+      'Built a direct-selling and marketing distribution platform for a leading India-based client. AI underpins distributor matching, content personalization, sales enablement, and territory analytics.',
     highlights: [
       'AI-powered distributor recommendations and matching',
       'Personalized marketing content generation per region',
-      'Sales coaching assistant for distributor onboarding',
+      'Sales enablement assistant for distributor onboarding',
       'Predictive analytics for territory and product performance',
     ],
-    tech: ['LLM personalization', 'Recommender systems', 'Coaching agents'],
+    tech: ['LLM personalization', 'Recommender systems', 'Enablement agents'],
     illustration: 'marketing',
   },
   {
@@ -74,7 +74,7 @@ export const AI_CASES: AICase[] = [
       'AI dispatch optimization considering traffic and demand',
       'Conversational customer support agent (multilingual)',
       'Surge pricing with explainability for both rider and driver',
-      'Driver coaching with performance feedback loops',
+      'Driver performance guidance with feedback loops',
     ],
     tech: ['Optimization', 'Multilingual LLMs', 'Pricing intelligence'],
     illustration: 'taxi',

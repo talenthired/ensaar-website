@@ -10,22 +10,24 @@ export const siteConfig = {
   legalName: 'Ensaar Global Pvt. Ltd.',
   url: 'https://ensaar.com',
   description:
-    'Ensaar Global teaches you to build a profitable AI business — through a paid community, live cohort programs, and 1:1 coaching. Operator-led: ten years building production AI for companies across seven countries.',
-  tagline: 'Become an AI millionaire.',
-  taglineLong: 'Three paths — community, cohorts, 1:1 coaching — to build a profitable AI business.',
-  email: 'hr@ensaar.com',
-  // Admissions / applications inbox (relabeled in UI from prior "training enquiries" usage).
-  trainingEmail: 'Trainings@ensaar.com',
-  disclaimerUrl: '/legal/earnings-disclaimer',
+    'Ensaar Global helps enterprises turn valuable workflows into controlled AI pilots and helps students, engineers, teams, and campuses build practical AI capability through realistic work, software engineering, secure deployment, and governance.',
+  tagline: 'AI that works. People ready to use it.',
+  taglineLong: 'Enterprise AI implementation, practical workforce enablement, software engineering, secure deployment, BCEP AI readiness, and measurable AI capability.',
+  email: 'info@ensaar.com',
+  trainingEmail: 'info@ensaar.com',
   refundUrl: '/legal/refund-policy',
-  locality: 'Begumpet',
-  region: 'Hyderabad',
+  locality: 'Hyderabad',
+  region: 'Telangana',
   state: 'Telangana',
   country: 'India',
   countryCode: 'IN',
   foundedYear: 2014,
   hours: 'Mo-Fr 09:00-17:00',
   locales: ['en-IN', 'en'],
+  locations: [
+    { city: 'Hyderabad', state: 'Telangana' },
+    { city: 'Noida', state: 'Uttar Pradesh' },
+  ],
 } as const;
 
-export const ogImage = `${siteConfig.url}/og-image.png`;
+export const ogImage = `${siteConfig.url}/og`;

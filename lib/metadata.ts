@@ -11,7 +11,7 @@ export function pageMetadata({ title, description, path }: PageMetaParams): Meta
   const url = `${siteConfig.url}${path}`;
   const fullTitle = title === siteConfig.name ? title : `${title} - ${siteConfig.name}`;
   return {
-    title: fullTitle,
+    title: { absolute: fullTitle },
     description,
     alternates: { canonical: url },
     openGraph: {

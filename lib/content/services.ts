@@ -7,48 +7,77 @@ export type Service = {
   serviceType: string;
   offerings: string[];
   outcomes: string[];
-  accent: 'indigo' | 'cyan' | 'violet';
+  accent: 'indigo' | 'cyan' | 'violet' | 'warm';
 };
 
 export const SERVICES: Service[] = [
   {
     slug: 'ai-solutions',
-    name: 'AI Solutions',
-    tagline: 'Turn workflows into managed AI pods',
+    name: 'Enterprise AI Implementation',
+    tagline: 'Build a controlled AI pilot',
     shortDescription:
-      'Production AI systems for products, operations, support, research, and knowledge work. Start with an audit, a feature pod, a knowledge automation pod, or an AI software pod.',
+      'Identify a valuable enterprise workflow, define the evidence and controls, build a focused AI pilot, and prepare the people and operating model required to scale it.',
     longDescription:
-      'Ensaar builds production AI systems that reduce expensive work. We design, integrate, and deploy solutions powered by frontier models like Claude using prompt caching, tool use, MCP servers, Claude Code workflows, RAG, and evaluation harnesses. The goal is not AI theater. The goal is measurable reduction in manual effort, delivery cost, and cycle time.',
-    serviceType: 'Managed AI Solutions and Automation',
+      'Ensaar begins with a workflow and a decision, not a model demonstration. We help teams test whether AI can create measurable value, build the surrounding application and integration layer, establish quality and security controls, and enable the people who will operate the result. Delivery can use Qwen, DeepSeek, Gemma-style, GPT-compatible, Claude, and other frontier models across AWS, Amazon Bedrock, cloud, or hybrid environments.',
+    serviceType: 'Enterprise AI Implementation and Workforce Enablement',
     offerings: [
-      'AI cost reduction audits',
-      'Knowledge automation and RAG systems',
-      'Claude feature pods for existing products',
-      'AI-native MVP builds',
-      'Support and operations automation',
-      'Research and analysis desks',
-      'Agentic workflow design',
-      'Evaluation and governance frameworks',
+      'AI workflow diagnostic and opportunity mapping',
+      'Focused proof of value and controlled pilot delivery',
+      'Multi-model strategy and model evaluation',
+      'Amazon Bedrock and AWS GPU deployment support',
+      'VS Code and IDE-native AI engineering workflows',
+      'Code generation, refactoring, testing, and documentation enablement',
+      'Token, latency, utilization, and cost observability',
+      'Cloud and hybrid deployment architecture',
+      'Enterprise security and AI governance',
+      'Team adoption, playbooks, and engineering support',
     ],
     outcomes: [
-      'Reduced manual processing cost',
-      'Faster delivery against product backlogs',
-      'Lower support and research workload',
-      'AI capability your team can keep using',
+      'A clear decision on one valuable AI workflow',
+      'Quality, security, and cost evidence before scaling',
+      'Model choice without unnecessary lock-in',
+      'An operable system and a team ready to own it',
     ],
     accent: 'indigo',
   },
   {
-    slug: 'staffing',
-    name: 'Staffing',
-    tagline: 'Managed AI-augmented capacity',
+    slug: 'software-development',
+    name: 'Software Development',
+    tagline: 'Engineering that carries the product from idea to production',
     shortDescription:
-      'AI-fluent contributors, senior engineers, AI specialists, and architects placed into your workflow with Ensaar oversight, reporting, and replacement guarantee.',
+      'Full-cycle web, mobile, SaaS, and enterprise application development with AI-assisted engineering, modern architecture, and accountable delivery.',
     longDescription:
-      'Ensaar staffing is not a resume marketplace. We place AI-augmented talent into client teams with a managed delivery cadence, senior review paths, and clear performance visibility. Execution capacity can start at $7/hr, while senior tiers cover architecture, AI specialization, and multi-team delivery governance.',
+      'Ensaar designs and builds software products that solve real operating problems. Our teams cover product definition, experience design, frontend, backend, integrations, cloud deployment, testing, and handover. AI-assisted engineering improves delivery speed, while senior technical review protects maintainability, security, and product quality.',
+    serviceType: 'Custom Software Development and Product Engineering',
+    offerings: [
+      'Web and SaaS product development',
+      'Mobile application development',
+      'Enterprise application engineering',
+      'API and platform integrations',
+      'Legacy application modernization',
+      'Cloud architecture and DevOps',
+      'Quality engineering and test automation',
+      'Product discovery and technical architecture',
+    ],
+    outcomes: [
+      'A production-ready product, not a prototype handoff',
+      'Faster engineering through controlled AI assistance',
+      'Clear architecture and delivery ownership',
+      'Software your internal team can operate and extend',
+    ],
+    accent: 'warm',
+  },
+  {
+    slug: 'staffing',
+    name: 'AI-Ready Engineering Teams',
+    tagline: 'Add AI-fluent capacity with accountable support',
+    shortDescription:
+      'AI-fluent contributors, senior engineers, specialists, and architects who work inside your delivery system with Ensaar oversight and enablement.',
+    longDescription:
+      'Ensaar provides supported engineering capacity, not an anonymous resume marketplace. We place AI-fluent talent into client teams with clear delivery ownership, senior review paths, practical AI workflows, reporting cadence, and continued enablement as tools and models evolve.',
     serviceType: 'Managed Talent Augmentation and Staffing',
     offerings: [
-      'Execution Specialists from $7/hr',
+      'AI-fluent software engineers',
       'Senior Pod Engineers',
       'AI Specialists for LLM, RAG, and agentic systems',
       'Solutions Architects for delivery governance',
@@ -66,25 +95,30 @@ export const SERVICES: Service[] = [
   {
     slug: 'corporate-training',
     name: 'Corporate Training',
-    tagline: 'Train teams for the AI-shifted workplace',
+    tagline: 'Get BCEP Certified for AI-ready work',
     shortDescription:
-      "Ensaar's Business Excellence Program (BCEP) develops leadership, soft skills, professional skills, and internal training capability for teams adapting to AI-era work.",
+      "BCEP is Ensaar's structured certification pathway for AI readiness, emotional intelligence, business communication, leadership execution, professional effectiveness, and enterprise capability building.",
     longDescription:
-      "Ensaar's corporate training practice, BCEP, combines corporate know-how with structured skill development. Programs are practical, scalable, outcome-focused, and deeply personalized. As AI changes how teams work, BCEP helps people communicate, lead, decide, and train more effectively.",
-    serviceType: 'Corporate Training and Capability Building',
+      "The Business Communication Excellence Program (BCEP) validates applied workplace capability through structured learning, practical assignments, and assessment. AI readiness and emotional intelligence are core threads across communication, leadership, execution, and internal enablement, helping people use AI responsibly, explain AI-assisted work clearly, work constructively with others, and perform effectively in AI-shaped workplaces.",
+    serviceType: 'BCEP Professional Certification, AI Readiness, and Enterprise Capability Building',
     offerings: [
-      'Leadership Development',
-      'Soft Skills and Personality',
-      'Professional Skills Enhancement',
-      'Train-the-Trainer programs',
-      'Business communication training',
-      'AI-era workplace readiness workshops',
+      'BCEP Leadership Certification',
+      'BCEP Business Communication Certification',
+      'BCEP Professional Excellence Certification',
+      'BCEP Facilitator Certification',
+      'AI readiness for professionals and enterprise cohorts',
+      'Communication and judgment in AI-assisted work',
+      'Emotional intelligence and self-awareness',
+      'Workplace assignments and applied assessment',
+      'Enterprise cohort certification pathways',
     ],
     outcomes: [
-      'Sharper communication and execution',
-      'Leadership readiness during transformation',
-      'More accountable and confident teams',
-      'Internal training systems that scale',
+      'A clear professional certification milestone',
+      'Practical AI readiness for modern workplace roles',
+      'Demonstrated workplace communication capability',
+      'Stronger emotional intelligence and interpersonal judgment',
+      'Stronger leadership and execution standards',
+      'Repeatable internal capability systems',
     ],
     accent: 'violet',
   },

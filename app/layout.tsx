@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, Archivo_Black, JetBrains_Mono } from 'next/font/google';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { ThemeProvider } from '@/components/theme/ThemeProvider';
+import { AttributionCapture } from '@/components/marketing/AttributionCapture';
+import { Analytics } from '@/components/marketing/Analytics';
+import { OpportunityAdvisor } from '@/components/marketing/OpportunityAdvisor';
 import { organizationSchema, websiteSchema } from '@/components/seo/schemas';
 import { siteConfig, ogImage } from '@/lib/utils';
 import './globals.css';
@@ -13,27 +15,8 @@ const themeBootstrap = `
 (function(){try{var t=localStorage.getItem('ensaar-theme');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 `;
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const archivoBlack = Archivo_Black({
-  subsets: ['latin'],
-  weight: '400',
-  variable: '--font-archivo',
-  display: 'swap',
-});
-
-const jetBrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-mono',
-  display: 'swap',
-});
-
 export const viewport: Viewport = {
-  themeColor: '#0a0a0f',
+  themeColor: '#ffffff',
   width: 'device-width',
   initialScale: 1,
 };
@@ -41,25 +24,47 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} - Managed AI Execution Pods`,
+    default: `${siteConfig.name} - ${siteConfig.tagline}`,
     template: `%s - ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: [
-    'AI execution pods',
-    'AI cost reduction',
-    'managed AI delivery',
-    'AI automation',
-    'AI staffing',
-    'Claude AI integration',
-    'LLM integration',
-    'AI support desk',
-    'AI research desk',
-    'software cost reduction',
-    'business excellence program',
-    'BCEP',
-    'corporate training',
+    'enterprise AI enablement',
+    'enterprise AI adoption',
+    'AI engineering support',
+    'multi-model AI strategy',
+    'Amazon Bedrock consulting',
+    'AWS GPU AI deployment',
+    'IDE AI enablement',
+    'AI observability and governance',
+    'AI software development',
+    'custom software development company',
+    'application development services',
+    'enterprise software development',
+    'AI application engineering',
+    'AI automation services',
+    'Claude integration services',
+    'RAG development company',
+    'AI augmented staffing',
+    'AI support automation',
+    'AI research services',
+    'AI product development',
+    'AI workforce enablement',
+    'AI work simulation',
+    'AI skills assessment',
+    'role based AI training',
+    'AI capability pilot',
+    'DailyByte AI Learn',
+    'DailyByte AI Target',
+    'DailyByte Daily Code',
+    'job specific AI learning',
+    'BCEP certification',
+    'BCEP AI readiness',
+    'AI readiness certification',
+    'emotional intelligence training',
+    'business communication certification',
     'Hyderabad',
+    'Noida',
     'Ensaar Global',
   ],
   authors: [{ name: siteConfig.legalName, url: siteConfig.url }],
@@ -70,7 +75,7 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: siteConfig.url,
     siteName: siteConfig.name,
-    title: `${siteConfig.name} - Managed AI Execution Pods`,
+    title: `${siteConfig.name} - ${siteConfig.tagline}`,
     description: siteConfig.description,
     images: [{ url: ogImage, width: 1200, height: 630, alt: siteConfig.name }],
   },
@@ -106,18 +111,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en-IN"
       data-theme="light"
-      className={`${inter.variable} ${archivoBlack.variable} ${jetBrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
+      <body suppressHydrationWarning>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: themeBootstrap }}
+        />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
-      </head>
-      <body>
         <ThemeProvider>
+          <Analytics />
+          <AttributionCapture />
           <Header />
           <main id="main">{children}</main>
           <Footer />
+          <OpportunityAdvisor />
         </ThemeProvider>
       </body>
     </html>

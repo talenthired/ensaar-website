@@ -21,16 +21,16 @@ const TIMELINE = [
   },
   {
     year: '2024 - Present',
-    title: 'The AI Advance',
-    body: 'Actively building AI-powered implementations using Claude, Claude Code, and its ecosystem of plugins and skills - transforming how our clients operate.',
+    title: 'Enterprise AI Enablement',
+    body: 'Supporting students, engineers, and organizations with model strategy, AI-assisted software delivery, cloud deployment, governance, and practical adoption programs.',
     active: true,
   },
 ];
 
 const STATS = [
   { label: 'Years of Delivery', value: 10, suffix: '+' },
-  { label: 'Industries Served', value: 5, suffix: '+' },
-  { label: 'AI-First Approach', value: 100, suffix: '%' },
+  { label: 'India Locations', value: 2, suffix: '' },
+  { label: 'Markets Reached', value: 7, suffix: '' },
 ];
 
 export function AboutSection() {
@@ -46,7 +46,7 @@ export function AboutSection() {
               Two Decades of Expertise. <span className="gradient-text">AI-First Future.</span>
             </>
           }
-          lede="We combine deep experience in information technology and consumer product engineering with modern AI capabilities to deliver solutions that move businesses forward."
+          lede="We combine technology delivery, enterprise AI enablement, and human capability development to help people and organizations move forward with confidence."
         />
 
         <motion.div

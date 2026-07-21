@@ -24,16 +24,16 @@ export function GradientBorder({
   return (
     <motion.div
       className={cn(
-        'relative rounded-[var(--r,1.25rem)] p-[1px]',
-        'bg-[linear-gradient(135deg,rgba(99,102,241,0.4),rgba(6,182,212,0.15)_50%,rgba(99,102,241,0.4))]',
+        'relative rounded-[var(--r,0.5rem)] p-[1px]',
+        'bg-[linear-gradient(135deg,rgba(37,99,235,0.42),rgba(13,148,136,0.18)_50%,rgba(225,29,72,0.35))]',
         animated && 'bg-[length:300%_300%]',
         className,
       )}
       whileHover={animated ? { backgroundPosition: '100% 50%' } : undefined}
       transition={{ duration: 1.8, ease: 'easeInOut' }}
-      style={{ '--r': '1.25rem' } as React.CSSProperties}
+      style={{ '--r': '0.5rem' } as React.CSSProperties}
     >
-      <div className={cn('rounded-[calc(var(--r,1.25rem)-1px)] bg-bg-secondary h-full', innerClassName)}>
+      <div className={cn('rounded-[calc(var(--r,0.5rem)-1px)] bg-bg-secondary h-full', innerClassName)}>
         {children}
       </div>
     </motion.div>

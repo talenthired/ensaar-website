@@ -5,24 +5,26 @@ const nextConfig = {
   compress: true,
   images: {
     formats: ['image/avif', 'image/webp'],
+    qualities: [75, 90, 95],
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'verify.ensaar.com' },
     ],
   },
   async redirects() {
     return [
-      // Routes deleted from HEAD (Next.js commit ee20ffa) - 308 permanent to closest new concept.
-      { source: '/services', destination: '/pricing', permanent: true },
-      { source: '/services/ai-solutions', destination: '/pricing', permanent: true },
-      { source: '/services/engineering', destination: '/pricing', permanent: true },
-      { source: '/services/technology', destination: '/pricing', permanent: true },
-      { source: '/ai', destination: '/pricing', permanent: true },
-      { source: '/bcep', destination: '/pricing', permanent: true },
-      { source: '/bcep/leadership', destination: '/pricing', permanent: true },
-      { source: '/bcep/soft-skills', destination: '/pricing', permanent: true },
-      { source: '/bcep/professional', destination: '/pricing', permanent: true },
-      { source: '/bcep/train-the-trainer', destination: '/pricing', permanent: true },
+      { source: '/services/engineering', destination: '/services/ai-solutions', permanent: true },
+      { source: '/services/technology', destination: '/services/ai-solutions', permanent: true },
+      { source: '/ai', destination: '/services/ai-solutions', permanent: true },
+      { source: '/bcep', destination: '/services/corporate-training', permanent: true },
+      { source: '/bcep/:track', destination: '/services/corporate-training/:track', permanent: true },
+      { source: '/certificate-verification', destination: '/verify', permanent: true },
+      { source: '/services/corporate-training/soft-skills', destination: '/services/corporate-training/business-communication', permanent: true },
+      { source: '/services/corporate-training/train-the-trainer', destination: '/services/corporate-training/facilitator', permanent: true },
       { source: '/work', destination: '/', permanent: true },
+      { source: '/insights/ai-cost-reduction-audit-framework', destination: '/insights/enterprise-ai-adoption-roadmap', permanent: true },
+      { source: '/insights/managed-ai-pods-vs-freelancers', destination: '/insights/multi-model-ai-strategy', permanent: true },
+      { source: '/insights/ai-augmented-staffing-cost-model', destination: '/insights/ide-native-ai-engineering', permanent: true },
     ];
   },
   async headers() {

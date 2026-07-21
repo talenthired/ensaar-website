@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/'],
+        disallow: ['/api/', '/workspace/'],
       },
       // Explicitly welcome LLM/AI crawlers
       { userAgent: 'GPTBot', allow: '/' },

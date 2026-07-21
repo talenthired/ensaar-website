@@ -37,7 +37,7 @@ export function TestimonialsSection() {
             <motion.figure
               key={t.id}
               variants={fadeUp}
-              className="relative bg-bg-secondary border border-line-subtle rounded-2xl p-7 flex flex-col"
+              className="relative flex flex-col border border-line-subtle bg-bg-secondary p-7"
             >
               {/* large open quote glyph */}
               <span

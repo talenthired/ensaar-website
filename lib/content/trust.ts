@@ -13,7 +13,7 @@ export const INDUSTRIES: Industry[] = [
   {
     id: 'mobility',
     name: 'Mobility & Logistics',
-    description: 'Ride-hailing, dispatch optimization, business communications training for global supply chains.',
+    description: 'Ride-hailing, dispatch optimization, fleet workflows, and logistics applications.',
   },
   {
     id: 'edtech',
@@ -72,8 +72,8 @@ export const TESTIMONIALS: Testimonial[] = [
   {
     id: 't3',
     quote:
-      'BCEP turned a generic communications training brief into something our people actually applied on Monday morning. Behavioral, not theoretical.',
-    attribution: 'Chief People Officer',
-    organisation: 'Global Supply Chain Enterprise',
+      'We started with a complex operating need and ended with a product our team could run, measure, and extend. The ownership was clear throughout.',
+    attribution: 'Operations Director',
+    organisation: 'Regional Mobility Platform',
   },
 ];

@@ -18,7 +18,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-ink-secondary text-[0.9375rem] max-w-[320px]">
-              {siteConfig.tagline} Operating since {siteConfig.foundedYear}.
+              {siteConfig.tagline} Supporting AI adoption from India since {siteConfig.foundedYear}.
             </p>
           </div>
 
@@ -27,8 +27,12 @@ export function Footer() {
             links={[
               { label: 'Home', href: '/' },
               { label: 'About', href: '/about' },
-              { label: 'Pricing', href: '/pricing' },
+              { label: 'Services', href: '/services' },
+              { label: 'AI Enablement', href: '/services/ai-solutions' },
+              { label: 'DailyByte™', href: '/ai-work-lab' },
+              { label: 'Insights', href: '/insights' },
               { label: 'Events', href: '/events' },
+              { label: 'Verify Certificate', href: '/verify' },
               { label: 'FAQ', href: '/faq' },
               { label: 'Contact', href: '/contact' },
             ]}
@@ -43,26 +47,27 @@ export function Footer() {
                 <a href={`mailto:${siteConfig.email}`} className="hover:text-ink-primary transition-colors">
                   {siteConfig.email}
                 </a>
-                <span className="block text-xs text-ink-muted font-mono mt-0.5">general</span>
+                <span className="block text-xs text-ink-muted font-mono mt-0.5">AI, software, and BCEP enquiries</span>
               </li>
-              <li>
-                <a
-                  href={`mailto:${siteConfig.trainingEmail}`}
-                  className="hover:text-ink-primary transition-colors"
-                >
-                  {siteConfig.trainingEmail}
-                </a>
-                <span className="block text-xs text-ink-muted font-mono mt-0.5">training / BCEP</span>
-              </li>
-              <li className="mt-2">{siteConfig.locality}, {siteConfig.region}</li>
-              <li>{siteConfig.state}, {siteConfig.country}</li>
+              {siteConfig.locations.map((location) => (
+                <li key={location.city} className="first:mt-2">
+                  {location.city}, {location.state}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pt-8 border-t border-line-subtle text-xs text-ink-muted">
-          <p>Copyright {siteConfig.foundedYear} - {new Date().getFullYear()} {siteConfig.legalName}. All rights reserved.</p>
-          <p className="font-mono tracking-[0.1em]">Crafted with AI.</p>
+          <p>Copyright {siteConfig.foundedYear} - {new Date().getFullYear()} {siteConfig.legalName} All rights reserved.</p>
+          <div className="flex flex-wrap gap-4 font-mono tracking-[0.08em]">
+            <Link href="/legal/terms" className="hover:text-ink-secondary">Terms</Link>
+            <Link href="/legal/privacy" className="hover:text-ink-secondary">Privacy</Link>
+            <Link href="/legal/refund-policy" className="hover:text-ink-secondary">Refunds</Link>
+            <Link href="/verify" className="hover:text-ink-secondary">Certificate verification</Link>
+            <Link href="/workspace/login" className="hover:text-ink-secondary">Lead workspace</Link>
+            <span>Crafted with AI.</span>
+          </div>
         </div>
       </div>
     </footer>

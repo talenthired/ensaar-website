@@ -12,7 +12,7 @@ import { siteConfig } from '@/lib/utils';
 export const metadata: Metadata = pageMetadata({
   title: 'Frequently Asked Questions',
   description:
-    'Answers about Ensaar Global - our services, AI capabilities, the Business Excellence Program (BCEP), industries we serve, and how to start an engagement.',
+    'Answers about Ensaar Global, AI solutions, software development, managed engineering, BCEP AI readiness certification, and how to start an engagement.',
   path: '/faq',
 });
 
@@ -20,7 +20,7 @@ const CATEGORIES: Array<{ key: typeof FAQ[number]['category']; label: string }> 
   { key: 'company', label: 'About Ensaar' },
   { key: 'services', label: 'Services' },
   { key: 'ai', label: 'AI Capabilities' },
-  { key: 'bcep', label: 'BCEP - Training' },
+  { key: 'bcep', label: 'BCEP AI Readiness' },
   { key: 'engagement', label: 'Engagement' },
 ];
 
@@ -68,7 +68,7 @@ export default function FaqPage() {
                     {items.map((item, i) => (
                       <details
                         key={item.question}
-                        className="group glass rounded-2xl p-6 transition-colors open:border-line-glow"
+                        className="group border border-line-subtle bg-bg-secondary p-6 transition-colors open:border-line-glow"
                         open={cat.key === 'company' && i === 0}
                       >
                         <summary className="flex items-center justify-between gap-4 cursor-pointer list-none">
@@ -87,7 +87,7 @@ export default function FaqPage() {
               );
             })}
 
-            <div className="glass-strong rounded-2xl p-10 text-center mt-16">
+            <div className="mt-16 border-y border-line-glow bg-bg-secondary p-10 text-center">
               <h3 className="text-2xl mb-3">Still have a question?</h3>
               <p className="text-ink-secondary mb-6">
                 We're happy to talk it through. Write to us at{' '}

@@ -1,78 +1,124 @@
-# Ensaar Global Pvt. Ltd.
+# Ensaar Global
 
-> Ensaar Global is a managed AI execution partner based in Begumpet, Hyderabad, India. Founded in 2014, Ensaar helps companies reduce software, staffing, support, research, knowledge, and operations cost through human-led AI execution pods.
+> Ensaar Global helps enterprises turn valuable workflows into controlled AI pilots and helps students, engineers, teams, and campuses build practical AI capability through realistic work.
 
-## Core positioning
+## Core proposition
 
-Show us the work. We show what AI can reduce.
+Ensaar Global Pvt. Ltd. is an enterprise AI implementation, software engineering, and workforce enablement company founded in 2014.
 
-Ensaar is not a freelancer marketplace. It scopes the work, assigns the right managed AI pod, applies senior oversight, and tracks the request from estimate to delivery.
+Ensaar connects two parts of AI adoption that are often separated:
 
-## Company facts
+1. Build AI systems and workflows that are useful, secure, observable, and governable.
+2. Help people develop the judgment to direct, verify, and improve AI-assisted work.
+
+The company supports model-flexible and deployment-flexible adoption. Client operational systems are not required to move into a proprietary architecture.
+
+## Best starting points
+
+### AI Workflow Diagnostic
+
+For enterprises that want to identify or validate a valuable first workflow. The diagnostic examines the value hypothesis, data readiness, model fit, security and quality controls, and the evidence required for a focused pilot decision.
+
+### Controlled AI Adoption Sprint
+
+For organizations that already have experiments, prototypes, or pilots. The sprint focuses on quality evidence, observability, governance, operational ownership, and a controlled path to wider adoption.
+
+### DailyByte AI Learn and AI Target
+
+For students, engineers, professionals, teams, and campuses that want practical evidence of AI capability. AI Learn gives guided applied work labs. AI Target turns a job description into an interactive learning path. Daily Code keeps core coding and AI work fundamentals aligned to the selected target role.
+
+### AI Capability Pilot
+
+For companies, learning teams, and colleges. A focused cohort completes realistic AI work simulations so program leaders can understand participation, strengths, focus areas, and readiness before a larger rollout.
+
+## DailyByte AI Learn, AI Target, and Daily Code
+
+DailyByte is Ensaar Global's practical AI enablement product for individuals, teams, enterprises, and campuses. Individuals can create an account and start with AI Learn or AI Target. Enterprises and institutions can use DailyByte as part of a team workspace, capability pilot, or cohort rollout.
+
+DailyByte capabilities visible in the current product include:
+
+- AI Learn guided labs for product, data, engineering, QA, operations, and other roles.
+- AI Target job-description-based learning paths.
+- Start AI Learn lab flows from a selected job target.
+- Daily Code path setup for SQL, Python, Java, TypeScript, and AI work missions.
+- AI-generated and curated realistic task briefs.
+- Source files and work artifacts that the participant must inspect.
+- An in-browser AI assistant with tools.
+- Evaluation of both work process and submitted outcome.
+- Coaching signals related to prompting, verification, and practical judgment.
+- Daily coding practice, streaks, progress, and skill development.
+- Team workspaces and manager capability insights.
+- Organization administration, invitations, audit-oriented controls, and enterprise identity foundations.
+
+DailyByte is not positioned as a passive AI course. Its purpose is to measure whether a person can produce dependable work with AI.
+
+Product page: https://ensaar.com/ai-work-lab
+
+Planned product host: https://dailybyte.ensaar.com
+
+## Enterprise AI implementation
+
+- AI workflow discovery and focused pilot design.
+- Multi-model strategy across Qwen, DeepSeek, Gemma-style, GPT-compatible, Claude, and other frontier models.
+- Amazon Bedrock and AWS GPU infrastructure support.
+- VS Code and IDE-native engineering workflows.
+- AI support for code generation, refactoring, testing, documentation, and review.
+- Retrieval-augmented generation, tool use, and agentic workflow design.
+- Observability for token use, latency, quality, infrastructure utilization, and cost.
+- Security, access control, evaluation, data boundaries, and human review.
+- Cloud and hybrid deployment flexibility.
+- Team adoption, engineering playbooks, and continuing support.
+
+Enterprise AI page: https://ensaar.com/services/ai-solutions
+
+## Technology services
+
+- Enterprise AI Enablement: strategy, engineering workflows, deployment, observability, governance, and adoption support.
+- Software Development: web, mobile, SaaS, and enterprise applications from discovery through production and handover.
+- AI-Ready Engineering Teams: supported AI-fluent contributors, specialists, senior engineers, and architects.
+- Cloud and Automation: connected systems, deployment pipelines, modernization, and automated workflows.
+
+## Evidence and experience
+
+Ensaar Global Pvt. Ltd. has operated since 2014 with locations in Hyderabad, Telangana and Noida, Uttar Pradesh. The company has delivered technology and capability work across India, Singapore, China, the United Arab Emirates, Saudi Arabia, Japan, and Australia.
+
+Public case studies are anonymized to protect client confidentiality. Examples include an AI-integrated trading platform for a Singapore client, an AI language learning community for a China client, a direct-selling marketing platform for an India client, and a taxi booking application for a UAE client.
+
+## BCEP AI readiness certification and human capability
+
+The Business Communication Excellence Program (BCEP) is an assessed professional certification pathway covering AI readiness, Leadership Execution, Business Communication, Professional Excellence, and Enterprise Facilitation.
+
+AI readiness and emotional intelligence are core BCEP capabilities. Participants build the judgment to communicate AI-assisted work clearly, verify outputs, collaborate responsibly, and lead in AI-shaped workplaces. Self-awareness, empathy, emotional regulation, and constructive interpersonal judgment are embedded across the pathways.
+
+Ensaar-issued and BCEP credentials can be checked against the official registry at https://ensaar.com/verify. Validation supports certificate number lookup, QR image scanning, email OTP confirmation, and current active, expired, or revoked status.
+
+Ensaar also delivers academic programs, industry-readiness initiatives, workshops, industry meetups, startup Centre of Excellence initiatives, and certified courses.
+
+## Useful pages
+
+- Home: https://ensaar.com/
+- DailyByte AI Learn and AI Target: https://ensaar.com/ai-work-lab
+- Enterprise AI Enablement: https://ensaar.com/services/ai-solutions
+- Software Development: https://ensaar.com/services/software-development
+- AI-Ready Engineering Teams: https://ensaar.com/services/staffing
+- BCEP AI Readiness Certification: https://ensaar.com/services/corporate-training
+- Certificate Verification: https://ensaar.com/verify
+- Insights: https://ensaar.com/insights
+- Events: https://ensaar.com/events
+- FAQ: https://ensaar.com/faq
+- Contact: https://ensaar.com/contact
+
+## Contact
+
+- General, AI, technology services, and BCEP AI readiness certification: info@ensaar.com
+- Locations: Hyderabad, Telangana; Noida, Uttar Pradesh
+- Website: https://ensaar.com
+
+## Entity facts
 
 - Legal name: Ensaar Global Pvt. Ltd.
 - Founded: 2014
-- Headquarters: Begumpet, Hyderabad, Telangana, India
-- General contact: hr@ensaar.com
-- Training / BCEP contact: Trainings@ensaar.com
-- Office hours: Monday through Friday, 9am to 5pm IST; Saturday by appointment
-- Website: https://ensaar.com
-- Areas served: India and worldwide
-
-## Managed AI pod offers
-
-- AI Cost Reduction Audit: $299, 1 week. Review current workflows, product backlog, support load, staffing plan, and operating cost. Output is a prioritized reduction plan.
-- Knowledge Automation Pod: $1,499, 2 weeks. Build a retrieval system over documents, tickets, policies, product knowledge, or internal data.
-- AI Feature Pod: $2,499, 3 weeks. Ship one Claude-powered AI feature into an existing product with rollout and evaluation.
-- AI Software Pod: $4,999, 8 weeks. Build an AI-native MVP with frontend, backend, AI integration, deployment, and handover.
-- Embedded AI Desk: $999/month. Ongoing AI specialist capacity for roughly 20 hours per week.
-- AI Staffing Pod: from $7/hour. Managed AI-augmented capacity with senior review, reporting cadence, and replacement guarantee.
-
-## Hourly tiers
-
-- Execution Specialist: $7/hour. AI-assisted execution capacity inside a managed delivery system.
-- Senior Pod Engineer: $15/hour. Senior engineering depth with AI-assisted throughput.
-- AI Specialist: $30/hour. LLM, RAG, evaluation, and agentic workflow specialist.
-- Solutions Architect: $50/hour. Scope, system design, delivery governance, and accountability.
-
-## Work Ensaar can reduce
-
-- Software backlog: features, tests, integrations, refactors, documentation.
-- Manual operations: SOPs, spreadsheet steps, approvals, repeat workflows.
-- Support workload: ticket triage, knowledge answers, escalation drafting.
-- Research and analysis: market scans, data enrichment, competitor tracking, report drafts.
-- Hiring gaps: AI-augmented engineering, product, design, and AI specialist capacity.
-- Data and knowledge: RAG systems, internal copilots, document automation.
-
-## Services
-
-### AI Solutions
-Ensaar designs, integrates, and ships production AI systems with Claude, large language models, prompt caching, MCP servers, Claude Code workflows, RAG, evaluation harnesses, and agentic workflow orchestration. Recent anonymized engagements include trading platforms with AI integration (Singapore), language learning communities with AI integration (China), direct-selling and marketing platforms with AI personalization (India), taxi booking apps with AI dispatch and support (UAE), healthcare triage assistants (Saudi Arabia), restaurant concierge tools (Japan), and real estate discovery agents (Australia).
-
-### Staffing
-Ensaar provides managed AI-augmented contributors, senior engineers, AI specialists, product talent, and architects. The model is curated and managed, not crowdsourced. Engagements can run from 4-week specialist embeds to 12-month team augmentation.
-
-### Corporate Training
-Ensaar's Business Excellence Program (BCEP) provides leadership development, soft skills and personality development, professional skills enhancement, and train-the-trainer programs. BCEP helps teams adapt to AI-era work through practical, outcome-focused capability building.
-
-## Key pages
-
-- [Home](https://ensaar.com/) - managed AI execution pod positioning
-- [Pricing](https://ensaar.com/pricing) - managed pod pricing and hourly tiers
-- [AI Cost-Savings Calculator](https://ensaar.com/calculator) - interactive estimator
-- [Services](https://ensaar.com/services) - overview of AI Solutions, Staffing, and Corporate Training
-- [AI Solutions](https://ensaar.com/services/ai-solutions) - production AI case studies and offerings
-- [Staffing](https://ensaar.com/services/staffing) - AI-augmented capacity and staffing pods
-- [Corporate Training](https://ensaar.com/services/corporate-training) - BCEP overview
-- [Events](https://ensaar.com/events) - workshops, webinars, meetups, and conference appearances
-- [FAQ](https://ensaar.com/faq) - structured Q&A
-- [Contact](https://ensaar.com/contact) - request a cost reduction plan
-
-## Confidentiality
-
-Client names are not disclosed publicly. Ensaar describes work by region, industry, and outcome. Named references may be discussed privately when appropriate.
-
-## Lead intent
-
-Primary call to action: Get My AI Cost Reduction Plan.
-Secondary call to action: Explore Managed AI Pods.
+- Primary category: Enterprise AI implementation and workforce enablement
+- Product: DailyByte AI Learn, AI Target, and Daily Code for individuals, teams, enterprises, and campuses
+- Secondary category: Software engineering and BCEP AI readiness certification
+- Client names: confidential unless written permission is provided

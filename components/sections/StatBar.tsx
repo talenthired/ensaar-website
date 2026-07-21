@@ -6,17 +6,12 @@ export type Stat = {
   hint?: string;
 };
 
-/**
- * Soft credibility stats directly under the hero. Phase 1 uses Ensaar-history
- * numbers; Phase 2 layers in real student/cohort numbers once the community
- * launches. Never fabricate — the credibility job here is "this is real,"
- * not "this looks impressive."
- */
+/** Credibility signals based on Ensaar's operating history. */
 const DEFAULT_STATS: Stat[] = [
   { value: 'Since 2014', label: 'Operator-led', hint: 'Ensaar Global Pvt. Ltd.' },
   { value: '7', label: 'Countries delivered to', hint: 'India, Singapore, China, UAE, Saudi Arabia, Japan, Australia' },
-  { value: '10 yrs', label: 'Production AI experience' },
-  { value: 'Hyderabad', label: 'Headquarters', hint: 'Begumpet, Telangana, India' },
+  { value: 'AI + software', label: 'Integrated delivery capability' },
+  { value: '2 locations', label: 'India presence', hint: 'Hyderabad, Telangana and Noida, Uttar Pradesh' },
 ];
 
 export function StatBar({ stats = DEFAULT_STATS }: { stats?: Stat[] }) {

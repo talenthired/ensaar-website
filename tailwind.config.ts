@@ -4,6 +4,7 @@ const withVar = (name: string) => `rgb(var(--color-${name}) / <alpha-value>)`;
 const withVarRaw = (name: string) => `rgb(var(--color-${name}))`;
 
 const config: Config = {
+  darkMode: ['selector', '[data-theme="dark"]'],
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -25,6 +26,7 @@ const config: Config = {
           glow: withVar('accent-glow'),
           cyan: withVar('accent-cyan'),
           'cyan-soft': withVar('accent-cyan-soft'),
+          warm: withVar('accent-warm'),
         },
         ink: {
           primary: withVar('ink-primary'),
@@ -37,13 +39,13 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ['var(--font-archivo)', 'Inter', 'sans-serif'],
+        display: ['var(--font-inter)', 'Inter', 'sans-serif'],
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'JetBrains Mono', 'monospace'],
       },
       backgroundImage: {
-        'gradient-brand': 'linear-gradient(135deg, #6366f1 0%, #06b6d4 100%)',
-        'gradient-brand-soft': 'linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(6,182,212,0.15) 100%)',
+        'gradient-brand': 'linear-gradient(135deg, #008ecf 0%, #13a694 100%)',
+        'gradient-brand-soft': 'linear-gradient(135deg, rgba(0,142,207,0.13) 0%, rgba(19,166,148,0.11) 100%)',
         'gradient-mesh':
           'radial-gradient(at 20% 10%, rgba(99,102,241,0.10) 0%, transparent 50%), radial-gradient(at 80% 80%, rgba(6,182,212,0.08) 0%, transparent 50%)',
       },

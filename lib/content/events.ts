@@ -10,7 +10,7 @@ export type EnsaarEvent = {
   speakers?: string[];
 };
 
-const today = new Date('2026-04-26').toISOString().split('T')[0];
+const today = new Date().toISOString().split('T')[0];
 
 export const EVENTS: EnsaarEvent[] = [
   {
@@ -18,10 +18,10 @@ export const EVENTS: EnsaarEvent[] = [
     title: 'Claude Code in the Real World - Hyderabad Meetup',
     date: '2026-05-22',
     type: 'meetup',
-    location: 'Hyderabad, India',
+    location: 'Hyderabad, Telangana',
     status: 'upcoming',
     summary:
-      'A practitioner-only meetup. Live demos of Claude Code skills, plugins, and MCP servers from teams shipping AI in production. Hosted at our Begumpet office.',
+      'A practitioner-only meetup with live demonstrations of Claude Code skills, plugins, and MCP servers from teams shipping AI in production. Hosted in Hyderabad.',
     speakers: ['Ensaar AI Team', 'Invited practitioners'],
   },
   {
@@ -40,10 +40,10 @@ export const EVENTS: EnsaarEvent[] = [
     title: 'BCEP Workshop: Leadership in the AI Era',
     date: '2026-07-18',
     type: 'workshop',
-    location: 'Hyderabad, India',
+    location: 'Hyderabad, Telangana',
     status: 'upcoming',
     summary:
-      'A one-day BCEP workshop helping mid-level leaders navigate teams that are increasingly AI-augmented. Hands-on, scenario-based, capped at 24 participants.',
+      'A one-day BCEP workshop helping mid-level leaders build AI readiness, emotional intelligence, communication, and sound judgment while leading increasingly AI-augmented teams.',
     speakers: ['BCEP Faculty'],
   },
   {
@@ -58,20 +58,20 @@ export const EVENTS: EnsaarEvent[] = [
   },
   {
     id: 'past-bcep-soft-skills-2026-03',
-    title: 'BCEP Workshop: Communication & Presentation',
+    title: 'BCEP Workshop: AI-Ready Communication and Presentation',
     date: '2026-03-15',
     type: 'workshop',
-    location: 'Hyderabad, India',
+    location: 'Hyderabad, Telangana',
     status: 'past',
     summary:
-      'A two-day BCEP intervention with 32 participants from a Hyderabad-based enterprise. Covered presentation excellence and stakeholder communication.',
+      'A two-day BCEP intervention covering AI readiness, emotional intelligence, presentation excellence, and stakeholder communication for an enterprise cohort.',
   },
 ];
 
 export function upcomingEvents() {
-  return EVENTS.filter((e) => e.status === 'upcoming').sort((a, b) => a.date.localeCompare(b.date));
+  return EVENTS.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function pastEvents() {
-  return EVENTS.filter((e) => e.status === 'past').sort((a, b) => b.date.localeCompare(a.date));
+  return EVENTS.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
 }

@@ -3,7 +3,7 @@ import { siteConfig, ogImage } from '@/lib/utils';
 export function organizationSchema() {
   return {
     '@context': 'https://schema.org',
-    '@type': ['Organization', 'EducationalOrganization'],
+    '@type': ['Organization', 'ProfessionalService'],
     '@id': `${siteConfig.url}/#organization`,
     name: siteConfig.legalName,
     alternateName: siteConfig.name,
@@ -13,12 +13,12 @@ export function organizationSchema() {
     description: siteConfig.description,
     foundingDate: String(siteConfig.foundedYear),
     email: siteConfig.email,
-    address: {
+    address: siteConfig.locations.map((location) => ({
       '@type': 'PostalAddress',
-      addressLocality: siteConfig.locality,
-      addressRegion: siteConfig.region,
+      addressLocality: location.city,
+      addressRegion: location.state,
       addressCountry: siteConfig.countryCode,
-    },
+    })),
     geo: {
       '@type': 'GeoCoordinates',
       latitude: 17.4474,
@@ -47,10 +47,28 @@ export function organizationSchema() {
       {
         '@type': 'ContactPoint',
         email: siteConfig.trainingEmail,
-        contactType: 'admissions',
+        contactType: 'corporate training',
         areaServed: 'Worldwide',
       },
     ],
+  };
+}
+
+export function serviceSchema(params: {
+  name: string;
+  description: string;
+  url: string;
+  serviceType: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: params.name,
+    description: params.description,
+    url: params.url,
+    serviceType: params.serviceType,
+    provider: { '@id': `${siteConfig.url}/#organization` },
+    areaServed: 'Worldwide',
   };
 }
 
@@ -64,6 +82,26 @@ export function websiteSchema() {
     description: siteConfig.description,
     publisher: { '@id': `${siteConfig.url}/#organization` },
     inLanguage: 'en-IN',
+  };
+}
+
+export function softwareApplicationSchema(params: {
+  name: string;
+  description: string;
+  url: string;
+  featureList: string[];
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: params.name,
+    description: params.description,
+    url: params.url,
+    applicationCategory: 'EducationalApplication',
+    operatingSystem: 'Web',
+    featureList: params.featureList,
+    creator: { '@id': `${siteConfig.url}/#organization` },
+    inLanguage: 'en',
   };
 }
 

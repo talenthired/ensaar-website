@@ -16,7 +16,7 @@ export function IndustriesSection() {
   const reducedMotion = useReducedMotion();
 
   return (
-    <Section className="relative overflow-hidden">
+    <Section id="industries" className="relative overflow-hidden">
       {/* subtle pattern band */}
       <div aria-hidden className="absolute inset-0 -z-10 opacity-[0.07] text-accent-primary">
         <DotPattern />
@@ -34,7 +34,7 @@ export function IndustriesSection() {
         />
 
         <motion.div
-          className="grid gap-px bg-line-subtle/60 border border-line-subtle rounded-2xl overflow-hidden md:grid-cols-2 lg:grid-cols-4"
+          className="grid gap-px overflow-hidden border border-line-subtle bg-line-subtle/60 md:grid-cols-2 lg:grid-cols-4"
           initial={reducedMotion ? 'visible' : 'hidden'}
           whileInView="visible"
           viewport={viewportOnce}
@@ -43,8 +43,9 @@ export function IndustriesSection() {
           {INDUSTRIES.map((ind, i) => (
             <motion.div
               key={ind.id}
+              id={`industry-${ind.id}`}
               variants={fadeUp}
-              className="bg-bg-secondary p-6 hover:bg-accent-primary/[0.04] transition-colors"
+              className="scroll-mt-28 bg-bg-secondary p-6 hover:bg-accent-primary/[0.04] transition-colors"
             >
               <div className="flex items-start gap-3 mb-3">
                 <span className="font-mono text-xs text-ink-muted tabular-nums tracking-wider mt-1">
