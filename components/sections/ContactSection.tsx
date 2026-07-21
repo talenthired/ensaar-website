@@ -74,6 +74,7 @@ export function ContactSection() {
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeRight}
+            className="min-w-0"
           >
             <span className="eyebrow mb-5">Start a Conversation</span>
             <h2 className="text-[clamp(2rem,5vw,3.5rem)] mt-5 mb-5 text-balance">
@@ -119,7 +120,7 @@ export function ContactSection() {
             whileInView="visible"
             viewport={viewportOnce}
             variants={fadeLeft}
-            className="flex flex-col gap-5 border border-line-subtle bg-bg-secondary p-6 shadow-card sm:p-9"
+            className="flex min-w-0 flex-col gap-5 border border-line-subtle bg-bg-secondary p-6 shadow-card sm:p-9"
           >
             <Field label="Name" name="name" required autoComplete="name" />
             <Field label="Email" name="email" type="email" required autoComplete="email" />
@@ -245,7 +246,7 @@ type FieldProps = {
 
 function Field({ label, name, type = 'text', required, autoComplete, textarea, rows = 4, options }: FieldProps) {
   const common =
-    'font-sans text-base px-4 py-3.5 bg-bg-primary/60 border border-line-subtle rounded-md text-ink-primary transition-all focus:outline-none focus:border-accent-primary focus:bg-bg-primary/85 focus:ring-[3px] focus:ring-accent-primary/15';
+    'w-full min-w-0 font-sans text-base px-4 py-3.5 bg-bg-primary/60 border border-line-subtle rounded-md text-ink-primary transition-all focus:outline-none focus:border-accent-primary focus:bg-bg-primary/85 focus:ring-[3px] focus:ring-accent-primary/15';
   return (
     <label className="flex flex-col gap-2">
       <span className="font-mono text-xs uppercase tracking-[0.1em] text-ink-secondary">

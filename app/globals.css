@@ -29,7 +29,10 @@
   --color-line-glow: 1 145 201 / 0.34;
 
   /* accents (indigo/cyan stay the same in both modes; brand colors) */
-  --color-accent-primary: 0 142 207;
+  /* accent-primary darkened from 0 142 207 (#008ecf, 3.6:1 on white) to
+     meet WCAG AA 4.5:1 for small text/badges; gradient-brand keeps the
+     brighter #008ecf for large CTAs. */
+  --color-accent-primary: 0 119 172;
   --color-accent-secondary: 0 119 154;
   --color-accent-glow: 0 142 207;
   --color-accent-cyan: 19 166 148;

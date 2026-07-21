@@ -93,7 +93,7 @@ export default function FaqPage() {
                 We're happy to talk it through. Write to us at{' '}
                 <a
                   href={`mailto:${siteConfig.email}`}
-                  className="text-accent-secondary hover:text-accent-cyan-soft"
+                  className="text-accent-secondary underline underline-offset-2 hover:text-accent-cyan-soft"
                 >
                   {siteConfig.email}
                 </a>
