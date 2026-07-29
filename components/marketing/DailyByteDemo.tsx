@@ -37,7 +37,7 @@ function Cursor({ path }: { path: Array<{ x: number; y: number }> }) {
         cx="5"
         cy="5"
         r="17"
-        fill="#8ab4ff"
+        fill="#ffb703"
         opacity="0.22"
         animate={reducedMotion ? undefined : { scale: [0.55, 1.35, 0.55], opacity: [0, 0.26, 0] }}
         transition={{ duration: 1.45, repeat: Infinity, repeatDelay: 1.1 }}
@@ -52,12 +52,12 @@ function Shell({
   title,
 }: {
   children: ReactNode;
-  active: 'AI Learn' | 'AI Target' | 'Daily code';
+  active: 'AI Learn' | 'AI Jobs' | 'Daily code';
   title: string;
 }) {
   const navItems = [
     ['AI Learn', 210],
-    ['AI Target', 244],
+    ['AI Jobs', 244],
     ['Daily code', 278],
     ['Practice', 312],
     ['Progress', 346],
@@ -73,13 +73,25 @@ function Shell({
       <circle cx="102" cy="51" r="6" fill="#00ca4e" />
       <rect x="122" y="42" width="270" height="18" rx="9" fill="rgba(255,255,255,0.07)" />
       <text x="140" y="55" fill="rgba(255,255,255,0.48)" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" fontSize="10">
-        dailybyte.ensaar.com
+        labs.ensaar.com
       </text>
 
       <rect x="32" y="74" width="166" height="498" fill="#171717" stroke="rgba(255,255,255,0.08)" />
-      <rect x="54" y="100" width="22" height="22" rx="6" fill="#5f9cff" />
-      <text x="86" y="116" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="14" fontWeight="800">
-        DailyByte™
+      {/* The DailyByte mark, same geometry as brand/logo in the product repo.
+          The negative-space ring is a filled rect here because the sidebar
+          behind it is a known flat colour. */}
+      <g transform="translate(54 99) scale(0.375)">
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          fill="#ffffff"
+          d="M12 8 H33 C46.3 8 56 18.7 56 32 C56 45.3 46.3 56 33 56 H12 Z M22.5 18.5 H33 C40.525 18.5 45.5 23.425 45.5 32 C45.5 40.575 40.525 45.5 33 45.5 H22.5 Z"
+        />
+        <rect x="20" y="22" width="21" height="21" rx="6.9" fill="#171717" />
+        <rect x="23" y="25" width="15" height="15" rx="3.9" fill="#ffb703" />
+      </g>
+      <text x="86" y="116" fontFamily="Inter, Arial, sans-serif" fontSize="15" fontWeight="800" letterSpacing="-0.6">
+        <tspan fill="#ffffff">daily</tspan><tspan fill="#ffb703">byte</tspan>
       </text>
       <rect x="54" y="140" width="122" height="32" rx="8" fill="rgba(255,255,255,0.055)" stroke="rgba(255,255,255,0.12)" />
       <text x="73" y="161" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="700">
@@ -90,7 +102,7 @@ function Shell({
         return (
         <g key={String(label)}>
           <rect x="48" y={Number(y) - 19} width="138" height="28" rx="8" fill={isActive ? 'rgba(255,255,255,0.08)' : 'transparent'} />
-          <circle cx="64" cy={Number(y) - 5} r="4" fill={isActive ? '#8ab4ff' : 'rgba(255,255,255,0.35)'} />
+          <circle cx="64" cy={Number(y) - 5} r="4" fill={isActive ? '#ffb703' : 'rgba(255,255,255,0.35)'} />
           <text x="78" y={Number(y)} fill={isActive ? '#f8fafc' : 'rgba(255,255,255,0.58)'} fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight={isActive ? '800' : '650'}>
             {label}
           </text>
@@ -98,12 +110,12 @@ function Shell({
       );
       })}
       <rect x="48" y="506" width="138" height="36" rx="9" fill="rgba(255,255,255,0.045)" stroke="rgba(255,255,255,0.1)" />
-      <circle cx="68" cy="524" r="12" fill="#6ea8ff" />
+      <circle cx="68" cy="524" r="12" fill="#ffb703" />
       <text x="88" y="520" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="10" fontWeight="800">
         L2 Bronze
       </text>
       <rect x="88" y="529" width="72" height="4" rx="2" fill="rgba(255,255,255,0.12)" />
-      <rect x="88" y="529" width="42" height="4" rx="2" fill="#a78bfa" />
+      <rect x="88" y="529" width="42" height="4" rx="2" fill="#5fc3e0" />
 
       <rect x="198" y="74" width="730" height="498" fill="#121212" />
       <rect x="198" y="74" width="730" height="44" fill="#181818" stroke="rgba(255,255,255,0.08)" />
@@ -114,7 +126,7 @@ function Shell({
       <text x="820" y="100" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="10" fontWeight="800">
         L2
       </text>
-      <circle cx="900" cy="96" r="14" fill="#3f3168" stroke="rgba(255,255,255,0.18)" />
+      <circle cx="900" cy="96" r="14" fill="#0f2a33" stroke="rgba(255,255,255,0.18)" />
       {children}
     </>
   );
@@ -123,16 +135,16 @@ function Shell({
 function LearnScreen() {
   const reducedMotion = useReducedMotion();
   const cards = [
-    ['AI Product Analyst', 'Ready to start', '#8ab4ff', 248, 248],
-    ['Automate test suite', 'Best score 86%', '#59d8c8', 458, 248],
+    ['AI Product Analyst', 'Ready to start', '#ffb703', 248, 248],
+    ['Automate test suite', 'Best score 86%', '#5fcfa8', 458, 248],
     ['Data QA from CSV', 'Ready to start', '#f5a623', 668, 248],
-    ['Support insight brief', 'AI generated', '#a78bfa', 248, 374],
+    ['Support insight brief', 'AI generated', '#5fc3e0', 248, 374],
     ['Revenue dashboard', 'For your role', '#fb7185', 458, 374],
   ] as const;
 
   return (
     <>
-      <text x="244" y="160" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
+      <text x="244" y="160" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
         Personalized for Data Analyst
       </text>
       <text x="244" y="196" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="34" fontWeight="850">
@@ -166,8 +178,8 @@ function LearnScreen() {
 function TargetScreen() {
   return (
     <>
-      <text x="244" y="154" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
-        AI Target learning
+      <text x="244" y="154" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
+        AI Jobs learning
       </text>
       <text x="244" y="192" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="36" fontWeight="850">
         Master this job target.
@@ -176,7 +188,7 @@ function TargetScreen() {
         Learn each requirement, practice with AI, and build proof for interviews.
       </text>
       <rect x="734" y="142" width="136" height="114" rx="14" fill="#1f1f1f" stroke="rgba(255,255,255,0.1)" />
-      <text x="754" y="168" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="800">
+      <text x="754" y="168" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="800">
         Needs focus
       </text>
       <text x="754" y="214" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="46" fontWeight="850">
@@ -187,7 +199,7 @@ function TargetScreen() {
       </text>
 
       <rect x="244" y="286" width="220" height="224" rx="14" fill="#1d1d1d" stroke="rgba(255,255,255,0.1)" />
-      <text x="266" y="318" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
+      <text x="266" y="318" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
         Job-specific coach
       </text>
       <text x="266" y="344" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="16" fontWeight="850">
@@ -201,7 +213,7 @@ function TargetScreen() {
       ].map(([kicker, title], index) => (
         <g key={title}>
           <rect x="266" y={366 + index * 34} width="176" height="28" rx="8" fill={index === 0 ? 'rgba(138,180,255,0.18)' : '#151515'} stroke="rgba(255,255,255,0.08)" />
-          <text x="278" y={383 + index * 34} fill={index === 0 ? '#8ab4ff' : 'rgba(255,255,255,0.55)'} fontFamily="Inter, Arial, sans-serif" fontSize="9" fontWeight="800">
+          <text x="278" y={383 + index * 34} fill={index === 0 ? '#ffb703' : 'rgba(255,255,255,0.55)'} fontFamily="Inter, Arial, sans-serif" fontSize="9" fontWeight="800">
             {kicker}
           </text>
           <text x="332" y={383 + index * 34} fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="10" fontWeight="750">
@@ -211,8 +223,8 @@ function TargetScreen() {
       ))}
 
       <rect x="488" y="286" width="382" height="224" rx="14" fill="#1f1f1f" stroke="rgba(255,255,255,0.1)" />
-      <text x="512" y="318" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
-        EnAI Target Coach
+      <text x="512" y="318" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
+        EnAI Jobs Coach
       </text>
       <text x="512" y="350" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="22" fontWeight="850">
         Master SQL for this role
@@ -224,7 +236,7 @@ function TargetScreen() {
       ].map(([title, detail], index) => (
         <g key={title}>
           <rect x={512 + index * 116} y="382" width="102" height="82" rx="10" fill="#151515" stroke="rgba(255,255,255,0.08)" />
-          <text x={526 + index * 116} y="410" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="10" fontWeight="850">
+          <text x={526 + index * 116} y="410" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="10" fontWeight="850">
             {title}
           </text>
           <text x={526 + index * 116} y="434" fill="rgba(255,255,255,0.58)" fontFamily="Inter, Arial, sans-serif" fontSize="9">
@@ -232,7 +244,7 @@ function TargetScreen() {
           </text>
         </g>
       ))}
-      <rect x="512" y="480" width="112" height="28" rx="8" fill="#8ab4ff" />
+      <rect x="512" y="480" width="112" height="28" rx="8" fill="#ffb703" />
       <text x="530" y="499" fill="#101010" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="850">
         Start AI Learn
       </text>
@@ -245,7 +257,7 @@ function DailyCodeScreen() {
   const reducedMotion = useReducedMotion();
   return (
     <>
-      <text x="244" y="154" fill="#8ab4ff" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
+      <text x="244" y="154" fill="#ffb703" fontFamily="Inter, Arial, sans-serif" fontSize="12" fontWeight="800">
         Set Daily Code path
       </text>
       <text x="244" y="192" fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="34" fontWeight="850">
@@ -259,7 +271,7 @@ function DailyCodeScreen() {
       {['Python coding', 'SQL analytics', 'Java backend', 'TypeScript frontend', 'AI work missions'].map((label, index) => (
         <g key={label}>
           <rect x="266" y={286 + index * 34} width="232" height="26" rx="8" fill={index === 1 ? 'rgba(138,180,255,0.18)' : '#151515'} stroke="rgba(255,255,255,0.08)" />
-          <circle cx="282" cy={299 + index * 34} r="5" fill={index === 1 ? '#8ab4ff' : 'rgba(255,255,255,0.28)'} />
+          <circle cx="282" cy={299 + index * 34} r="5" fill={index === 1 ? '#ffb703' : 'rgba(255,255,255,0.28)'} />
           <text x="296" y={303 + index * 34} fill="#f8fafc" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="760">
             {label}
           </text>
@@ -276,7 +288,7 @@ function DailyCodeScreen() {
           key={line}
           x="592"
           y={354 + index * 20}
-          fill={index === 0 ? '#8ab4ff' : 'rgba(255,255,255,0.68)'}
+          fill={index === 0 ? '#ffb703' : 'rgba(255,255,255,0.68)'}
           fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
           fontSize="11"
           animate={reducedMotion ? undefined : { opacity: [0.4, 1, 1] }}
@@ -285,7 +297,7 @@ function DailyCodeScreen() {
           {line}
         </motion.text>
       ))}
-      <rect x="572" y="452" width="116" height="30" rx="9" fill="#8ab4ff" />
+      <rect x="572" y="452" width="116" height="30" rx="9" fill="#ffb703" />
       <text x="606" y="472" fill="#101010" fontFamily="Inter, Arial, sans-serif" fontSize="11" fontWeight="850">
         Run
       </text>
@@ -299,9 +311,9 @@ export function DailyByteDemo({ view, className, label = 'Animated DailyByte pro
   const screen = normalized(view);
   const shell = {
     learn: { active: 'AI Learn', title: 'AI Learn' },
-    target: { active: 'AI Target', title: 'AI Target' },
+    target: { active: 'AI Jobs', title: 'AI Jobs' },
     dailyCode: { active: 'Daily code', title: 'Daily Code' },
-  }[screen] as { active: 'AI Learn' | 'AI Target' | 'Daily code'; title: string };
+  }[screen] as { active: 'AI Learn' | 'AI Jobs' | 'Daily code'; title: string };
 
   return (
     <div className={cn('relative h-full w-full overflow-hidden bg-[#121212]', className)} aria-label={label}>
