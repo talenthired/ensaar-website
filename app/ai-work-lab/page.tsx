@@ -1,5 +1,11 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
+// Imported, not referenced by "/images/dailybyte/...". A string src keeps the
+// same URL forever, and Next's image optimiser caches by (url, width, quality)
+// without checking whether the file underneath changed, so refreshed
+// screenshots kept serving the old bytes. Static imports are content-hashed:
+// new bytes, new URL, nothing stale to serve.
+import shotAiJobs from '@/public/images/dailybyte/dailybyte-ai-jobs.png';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -15,19 +21,19 @@ import {
 import { DailyByteGallery } from '@/components/marketing/DailyByteGallery';
 import { Container } from '@/components/ui/Container';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { faqPageSchema, softwareApplicationSchema, webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, faqPageSchema, softwareApplicationSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
 import { dailyByteLinks } from '@/lib/dailybyte';
 
 const description =
-  'DailyByte is Ensaar Global\'s practical AI enablement platform for individuals and enterprises. AI Learn builds applied AI work skill, AI Target adapts learning to a specific job description, and Daily Code supports the target path.';
+  'DailyByte is Ensaar Global\'s practical AI enablement platform for individuals and enterprises. AI Learn builds applied AI work skill, AI Jobs adapts learning to a specific job description, and Daily Code supports the target path.';
 
 const FAQ_ITEMS = [
   {
-    question: 'What are DailyByte AI Learn and AI Target?',
+    question: 'What are DailyByte AI Learn and AI Jobs?',
     answer:
-      'DailyByte is a product being developed by Ensaar Global for practical AI enablement. AI Learn gives people guided work labs with source material and an AI assistant. AI Target turns a saved job description into skill modules, practice loops, Daily Code paths, and proof artifacts.',
+      'DailyByte is a product being developed by Ensaar Global for practical AI enablement. AI Learn gives people guided work labs with source material and an AI assistant. AI Jobs turns a saved job description into skill modules, practice loops, Daily Code paths, and proof artifacts.',
   },
   {
     question: 'How is this different from an AI course?',
@@ -47,7 +53,7 @@ const FAQ_ITEMS = [
   {
     question: 'How do I start using DailyByte?',
     answer:
-      'Individuals can create a DailyByte account and begin with AI Learn or AI Target. Enterprise users can create a team workspace or speak with Ensaar about a cohort, capability pilot, or role-specific AI enablement rollout.',
+      'Individuals can create a DailyByte account and begin with AI Learn or AI Jobs. Enterprise users can create a team workspace or speak with Ensaar about a cohort, capability pilot, or role-specific AI enablement rollout.',
   },
 ] as const;
 
@@ -75,25 +81,40 @@ const STEPS = [
 ] as const;
 
 export const metadata: Metadata = pageMetadata({
-  title: 'DailyByte AI Learn and AI Target for Students, Engineers, and Teams',
+  title: 'DailyByte AI Learn and AI Jobs for Students, Engineers, and Teams',
   description,
   path: '/ai-work-lab',
+  eyebrow: 'DailyByte',
+  keywords: [
+    'DailyByte AI Learn',
+    'DailyByte AI Jobs',
+    'Daily Code',
+    'job specific AI learning',
+    'AI work simulation',
+    'AI skills assessment',
+    'AI capability pilot',
+  ],
 });
 
 export default function AIWorkLabPage() {
   const url = `${siteConfig.url}/ai-work-lab`;
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'DailyByte', url },
+  ];
   return (
     <>
       <JsonLd
         data={[
-          webPageSchema({ name: 'DailyByte AI Learn and AI Target', description, url }),
+          webPageSchema({ name: 'DailyByte AI Learn and AI Jobs', description, url, breadcrumb: trail }),
+          breadcrumbSchema(trail, url),
           softwareApplicationSchema({
             name: 'DailyByte',
             description,
             url,
             featureList: [
               'AI Learn guided work labs',
-              'AI Target job-description-based learning paths',
+              'AI Jobs learning paths built from a real job description',
               'Daily Code path setup for SQL, Python, Java, TypeScript, and AI work',
               'In-browser AI assistant with tools',
               'Realistic source files and work artifacts',
@@ -120,7 +141,7 @@ export default function AIWorkLabPage() {
               Learn AI through work. Target the job you want.
             </h1>
             <p className="mt-6 max-w-xl text-[clamp(1rem,1.25vw,1.18rem)] leading-relaxed text-slate-200">
-              DailyByte<sup className="align-super text-[0.6em] font-medium leading-none">™</sup> combines AI Learn for guided applied work, AI Target for job-description-based preparation, and Daily Code paths that keep core skills aligned to the role.
+              DailyByte<sup className="align-super text-[0.6em] font-medium leading-none">™</sup> combines AI Learn for guided applied work, AI Jobs for job-description-based preparation, and Daily Code paths that keep core skills aligned to the role.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href={dailyByteLinks.individual} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-md bg-[#f5a623] px-7 py-4 text-base font-semibold text-[#0c2343] transition hover:-translate-y-0.5 hover:bg-[#f7b83e]">
@@ -135,12 +156,12 @@ export default function AIWorkLabPage() {
 
           <div className="relative lg:pl-4 xl:-mr-8">
             <div className="mb-3 flex items-center justify-between text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-emerald-100/70">
-              <span>AI Learn and AI Target</span><span>Product UI preview</span>
+              <span>AI Learn and AI Jobs</span><span>Product UI preview</span>
             </div>
             <div className="relative aspect-[16/10] overflow-hidden border border-white/15 bg-black shadow-[0_35px_90px_rgba(0,0,0,0.4)] lg:aspect-[16/9.6]">
               <Image
-                src="/images/dailybyte/dailybyte-ai-target.png"
-                alt="DailyByte AI Target job-specific learning page"
+                src={shotAiJobs}
+                alt="DailyByte AI Jobs role preparation page"
                 width={1188}
                 height={768}
                 priority
@@ -165,7 +186,7 @@ export default function AIWorkLabPage() {
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 {[
                   'AI Learn labs instead of toy prompts',
-                  'AI Target paths based on a real job description',
+                  'AI Jobs paths based on a real job description',
                   'Daily Code choices that match the target role',
                   'Feedback on process, outcome, and proof readiness',
                 ].map((item) => (
@@ -199,7 +220,7 @@ export default function AIWorkLabPage() {
               <h2 className="mt-6 text-[clamp(2.3rem,4.8vw,4.4rem)] leading-[1.02] text-balance">The work, the workspace, and the capability view.</h2>
             </div>
             <p className="max-w-2xl text-lg leading-relaxed text-emerald-50/75 lg:justify-self-end">
-              These animated product views are modeled on the current DailyByte interface. The preview covers AI Learn, AI Target, Daily Code path setup, and capability evidence.
+              These animated product views are modeled on the current DailyByte interface. The preview covers AI Learn, AI Jobs, Daily Code path setup, and capability evidence.
             </p>
           </div>
           <div className="mt-12"><DailyByteGallery /></div>
@@ -212,7 +233,7 @@ export default function AIWorkLabPage() {
             <div className="border-t-4 border-[#f5a623] bg-bg-primary p-8 md:p-10">
               <GraduationCap className="h-7 w-7 text-accent-secondary" aria-hidden />
               <div className="mt-8 text-xs font-semibold uppercase tracking-[0.1em] text-accent-secondary">For individuals</div>
-              <h2 className="mt-3 text-3xl leading-tight">Use AI Learn for skill and AI Target for the job you want.</h2>
+              <h2 className="mt-3 text-3xl leading-tight">Use AI Learn for skill and AI Jobs for the job you want.</h2>
               <p className="mt-5 leading-relaxed text-ink-secondary">Start with guided applied labs, save a target job, learn every requirement interactively, and build proof that can survive an interview.</p>
               <a href={dailyByteLinks.individual} target="_blank" rel="noreferrer" className="group mt-7 inline-flex items-center gap-2 border-b border-ink-primary pb-1 text-sm font-semibold text-ink-primary transition hover:text-accent-primary">For Individuals<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden /></a>
             </div>
@@ -252,7 +273,7 @@ export default function AIWorkLabPage() {
         <Container className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-cyan-200"><ShieldCheck className="h-4 w-4" aria-hidden /> Start with real work</div>
-            <h2 className="mt-4 max-w-3xl text-3xl leading-tight md:text-4xl">Choose AI Learn, add an AI Target, and build job-specific evidence of how you work with AI.</h2>
+            <h2 className="mt-4 max-w-3xl text-3xl leading-tight md:text-4xl">Choose AI Learn, add a role in AI Jobs, and build job-specific evidence of how you work with AI.</h2>
           </div>
           <div className="flex shrink-0 flex-wrap gap-3">
             <a href={dailyByteLinks.individual} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-md bg-[#f5a623] px-6 py-3.5 text-sm font-semibold text-[#0c2343] transition hover:bg-[#f7b83e]">For Individuals<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden /></a>

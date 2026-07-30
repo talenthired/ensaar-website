@@ -2,12 +2,22 @@
 
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import Image from 'next/image';
+// Imported, not referenced by "/images/dailybyte/...". A string src keeps the
+// same URL forever, and Next's image optimiser caches by (url, width, quality)
+// without checking whether the file underneath changed, so refreshed
+// screenshots kept serving the old bytes. Static imports are content-hashed:
+// new bytes, new URL, nothing stale to serve.
+import shotAiLearn from '@/public/images/dailybyte/dailybyte-ai-learn.png';
+import shotAiJobs from '@/public/images/dailybyte/dailybyte-ai-jobs.png';
+import shotDailyCode from '@/public/images/dailybyte/dailybyte-daily-code.png';
+import shotAiEvolution from '@/public/images/dailybyte/dailybyte-ai-evolution.png';
 import {
   ArrowLeft,
   ArrowRight,
   BarChart3,
   BriefcaseBusiness,
   CheckCircle2,
+  History,
   LayoutGrid,
   MousePointer2,
   Sparkles,
@@ -28,20 +38,20 @@ const VIEWS = [
     caption: 'Learners choose practical labs, direct AI with tools, submit artifacts, and receive feedback on process and outcome.',
     metric: 'AI Learn labs',
     path: 'daily.byte.ai/learn',
-    image: '/images/dailybyte/dailybyte-ai-learn.png',
+    image: shotAiLearn,
     proof: ['Role-specific labs', 'Guided workspace', 'Outcome feedback'],
   },
   {
     id: 'target',
-    label: 'AI Target',
+    label: 'AI Jobs',
     icon: LayoutGrid,
-    alt: 'DailyByte AI Target job-specific learning coach with readiness score and modules',
+    alt: 'DailyByte AI Jobs role preparation coach with readiness score and modules',
     kicker: 'Prepare for a real job',
-    title: 'AI Target adapts learning to a job description',
+    title: 'AI Jobs adapts learning to a job description',
     caption: 'A learner saves a job, then DailyByte™ turns its requirements into skill modules, practice loops, Daily Code paths, and proof artifacts.',
     metric: 'Job target coach',
     path: 'daily.byte.ai/targets',
-    image: '/images/dailybyte/dailybyte-ai-target.png',
+    image: shotAiJobs,
     proof: ['JD-based learning', 'Start AI Learn lab', 'Set Daily Code path'],
   },
   {
@@ -54,15 +64,29 @@ const VIEWS = [
     caption: 'Learners can choose SQL, Python, Java, TypeScript, or AI work missions and change paths as their target role changes.',
     metric: 'Daily Code path',
     path: 'daily.byte.ai/daily-code',
-    image: '/images/dailybyte/dailybyte-daily-code.png',
+    image: shotDailyCode,
     proof: ['Path choice', 'Skill progress', 'Career fit'],
+  },
+  {
+    id: 'aiEvolution',
+    label: 'AI Evolution',
+    icon: History,
+    alt: 'DailyByte AI Evolution timeline showing model releases from every major AI lab side by side',
+    kicker: 'Stay current',
+    title: 'AI Evolution tracks what every lab has shipped',
+    caption:
+      'A dated timeline of model releases across Anthropic, OpenAI, Google, Meta and others. Every entry carries a source link, and every benchmark figure says who reported it.',
+    metric: 'Model timeline',
+    path: 'daily.byte.ai/ai-evolution',
+    image: shotAiEvolution,
+    proof: ['Sourced release dates', 'Benchmarks with provenance', 'Updated as labs ship'],
   },
 ] as const;
 
 const AUDIENCE_CARDS = [
   {
     title: 'Individuals',
-    detail: 'Use AI Learn and AI Target to prepare for real roles',
+    detail: 'Use AI Learn and AI Jobs to prepare for real roles',
     icon: Users,
   },
   {
