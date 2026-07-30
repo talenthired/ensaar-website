@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { dailyByteUrl } from '@/lib/dailybyte';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,11 +20,7 @@ export async function GET(
   const target = DESTINATIONS[destination as keyof typeof DESTINATIONS];
   if (!target) return NextResponse.redirect(new URL('/ai-work-lab', request.url));
 
-  const base = (
-    process.env.DAILYBYTE_URL ||
-    process.env.NEXT_PUBLIC_DAILYBYTE_URL ||
-    'https://dailybyte.ensaar.com'
-  ).replace(/\/+$/, '');
+  const base = (process.env.DAILYBYTE_URL?.trim() || dailyByteUrl).replace(/\/+$/, '');
   const url = new URL(`${base}${target.path}`);
   url.searchParams.set('utm_source', 'ensaar');
   url.searchParams.set('utm_medium', 'website');

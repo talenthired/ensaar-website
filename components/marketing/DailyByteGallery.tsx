@@ -24,7 +24,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { dailyByteLinks } from '@/lib/dailybyte';
+import { dailyByteHost, dailyByteLinks } from '@/lib/dailybyte';
 import { cn } from '@/lib/utils';
 
 const VIEWS = [
@@ -37,7 +37,7 @@ const VIEWS = [
     title: 'AI Learn turns work into guided practice',
     caption: 'Learners choose practical labs, direct AI with tools, submit artifacts, and receive feedback on process and outcome.',
     metric: 'AI Learn labs',
-    path: 'daily.byte.ai/learn',
+    path: `${dailyByteHost}/learn`,
     image: shotAiLearn,
     proof: ['Role-specific labs', 'Guided workspace', 'Outcome feedback'],
   },
@@ -50,7 +50,7 @@ const VIEWS = [
     title: 'AI Jobs adapts learning to a job description',
     caption: 'A learner saves a job, then DailyByte™ turns its requirements into skill modules, practice loops, Daily Code paths, and proof artifacts.',
     metric: 'Job target coach',
-    path: 'daily.byte.ai/targets',
+    path: `${dailyByteHost}/targets`,
     image: shotAiJobs,
     proof: ['JD-based learning', 'Start AI Learn lab', 'Set Daily Code path'],
   },
@@ -63,7 +63,7 @@ const VIEWS = [
     title: 'Daily Code supports the target path',
     caption: 'Learners can choose SQL, Python, Java, TypeScript, or AI work missions and change paths as their target role changes.',
     metric: 'Daily Code path',
-    path: 'daily.byte.ai/daily-code',
+    path: `${dailyByteHost}/daily-code`,
     image: shotDailyCode,
     proof: ['Path choice', 'Skill progress', 'Career fit'],
   },
@@ -77,7 +77,7 @@ const VIEWS = [
     caption:
       'A dated timeline of model releases across Anthropic, OpenAI, Google, Meta and others. Every entry carries a source link, and every benchmark figure says who reported it.',
     metric: 'Model timeline',
-    path: 'daily.byte.ai/ai-evolution',
+    path: `${dailyByteHost}/ai-evolution`,
     image: shotAiEvolution,
     proof: ['Sourced release dates', 'Benchmarks with provenance', 'Updated as labs ship'],
   },

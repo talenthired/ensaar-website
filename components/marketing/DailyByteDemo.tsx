@@ -4,6 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import type { ReactNode } from 'react';
 import { useId } from 'react';
 import { cn } from '@/lib/utils';
+import { dailyByteHost } from '@/lib/dailybyte';
 
 type DailyByteDemoView = 'learn' | 'target' | 'dailyCode' | 'simulation' | 'tasks' | 'insights';
 
@@ -73,7 +74,7 @@ function Shell({
       <circle cx="102" cy="51" r="6" fill="#00ca4e" />
       <rect x="122" y="42" width="270" height="18" rx="9" fill="rgba(255,255,255,0.07)" />
       <text x="140" y="55" fill="rgba(255,255,255,0.48)" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace" fontSize="10">
-        labs.ensaar.com
+        {dailyByteHost}
       </text>
 
       <rect x="32" y="74" width="166" height="498" fill="#171717" stroke="rgba(255,255,255,0.08)" />
