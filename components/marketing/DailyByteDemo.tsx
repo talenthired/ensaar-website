@@ -77,18 +77,13 @@ function Shell({
       </text>
 
       <rect x="32" y="74" width="166" height="498" fill="#171717" stroke="rgba(255,255,255,0.08)" />
-      {/* The DailyByte mark, same geometry as brand/logo in the product repo.
-          The negative-space ring is a filled rect here because the sidebar
-          behind it is a known flat colour. */}
-      <g transform="translate(54 99) scale(0.375)">
-        <path
-          fillRule="evenodd"
-          clipRule="evenodd"
-          fill="#ffffff"
-          d="M12 8 H33 C46.3 8 56 18.7 56 32 C56 45.3 46.3 56 33 56 H12 Z M22.5 18.5 H33 C40.525 18.5 45.5 23.425 45.5 32 C45.5 40.575 40.525 45.5 33 45.5 H22.5 Z"
-        />
-        <rect x="20" y="22" width="21" height="21" rx="6.9" fill="#171717" />
-        <rect x="23" y="25" width="15" height="15" rx="3.9" fill="#ffb703" />
+      {/* The DailyByte mark, generated from brand/build.mjs in the product
+          repo. Scaled so its 100-unit height reads at 26px here. */}
+      <g transform="translate(54 98) scale(0.26)">
+          <path fill="#ffffff" d="M 4.2 0 H 60 V 19 H 4.2 A 4.2 4.2 0 0 1 0 14.8 V 4.2 A 4.2 4.2 0 0 1 4.2 0 Z" />
+          <path fill="#ffffff" d="M 58.2 0 A 37.4 50 0 0 1 58.2 100 L 58.2 81 A 18.4 31 0 0 0 58.2 19 Z" />
+          <path fill="#ffffff" d="M 4.2 33.7 H 14.8 A 4.2 4.2 0 0 1 19 37.9 V 77.2 A 4.2 4.2 0 0 0 23.2 81.4 H 34.9 A 4.2 4.2 0 0 1 39.1 85.6 V 95.8 A 4.2 4.2 0 0 1 34.9 100 H 4.2 A 4.2 4.2 0 0 1 0 95.8 V 37.9 A 4.2 4.2 0 0 1 4.2 33.7 Z" />
+          <rect x="28.67" y="37.1" width="29.3" height="29.3" rx="5.4" fill="#ffb703" />
       </g>
       <text x="86" y="116" fontFamily="Inter, Arial, sans-serif" fontSize="15" fontWeight="800" letterSpacing="-0.6">
         <tspan fill="#ffffff">daily</tspan><tspan fill="#ffb703">byte</tspan>
