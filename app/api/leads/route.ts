@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLead, listLeads } from '@/lib/leads/store';
-import { PORTAL_COOKIE, verifyPortalToken } from '@/lib/leads/auth';
+import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
+import { clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import type { NewLead } from '@/lib/leads/types';
 
 export const runtime = 'nodejs';
+
+// The lead form is public and writes to storage, so it needs a ceiling on top of
+// the honeypot below. Five submissions an hour is far above genuine use and well
+// below what makes flooding the inbox worthwhile.
+const MAX_SUBMISSIONS = 5;
+const WINDOW_MS = 60 * 60 * 1000;
 
 function clean(value: unknown, max = 500) {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
 
 export async function POST(request: NextRequest) {
+  const limit = rateLimit(clientKey(request, 'lead-submit'), MAX_SUBMISSIONS, WINDOW_MS);
+  if (!limit.ok) {
+    return tooManyRequests(limit.retryAfter, 'Too many submissions. Please try again later.');
+  }
   try {
     const body = (await request.json()) as Record<string, unknown>;
     if (clean(body.website)) return NextResponse.json({ ok: true }, { status: 202 });
@@ -55,7 +66,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!verifyPortalToken(request.cookies.get(PORTAL_COOKIE)?.value)) {
+  if (!verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {

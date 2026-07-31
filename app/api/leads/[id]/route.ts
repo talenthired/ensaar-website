@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PORTAL_COOKIE, verifyPortalToken } from '@/lib/leads/auth';
+import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
 import { LEAD_STATUSES, type LeadStatus, type LeadUpdate } from '@/lib/leads/types';
 import { updateLead } from '@/lib/leads/store';
 
@@ -9,7 +9,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!verifyPortalToken(request.cookies.get(PORTAL_COOKIE)?.value)) {
+  if (!verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

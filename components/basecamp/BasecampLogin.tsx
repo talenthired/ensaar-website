@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, LockKeyhole } from 'lucide-react';
 
-export function WorkspaceLogin() {
+export function BasecampLogin() {
   const router = useRouter();
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,14 +15,14 @@ export function WorkspaceLogin() {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/workspace/login', {
+      const response = await fetch('/api/basecamp/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || 'Unable to sign in.');
-      router.push('/workspace');
+      router.push('/basecamp');
       router.refresh();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'Unable to sign in.');
@@ -37,18 +37,19 @@ export function WorkspaceLogin() {
         <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-primary/10 text-accent-primary">
           <LockKeyhole className="h-6 w-6" aria-hidden />
         </div>
-        <span className="eyebrow">Private Workspace</span>
-        <h1 className="mt-5 text-3xl">Lead operations</h1>
+        <span className="eyebrow">Private</span>
+        <h1 className="mt-5 text-3xl">Basecamp</h1>
         <p className="mt-3 text-sm text-ink-secondary">
-          Review incoming work, qualify opportunities, assign owners, and track every next action.
+          Website administration: contact submissions, the events calendar, and everything
+          that keeps ensaar.com current.
         </p>
 
         <form onSubmit={submit} className="mt-8">
-          <label htmlFor="portal-password" className="block text-sm font-semibold text-ink-primary mb-2">
-            Workspace password
+          <label htmlFor="basecamp-password" className="block text-sm font-semibold text-ink-primary mb-2">
+            Basecamp password
           </label>
           <input
-            id="portal-password"
+            id="basecamp-password"
             type="password"
             autoComplete="current-password"
             required

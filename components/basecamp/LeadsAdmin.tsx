@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   CalendarClock,
   CircleDollarSign,
-  LogOut,
   Mail,
   RefreshCw,
   Search,
@@ -36,7 +35,7 @@ const STATUS_STYLE: Record<LeadStatus, string> = {
   lost: 'bg-rose-500/10 text-rose-700 dark:text-rose-300',
 };
 
-export function LeadWorkspace() {
+export function LeadsAdmin() {
   const router = useRouter();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Lead | null>(null);
@@ -51,7 +50,7 @@ export function LeadWorkspace() {
     try {
       const response = await fetch('/api/leads', { cache: 'no-store' });
       if (response.status === 401) {
-        router.push('/workspace/login');
+        router.push('/basecamp/login');
         return;
       }
       const result = (await response.json()) as { leads?: Lead[]; error?: string };
@@ -105,31 +104,20 @@ export function LeadWorkspace() {
     setSelected(result.lead);
   }
 
-  async function logout() {
-    await fetch('/api/workspace/logout', { method: 'POST' });
-    router.push('/workspace/login');
-    router.refresh();
-  }
-
   return (
-    <section className="min-h-screen pt-28 pb-16 bg-bg-secondary">
-      <div className="container-page">
+    <section>
+      <div>
         <div className="flex flex-col gap-5 border-b border-line-subtle pb-7 md:flex-row md:items-end md:justify-between">
           <div>
-            <span className="eyebrow">Lead Operations</span>
+            <span className="eyebrow">Contact submissions</span>
             <h1 className="mt-4 text-3xl md:text-4xl">Request pipeline</h1>
             <p className="mt-2 text-sm text-ink-secondary">
               Intake, attribution, qualification, ownership, and follow-up in one view.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <IconButton label="Refresh leads" onClick={() => void load()}>
-              <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden />
-            </IconButton>
-            <IconButton label="Sign out" onClick={() => void logout()}>
-              <LogOut className="h-4 w-4" aria-hidden />
-            </IconButton>
-          </div>
+          <IconButton label="Refresh submissions" onClick={() => void load()}>
+            <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} aria-hidden />
+          </IconButton>
         </div>
 
         <div className="grid grid-cols-2 border-x border-b border-line-subtle lg:grid-cols-3 xl:grid-cols-6">
