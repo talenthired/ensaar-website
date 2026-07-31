@@ -1,10 +1,12 @@
 import type { MetadataRoute } from 'next';
-import { siteConfig } from '@/lib/utils';
+import { siteConfig, SITE_LAST_MODIFIED } from '@/lib/utils';
 import { BCEP_TRACKS } from '@/lib/content/bcep';
 import { INSIGHTS } from '@/lib/content/insights';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const now = new Date();
+  // A fixed revision date rather than build time: a lastModified that jumps on every
+  // deploy trains crawlers to ignore the field.
+  const now = new Date(`${SITE_LAST_MODIFIED}T00:00:00Z`);
   const base = siteConfig.url;
 
   const topLevel: MetadataRoute.Sitemap = [
@@ -33,11 +35,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.65,
   }));
 
+  // Article entries carry their hero image so it is eligible for image search.
   const insights: MetadataRoute.Sitemap = INSIGHTS.map((insight) => ({
     url: `${base}/insights/${insight.slug}`,
-    lastModified: new Date(insight.updated),
+    lastModified: new Date(`${insight.updated}T00:00:00Z`),
     changeFrequency: 'monthly',
     priority: 0.75,
+    images: [insight.image],
   }));
 
   return [...topLevel, ...trainingTracks, ...insights];
