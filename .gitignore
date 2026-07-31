@@ -38,3 +38,7 @@ Thumbs.db
 # deploy
 .vercel
 .netlify
+
+# Local PDF generation artifacts (not source)
+/output
+/tmp
