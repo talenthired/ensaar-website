@@ -33,13 +33,13 @@ export function DailyByteSection() {
               Practical AI work platform
             </div>
             <h2 className="mt-6 text-[clamp(2.5rem,5vw,4.8rem)] leading-[1.01] text-balance">
-              See how AI Learn and AI Target turn intent into practice.
+              See how AI Learn and AI Jobs turn intent into practice.
             </h2>
           </div>
           <div className="max-w-2xl lg:justify-self-end">
-            <div className="font-mono text-sm text-[#f5a623]">daily.byte AI Learn + AI Target</div>
+            <div className="font-mono text-sm text-[#f5a623]">daily.byte AI Learn + AI Jobs</div>
             <p className="mt-4 text-lg leading-relaxed text-emerald-50/80">
-              DailyByte<sup className="align-super text-[0.6em] font-medium leading-none">™</sup> gives individuals a guided AI Learn path and job-specific AI Target preparation, while enterprises can use the same operating model to build practical AI capability across teams and cohorts.
+              DailyByte<sup className="align-super text-[0.6em] font-medium leading-none">™</sup> gives individuals a guided AI Learn path and job-specific AI Jobs preparation, while enterprises can use the same operating model to build practical AI capability across teams and cohorts.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a href={dailyByteLinks.individual} target="_blank" rel="noreferrer" className="group inline-flex items-center gap-2 rounded-md bg-[#f5a623] px-6 py-3.5 text-sm font-semibold text-[#0c2343] transition hover:-translate-y-0.5 hover:bg-[#f7b83e]">
@@ -74,7 +74,7 @@ export function DailyByteSection() {
         <div className="mt-12 grid gap-5 border-y border-white/15 py-7 sm:grid-cols-2 lg:grid-cols-4">
           {[
             'Start AI Learn with realistic work labs',
-            'Use AI Target to learn from a job description',
+            'Use AI Jobs to learn from a job description',
             'Set a Daily Code path aligned to the target role',
             'Track proof, readiness, and team capability signals',
           ].map((item, index) => (

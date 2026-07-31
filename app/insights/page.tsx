@@ -5,23 +5,52 @@ import { ArrowRight, Clock3 } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, itemListSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { INSIGHTS } from '@/lib/content/insights';
 import { siteConfig } from '@/lib/utils';
 
+const url = `${siteConfig.url}/insights`;
+const description =
+  'Practical guides to enterprise AI adoption, multi-model strategy, IDE-native engineering, RAG, governance, observability, and secure deployment.';
+const trail = [
+  { name: 'Home', url: siteConfig.url },
+  { name: 'Insights', url },
+];
+
 export const metadata: Metadata = pageMetadata({
   title: 'Enterprise AI Adoption and Engineering Insights',
-  description:
-    'Practical guides to enterprise AI adoption, multi-model strategy, IDE-native engineering, RAG, governance, observability, and secure deployment.',
+  description,
   path: '/insights',
+  eyebrow: 'AI adoption guides',
+  feeds: { 'application/rss+xml': `${url}/feed.xml` },
 });
 
 export default function InsightsPage() {
-  const url = `${siteConfig.url}/insights`;
+  const sorted = [...INSIGHTS].sort(
+    (a, b) => new Date(b.published).getTime() - new Date(a.published).getTime(),
+  );
   return (
     <>
-      <JsonLd data={webPageSchema({ name: 'Enterprise AI Adoption and Engineering Insights', description: metadata.description as string, url })} />
+      <JsonLd data={[
+        webPageSchema({
+          name: 'Enterprise AI Adoption and Engineering Insights',
+          description,
+          url,
+          type: 'CollectionPage',
+          breadcrumb: trail,
+        }),
+        breadcrumbSchema(trail, url),
+        itemListSchema({
+          name: 'Ensaar insights',
+          url,
+          items: sorted.map((insight) => ({
+            name: insight.title,
+            url: `${url}/${insight.slug}`,
+            description: insight.description,
+          })),
+        }),
+      ]} />
       <div className="pt-32 pb-12">
         <Container>
           <Breadcrumbs items={[{ name: 'Insights', href: '/insights' }]} />
@@ -41,7 +70,7 @@ export default function InsightsPage() {
       <section className="pb-24">
         <Container>
           <div className="grid gap-6 md:grid-cols-2">
-            {INSIGHTS.map((insight) => (
+            {sorted.map((insight) => (
               <article key={insight.slug} className="group overflow-hidden rounded-lg border border-line-subtle bg-bg-secondary transition hover:-translate-y-1 hover:shadow-card">
                 <Link href={`/insights/${insight.slug}`} className="block">
                   <div className="relative aspect-[16/8] overflow-hidden">

@@ -5,25 +5,37 @@ import { ArrowRight } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
+
+const url = `${siteConfig.url}/contact`;
+const trail = [
+  { name: 'Home', url: siteConfig.url },
+  { name: 'Contact', url },
+];
 
 export const metadata: Metadata = pageMetadata({
   title: 'Start an Enterprise AI or AI Capability Conversation',
   description: `Bring Ensaar one workflow, role, or cohort. Request an AI workflow diagnostic, AI capability pilot, software discussion, BCEP AI readiness certification, or event collaboration. Individuals and teams can begin directly through DailyByte. General enquiries: ${siteConfig.email}.`,
   path: '/contact',
+  eyebrow: 'Contact',
 });
 
 export default function ContactPage() {
   return (
     <>
       <JsonLd
-        data={webPageSchema({
-          name: 'Contact Ensaar Global',
-          description: 'Contact Ensaar about enterprise AI, software engineering, BCEP AI readiness certification, academic programs, and events.',
-          url: `${siteConfig.url}/contact`,
-        })}
+        data={[
+          webPageSchema({
+            name: 'Contact Ensaar Global',
+            description: 'Contact Ensaar about enterprise AI, software engineering, BCEP AI readiness certification, academic programs, and events.',
+            url,
+            type: 'ContactPage',
+            breadcrumb: trail,
+          }),
+          breadcrumbSchema(trail, url),
+        ]}
       />
 
       <section className="relative isolate overflow-hidden bg-[#0c2343] pb-20 pt-32 text-white md:pb-24 md:pt-40">

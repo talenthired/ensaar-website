@@ -66,9 +66,9 @@ export const FAQ: FaqItem[] = [
   },
   {
     category: 'ai',
-    question: 'What are DailyByte AI Learn and AI Target?',
+    question: 'What are DailyByte AI Learn and AI Jobs?',
     answer:
-      "DailyByte is Ensaar's practical AI enablement platform for individuals and enterprises. AI Learn gives learners guided applied work labs, AI Target turns a job description into an interactive learning path, and Daily Code lets people choose SQL, Python, Java, TypeScript, or AI work missions aligned to their target role.",
+      "DailyByte is Ensaar's practical AI enablement platform for individuals and enterprises. AI Learn gives learners guided applied work labs, AI Jobs turns a job description into an interactive learning path, and Daily Code lets people choose SQL, Python, Java, TypeScript, or AI work missions aligned to their target role.",
   },
   {
     category: 'ai',
@@ -120,7 +120,7 @@ export const FAQ: FaqItem[] = [
     category: 'engagement',
     question: 'Is Ensaar offering a proprietary AI platform?',
     answer:
-      'Ensaar is developing DailyByte as an AI Learn and AI Target platform for role-specific practice, job-specific preparation, Daily Code pathing, and capability evidence. Enterprise implementation services remain model-flexible and deployment-flexible. Clients are not required to move their operational AI systems into a proprietary architecture.',
+      'Ensaar is developing DailyByte as an AI Learn and AI Jobs platform for role-specific practice, job-specific preparation, Daily Code pathing, and capability evidence. Enterprise implementation services remain model-flexible and deployment-flexible. Clients are not required to move their operational AI systems into a proprietary architecture.',
   },
   {
     category: 'engagement',

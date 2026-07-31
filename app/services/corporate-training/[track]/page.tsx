@@ -16,8 +16,21 @@ export function generateStaticParams(): Params[] {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { track: slug } = await params;
   const track = getBcepTrack(slug);
-  if (!track) return pageMetadata({ title: 'Training track not found', description: 'Not found', path: `/services/corporate-training/${slug}` });
-  return pageMetadata({ title: `${track.name} BCEP AI Readiness Certification`, description: track.description, path: `/services/corporate-training/${track.slug}` });
+  if (!track) {
+    return pageMetadata({
+      title: 'Training track not found',
+      description: 'This certification track is no longer available.',
+      path: `/services/corporate-training/${slug}`,
+      noindex: true,
+    });
+  }
+  return pageMetadata({
+    title: `${track.name} BCEP AI Readiness Certification`,
+    description: track.description,
+    path: `/services/corporate-training/${track.slug}`,
+    eyebrow: 'BCEP certification',
+    keywords: [track.credential, 'BCEP certification', 'AI readiness certification', ...track.modules.slice(0, 4)],
+  });
 }
 
 export default async function CorporateTrainingTrackPage({ params }: { params: Promise<Params> }) {
@@ -25,14 +38,27 @@ export default async function CorporateTrainingTrackPage({ params }: { params: P
   const track = getBcepTrack(slug);
   if (!track) notFound();
   const url = `${siteConfig.url}/services/corporate-training/${track.slug}`;
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Services', url: `${siteConfig.url}/services` },
+    { name: 'Corporate Training', url: `${siteConfig.url}/services/corporate-training` },
+    { name: track.name, url },
+  ];
   return <><JsonLd data={[
-    webPageSchema({ name: track.name, description: track.description, url }),
-    serviceSchema({ name: track.credential, description: track.description, serviceType: 'Professional Certification', url }),
-    breadcrumbSchema([
-      { name: 'Home', url: siteConfig.url },
-      { name: 'Services', url: `${siteConfig.url}/services` },
-      { name: 'Corporate Training', url: `${siteConfig.url}/services/corporate-training` },
-      { name: track.name, url },
-    ]),
+    webPageSchema({ name: track.name, description: track.description, url, breadcrumb: trail }),
+    serviceSchema({ name: track.credential, description: track.description, serviceType: 'Professional Certification', url, offerings: track.modules }),
+    // The credential itself, so an answer engine can name what a participant earns.
+    {
+      '@context': 'https://schema.org',
+      '@type': 'EducationalOccupationalCredential',
+      name: track.credential,
+      description: track.description,
+      url,
+      credentialCategory: 'Professional certificate',
+      competencyRequired: track.modules,
+      educationalLevel: 'Professional',
+      recognizedBy: { '@id': `${siteConfig.url}/#organization` },
+    },
+    breadcrumbSchema(trail, url),
   ]} /><BcepTrackPage track={track} /></>;
 }

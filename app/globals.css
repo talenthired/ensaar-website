@@ -22,7 +22,13 @@
   /* ink / text */
   --color-ink-primary: 12 35 67;
   --color-ink-secondary: 67 82 104;
-  --color-ink-muted: 100 116 139;            /* slate-500 */
+  /* was 100 116 139 (#64748b): 4.38 on bg-tertiary and only 3.9 when a card's
+     opacity-90 composites it over white. Darkened to clear AA in both cases. */
+  --color-ink-muted: 87 101 122;
+  /* Text that sits ON accent-primary. White works in light (accent is deep blue)
+     but not in dark (accent is a light blue), so it is per-theme. */
+  --color-accent-ink: 255 255 255;
+  --color-accent-press: 0 110 160;
 
   /* lines */
   --color-line-subtle: 71 85 105 / 0.18;
@@ -59,7 +65,11 @@
 
   --color-ink-primary: 241 245 249;
   --color-ink-secondary: 148 163 184;
-  --color-ink-muted: 100 116 139;
+  /* was 100 116 139, copied from the light theme: 3.0-3.9 on dark surfaces.
+     Lightened so muted text clears AA against every dark background. */
+  --color-ink-muted: 139 152 171;
+  --color-accent-ink: 12 35 67;
+  --color-accent-press: 138 184 247;
 
   --color-line-subtle: 71 85 105 / 0.18;
   --color-line-glow: 37 99 235 / 0.4;

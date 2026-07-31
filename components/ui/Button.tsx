@@ -14,8 +14,10 @@ type ButtonBaseProps = {
 type ButtonProps = ButtonBaseProps & { href: string };
 
 const variants = {
+  // text-accent-ink / bg-accent-press, not white / a hardcoded blue: the dark
+  // theme's accent is a LIGHT blue, so white label text on it fails AA (2.5:1).
   primary:
-    'bg-accent-primary text-white shadow-[0_6px_20px_rgba(0,142,207,0.24)] hover:bg-[#007fb9] hover:shadow-[0_10px_28px_rgba(0,142,207,0.32)] hover:-translate-y-0.5',
+    'bg-accent-primary text-accent-ink shadow-[0_6px_20px_rgba(0,142,207,0.24)] hover:bg-accent-press hover:shadow-[0_10px_28px_rgba(0,142,207,0.32)] hover:-translate-y-0.5',
   outline:
     'border border-line-glow text-ink-primary backdrop-blur-md hover:bg-accent-primary/10 hover:border-accent-primary hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]',
   ghost:

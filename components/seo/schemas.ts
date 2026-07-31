@@ -1,4 +1,5 @@
-import { siteConfig, ogImage } from '@/lib/utils';
+import { siteConfig, ogImage, SITE_LAST_MODIFIED, SITE_PUBLISHED } from '@/lib/utils';
+import { SERVICES } from '@/lib/content/services';
 
 export function organizationSchema() {
   return {
@@ -7,12 +8,22 @@ export function organizationSchema() {
     '@id': `${siteConfig.url}/#organization`,
     name: siteConfig.legalName,
     alternateName: siteConfig.name,
+    legalName: siteConfig.legalName,
+    slogan: siteConfig.tagline,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/ensaar-logo.png`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${siteConfig.url}/ensaar-logo.png`,
+      width: 938,
+      height: 259,
+    },
     image: ogImage,
     description: siteConfig.description,
     foundingDate: String(siteConfig.foundedYear),
     email: siteConfig.email,
+    knowsAbout: siteConfig.knowsAbout,
+    knowsLanguage: ['en'],
+    ...(siteConfig.sameAs.length > 0 ? { sameAs: siteConfig.sameAs } : {}),
     address: siteConfig.locations.map((location) => ({
       '@type': 'PostalAddress',
       addressLocality: location.city,
@@ -33,9 +44,26 @@ export function organizationSchema() {
       },
     ],
     areaServed: [
-      { '@type': 'Country', name: 'India' },
+      ...siteConfig.deliveredIn.map((name) => ({ '@type': 'Country', name })),
       { '@type': 'Place', name: 'Worldwide' },
     ],
+    // The service catalogue in machine-readable form. Answer engines lean on this to
+    // state what the company actually sells rather than paraphrasing hero copy.
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Ensaar Global services',
+      itemListElement: SERVICES.map((service) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          '@id': `${siteConfig.url}/services/${service.slug}#service`,
+          name: service.name,
+          description: service.shortDescription,
+          serviceType: service.serviceType,
+          url: `${siteConfig.url}/services/${service.slug}`,
+        },
+      })),
+    },
     contactPoint: [
       {
         '@type': 'ContactPoint',
@@ -49,6 +77,7 @@ export function organizationSchema() {
         email: siteConfig.trainingEmail,
         contactType: 'corporate training',
         areaServed: 'Worldwide',
+        availableLanguage: ['English'],
       },
     ],
   };
@@ -59,17 +88,71 @@ export function serviceSchema(params: {
   description: string;
   url: string;
   serviceType: string;
+  offerings?: string[];
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
+    '@id': `${params.url}#service`,
     name: params.name,
     description: params.description,
     url: params.url,
     serviceType: params.serviceType,
     provider: { '@id': `${siteConfig.url}/#organization` },
-    areaServed: 'Worldwide',
+    areaServed: [
+      ...siteConfig.deliveredIn.map((name) => ({ '@type': 'Country', name })),
+      { '@type': 'Place', name: 'Worldwide' },
+    ],
+    ...(params.offerings && params.offerings.length > 0
+      ? {
+          hasOfferCatalog: {
+            '@type': 'OfferCatalog',
+            name: `${params.name} offerings`,
+            itemListElement: params.offerings.map((offering) => ({
+              '@type': 'Offer',
+              itemOffered: { '@type': 'Service', name: offering },
+            })),
+          },
+        }
+      : {}),
   };
+}
+
+/**
+ * The full graph for a service detail page: the page node, its breadcrumb trail, and
+ * the service itself with its offering catalogue. Every service page needs the same
+ * three, so they are built together instead of assembled by hand on each route.
+ */
+export function serviceDetailSchemas(service: {
+  slug: string;
+  name: string;
+  shortDescription: string;
+  longDescription: string;
+  serviceType: string;
+  offerings: string[];
+}) {
+  const url = `${siteConfig.url}/services/${service.slug}`;
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Services', url: `${siteConfig.url}/services` },
+    { name: service.name, url },
+  ];
+  return [
+    webPageSchema({
+      name: service.name,
+      description: service.shortDescription,
+      url,
+      breadcrumb: trail,
+    }),
+    breadcrumbSchema(trail, url),
+    serviceSchema({
+      name: service.name,
+      description: service.longDescription,
+      serviceType: service.serviceType,
+      url,
+      offerings: service.offerings,
+    }),
+  ];
 }
 
 export function websiteSchema() {
@@ -79,9 +162,37 @@ export function websiteSchema() {
     '@id': `${siteConfig.url}/#website`,
     url: siteConfig.url,
     name: siteConfig.name,
+    alternateName: siteConfig.legalName,
     description: siteConfig.description,
     publisher: { '@id': `${siteConfig.url}/#organization` },
     inLanguage: 'en-IN',
+    copyrightHolder: { '@id': `${siteConfig.url}/#organization` },
+  };
+}
+
+/**
+ * A ranked list of pages (article index, service index). Gives crawlers and answer
+ * engines the collection membership and ordering that a grid of cards does not express.
+ */
+export function itemListSchema(params: {
+  name: string;
+  url: string;
+  items: Array<{ name: string; url: string; description?: string }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: params.name,
+    url: params.url,
+    numberOfItems: params.items.length,
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: params.items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: item.url,
+      name: item.name,
+      ...(item.description ? { description: item.description } : {}),
+    })),
   };
 }
 
@@ -105,10 +216,18 @@ export function softwareApplicationSchema(params: {
   };
 }
 
-export function breadcrumbSchema(items: Array<{ name: string; url: string }>) {
+/**
+ * `pageUrl` links the trail back to the WebPage node via `@id`, so the two graph
+ * fragments on a page resolve to each other instead of floating independently.
+ */
+export function breadcrumbSchema(
+  items: Array<{ name: string; url: string }>,
+  pageUrl?: string,
+) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
+    ...(pageUrl ? { '@id': `${pageUrl}#breadcrumb` } : {}),
     itemListElement: items.map((item, i) => ({
       '@type': 'ListItem',
       position: i + 1,
@@ -133,21 +252,46 @@ export function faqPageSchema(items: Array<{ question: string; answer: string }>
   };
 }
 
+type WebPageType =
+  | 'WebPage'
+  | 'AboutPage'
+  | 'ContactPage'
+  | 'CollectionPage'
+  | 'FAQPage'
+  | 'CheckoutPage'
+  | 'ProfilePage';
+
 export function webPageSchema(params: {
   name: string;
   description: string;
   url: string;
+  type?: WebPageType;
+  datePublished?: string;
+  dateModified?: string;
+  /** Breadcrumb trail, so the page node and the BreadcrumbList resolve to each other. */
+  breadcrumb?: Array<{ name: string; url: string }>;
+  /** Short quotable summary. Answer engines prefer an explicit abstract over guessing. */
+  about?: string[];
 }) {
   return {
     '@context': 'https://schema.org',
-    '@type': 'WebPage',
+    '@type': params.type ?? 'WebPage',
+    '@id': `${params.url}#webpage`,
     name: params.name,
     description: params.description,
     url: params.url,
     isPartOf: { '@id': `${siteConfig.url}/#website` },
+    about: { '@id': `${siteConfig.url}/#organization` },
+    ...(params.about && params.about.length > 0
+      ? { mentions: params.about.map((name) => ({ '@type': 'Thing', name })) }
+      : {}),
+    ...(params.breadcrumb && params.breadcrumb.length > 0
+      ? { breadcrumb: { '@id': `${params.url}#breadcrumb` } }
+      : {}),
+    primaryImageOfPage: { '@type': 'ImageObject', url: ogImage },
     inLanguage: 'en-IN',
-    datePublished: '2024-01-01',
-    dateModified: new Date().toISOString().split('T')[0],
+    datePublished: params.datePublished ?? SITE_PUBLISHED,
+    dateModified: params.dateModified ?? SITE_LAST_MODIFIED,
   };
 }
 
@@ -347,22 +491,38 @@ export function articleSchema(params: {
   dateModified?: string;
   imageUrl?: string;
   authorName?: string;
+  articleSection?: string;
+  keywords?: string[];
+  wordCount?: number;
+  /** Bullet abstract. Answer engines quote this ahead of reconstructing the body. */
+  abstract?: string[];
 }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: params.title,
+    '@id': `${params.url}#article`,
+    headline: params.title.slice(0, 110),
+    name: params.title,
     description: params.description,
     url: params.url,
     datePublished: params.datePublished,
     dateModified: params.dateModified ?? params.datePublished,
-    image: params.imageUrl ?? `${siteConfig.url}/og-image.png`,
+    image: params.imageUrl ?? ogImage,
+    ...(params.articleSection ? { articleSection: params.articleSection } : {}),
+    ...(params.keywords && params.keywords.length > 0 ? { keywords: params.keywords } : {}),
+    ...(params.wordCount ? { wordCount: params.wordCount } : {}),
+    ...(params.abstract && params.abstract.length > 0
+      ? { abstract: params.abstract.join(' ') }
+      : {}),
+    inLanguage: 'en-IN',
+    isAccessibleForFree: true,
     author: {
       '@type': 'Organization',
+      '@id': `${siteConfig.url}/#organization`,
       name: params.authorName ?? siteConfig.legalName,
       url: siteConfig.url,
     },
     publisher: { '@id': `${siteConfig.url}/#organization` },
-    mainEntityOfPage: { '@type': 'WebPage', '@id': params.url },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${params.url}#webpage` },
   };
 }

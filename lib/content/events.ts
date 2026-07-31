@@ -1,25 +1,30 @@
-export type EnsaarEvent = {
+import type { EventType } from '@/lib/events/types';
+
+/**
+ * Initial event list. Events are now managed in Basecamp (/basecamp/events) and stored
+ * in the events store; this array only seeds an empty store on first read so the public
+ * page keeps its content on a fresh deployment. Editing it after seeding has no effect.
+ *
+ * `id` values are stable slugs so re-seeding cannot create duplicates.
+ */
+export type EventSeed = {
   id: string;
   title: string;
-  date: string;          // ISO date
-  type: 'webinar' | 'workshop' | 'meetup' | 'conference';
+  date: string;
+  type: EventType;
   location: string;
-  status: 'upcoming' | 'past';
   summary: string;
   href?: string;
   speakers?: string[];
 };
 
-const today = new Date().toISOString().split('T')[0];
-
-export const EVENTS: EnsaarEvent[] = [
+export const EVENT_SEED: EventSeed[] = [
   {
     id: 'claude-code-meetup-hyd-2026-05',
     title: 'Claude Code in the Real World - Hyderabad Meetup',
     date: '2026-05-22',
     type: 'meetup',
     location: 'Hyderabad, Telangana',
-    status: 'upcoming',
     summary:
       'A practitioner-only meetup with live demonstrations of Claude Code skills, plugins, and MCP servers from teams shipping AI in production. Hosted in Hyderabad.',
     speakers: ['Ensaar AI Team', 'Invited practitioners'],
@@ -30,7 +35,6 @@ export const EVENTS: EnsaarEvent[] = [
     date: '2026-06-12',
     type: 'webinar',
     location: 'Online',
-    status: 'upcoming',
     summary:
       'A 45-minute live discussion on what changes when your engineers ship with AI. Skill profiles, hiring rubrics, and red flags. Free to attend.',
     speakers: ['Ensaar Leadership'],
@@ -41,7 +45,6 @@ export const EVENTS: EnsaarEvent[] = [
     date: '2026-07-18',
     type: 'workshop',
     location: 'Hyderabad, Telangana',
-    status: 'upcoming',
     summary:
       'A one-day BCEP workshop helping mid-level leaders build AI readiness, emotional intelligence, communication, and sound judgment while leading increasingly AI-augmented teams.',
     speakers: ['BCEP Faculty'],
@@ -52,7 +55,6 @@ export const EVENTS: EnsaarEvent[] = [
     date: '2026-09-04',
     type: 'conference',
     location: 'Bangalore, India',
-    status: 'upcoming',
     summary:
       'Ensaar will be speaking on agentic workflows in production - what works, what breaks, and how to ship AI that survives contact with real users.',
   },
@@ -62,16 +64,7 @@ export const EVENTS: EnsaarEvent[] = [
     date: '2026-03-15',
     type: 'workshop',
     location: 'Hyderabad, Telangana',
-    status: 'past',
     summary:
       'A two-day BCEP intervention covering AI readiness, emotional intelligence, presentation excellence, and stakeholder communication for an enterprise cohort.',
   },
 ];
-
-export function upcomingEvents() {
-  return EVENTS.filter((e) => e.date >= today).sort((a, b) => a.date.localeCompare(b.date));
-}
-
-export function pastEvents() {
-  return EVENTS.filter((e) => e.date < today).sort((a, b) => b.date.localeCompare(a.date));
-}

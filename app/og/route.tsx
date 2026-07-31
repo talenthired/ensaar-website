@@ -1,11 +1,23 @@
 import { ImageResponse } from 'next/og';
+import type { NextRequest } from 'next/server';
 import { siteConfig } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 
-// Site-wide social share image (1200x630). Referenced as siteConfig.url + "/og"
-// by the metadata, so every page has a valid Open Graph / Twitter card image.
-export function GET(): ImageResponse {
+// Social share image (1200x630). Referenced by every page's metadata via ogImageFor(),
+// which passes the page title so each URL gets a distinct card instead of the whole
+// site sharing one image. No params falls back to the site-wide default.
+export function GET(request: NextRequest): ImageResponse {
+  const { searchParams } = new URL(request.url);
+  const title = (searchParams.get('title') || siteConfig.tagline).slice(0, 110);
+  const eyebrow = (searchParams.get('eyebrow') || '').slice(0, 42);
+  const subtitle =
+    searchParams.get('subtitle') ||
+    'Enterprise AI implementation, practical enablement, and the DailyByte™ platform.';
+
+  // Long titles need to step down a size or they overflow the 630px canvas.
+  const titleSize = title.length > 78 ? 46 : title.length > 46 ? 56 : 68;
+
   return new ImageResponse(
     (
       <div
@@ -26,10 +38,23 @@ export function GET(): ImageResponse {
           <span style={{ marginLeft: 12, color: '#ffffff' }}>Global</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontSize: 68, fontWeight: 800, lineHeight: 1.05 }}>{siteConfig.tagline}</div>
-          <div style={{ fontSize: 30, color: '#9fb3c8', marginTop: 26 }}>
-            Enterprise AI implementation, practical enablement, and the DailyByte™ platform.
-          </div>
+          {eyebrow ? (
+            <div
+              style={{
+                display: 'flex',
+                fontSize: 24,
+                fontWeight: 600,
+                letterSpacing: 2,
+                textTransform: 'uppercase',
+                color: '#f5a623',
+                marginBottom: 20,
+              }}
+            >
+              {eyebrow}
+            </div>
+          ) : null}
+          <div style={{ fontSize: titleSize, fontWeight: 800, lineHeight: 1.05 }}>{title}</div>
+          <div style={{ fontSize: 28, color: '#9fb3c8', marginTop: 24 }}>{subtitle}</div>
         </div>
         <div style={{ display: 'flex', width: 240, height: 14, background: '#29E7F2', borderRadius: 7 }} />
       </div>

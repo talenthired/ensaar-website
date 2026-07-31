@@ -22,7 +22,7 @@ const OFFERS = [
     audience: 'Students and engineers',
     title: 'Do real work with AI. Get evidence of how you think.',
     description:
-      'Use AI Learn for guided practice, AI Target to prepare from a specific job description, and Daily Code to keep core skills aligned.',
+      'Use AI Learn for guided practice, AI Jobs to prepare from a specific job description, and Daily Code to keep core skills aligned.',
     proof: 'DailyByte™ for individuals',
     action: 'For Individuals',
     href: dailyByteLinks.individual,

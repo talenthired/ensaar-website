@@ -17,6 +17,7 @@ export const metadata: Metadata = pageMetadata({
   title: 'Enterprise AI Implementation and Practical AI Enablement',
   description: siteConfig.description,
   path: '/',
+  eyebrow: siteConfig.tagline,
 });
 
 export default function HomePage() {
@@ -27,6 +28,7 @@ export default function HomePage() {
           name: 'Home',
           description: siteConfig.description,
           url: siteConfig.url,
+          about: siteConfig.knowsAbout,
         })}
       />
       <Hero />

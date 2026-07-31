@@ -7,27 +7,39 @@ import { HeroImage } from '@/components/ui/HeroImage';
 import { GlowOrbs } from '@/components/illustrations/Decorations';
 import { DotPattern } from '@/components/ui/DotPattern';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
+
+const url = `${siteConfig.url}/about`;
+const trail = [
+  { name: 'Home', url: siteConfig.url },
+  { name: 'About', url },
+];
 
 export const metadata: Metadata = pageMetadata({
   title: 'About Ensaar Global',
   description:
     'Ensaar Global is an enterprise AI enablement and software engineering company founded in 2014, with locations in Hyderabad and Noida.',
   path: '/about',
+  eyebrow: 'Our story',
 });
 
 export default function AboutPage() {
   return (
     <>
       <JsonLd
-        data={webPageSchema({
-          name: 'About Ensaar Global',
-          description:
-            'Ensaar Global helps students, engineers, and organizations adopt enterprise-grade AI from Hyderabad and Noida.',
-          url: `${siteConfig.url}/about`,
-        })}
+        data={[
+          webPageSchema({
+            name: 'About Ensaar Global',
+            description:
+              'Ensaar Global helps students, engineers, and organizations adopt enterprise-grade AI from Hyderabad and Noida.',
+            url,
+            type: 'AboutPage',
+            breadcrumb: trail,
+          }),
+          breadcrumbSchema(trail, url),
+        ]}
       />
 
       <div className="relative pt-32 pb-16 overflow-hidden">

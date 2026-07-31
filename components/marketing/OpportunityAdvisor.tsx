@@ -145,9 +145,9 @@ const CTA_LABEL: Record<'individual' | 'enterprise' | 'pricing', string> = {
 function getRecommendation(intent: AdvisorIntent, answers: AnswerMap) {
   if (intent === 'individual') {
     return {
-      title: 'DailyByte AI Learn and AI Target',
+      title: 'DailyByte AI Learn and AI Jobs',
       description:
-        'Start with AI Learn for guided practice, add an AI Target from a job description, and use Daily Code to keep core skills aligned to the role.',
+        'Start with AI Learn for guided practice, add a role in AI Jobs from a job description, and use Daily Code to keep core skills aligned to the role.',
       workType: 'DailyByte individual registration',
     };
   }
@@ -156,7 +156,7 @@ function getRecommendation(intent: AdvisorIntent, answers: AnswerMap) {
     return {
       title: 'DailyByte Enterprise Enablement',
       description:
-        'Create a team workspace or cohort rollout around AI Learn, AI Target, Daily Code paths, and measurable practical AI capability.',
+        'Create a team workspace or cohort rollout around AI Learn, AI Jobs, Daily Code paths, and measurable practical AI capability.',
       workType: 'Tailored DailyByte team or campus rollout',
     };
   }
@@ -499,7 +499,7 @@ export function OpportunityAdvisor() {
                         <input
                           value={question}
                           onChange={(event) => setQuestion(event.target.value)}
-                          placeholder="e.g. What is AI Target? How do I sign up?"
+                          placeholder="e.g. What is AI Jobs? How do I sign up?"
                           aria-label="Ask EnAI a question"
                           maxLength={300}
                           className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
@@ -575,18 +575,18 @@ export function OpportunityAdvisor() {
                           <>
                             <ResultLine>Create your DailyByte account</ResultLine>
                             <ResultLine>Start AI Learn with guided practice</ResultLine>
-                            <ResultLine>Add an AI Target from a job description</ResultLine>
+                            <ResultLine>Add a role in AI Jobs from a job description</ResultLine>
                           </>
                         ) : intent === 'institution' ? (
                           <>
                             <ResultLine>Create a team workspace</ResultLine>
                             <ResultLine>Invite a cohort around target roles</ResultLine>
-                            <ResultLine>Track AI Learn, AI Target, and Daily Code readiness</ResultLine>
+                            <ResultLine>Track AI Learn, AI Jobs, and Daily Code readiness</ResultLine>
                           </>
                         ) : (
                           <>
                             <ResultLine>Create an enterprise workspace for your teams</ResultLine>
-                            <ResultLine>Roll out AI Learn, AI Target, and Daily Code</ResultLine>
+                            <ResultLine>Roll out AI Learn, AI Jobs, and Daily Code</ResultLine>
                             <ResultLine>Track practical AI capability with reporting</ResultLine>
                           </>
                         )}

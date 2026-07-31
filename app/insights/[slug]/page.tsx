@@ -21,8 +21,34 @@ export function generateStaticParams(): Params[] {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const insight = getInsight(slug);
-  if (!insight) return pageMetadata({ title: 'Insight not found', description: 'Not found', path: `/insights/${slug}` });
-  return pageMetadata({ title: insight.title, description: insight.description, path: `/insights/${slug}` });
+  if (!insight) {
+    return pageMetadata({
+      title: 'Insight not found',
+      description: 'This insight is no longer available.',
+      path: `/insights/${slug}`,
+      noindex: true,
+    });
+  }
+  return pageMetadata({
+    title: insight.title,
+    description: insight.description,
+    path: `/insights/${slug}`,
+    eyebrow: insight.category,
+    article: {
+      publishedTime: insight.published,
+      modifiedTime: insight.updated,
+      section: insight.category,
+    },
+  });
+}
+
+/** Approximate body length, used for Article.wordCount. */
+function countWords(insight: { sections: Array<{ paragraphs: string[]; bullets?: string[] }> }) {
+  return insight.sections
+    .flatMap((section) => [...section.paragraphs, ...(section.bullets ?? [])])
+    .join(' ')
+    .split(/\s+/)
+    .filter(Boolean).length;
 }
 
 export default async function InsightPage({ params }: { params: Promise<Params> }) {
@@ -30,24 +56,43 @@ export default async function InsightPage({ params }: { params: Promise<Params> 
   const insight = getInsight(slug);
   if (!insight) notFound();
   const url = `${siteConfig.url}/insights/${insight.slug}`;
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Insights', url: `${siteConfig.url}/insights` },
+    { name: insight.title, url },
+  ];
 
   return (
     <>
       <JsonLd data={[
-        webPageSchema({ name: insight.title, description: insight.description, url }),
-        articleSchema({ title: insight.title, description: insight.description, url, datePublished: insight.published, dateModified: insight.updated, imageUrl: insight.image }),
+        webPageSchema({
+          name: insight.title,
+          description: insight.description,
+          url,
+          datePublished: insight.published,
+          dateModified: insight.updated,
+          breadcrumb: trail,
+        }),
+        articleSchema({
+          title: insight.title,
+          description: insight.description,
+          url,
+          datePublished: insight.published,
+          dateModified: insight.updated,
+          imageUrl: insight.image,
+          articleSection: insight.category,
+          wordCount: countWords(insight),
+          abstract: insight.summary,
+          keywords: insight.sections.map((section) => section.heading),
+        }),
         faqPageSchema(insight.faq),
-        breadcrumbSchema([
-          { name: 'Home', url: siteConfig.url },
-          { name: 'Insights', url: `${siteConfig.url}/insights` },
-          { name: insight.title, url },
-        ]),
+        breadcrumbSchema(trail, url),
       ]} />
 
       <article>
         <header className="pt-32 pb-14">
           <Container>
-            <Breadcrumbs items={[{ name: 'Insights', href: '/insights' }, { name: insight.category, href: `/insights/${insight.slug}` }]} />
+            <Breadcrumbs items={[{ name: 'Insights', href: '/insights' }, { name: insight.title, href: `/insights/${insight.slug}` }]} />
             <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr]">
               <div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted">

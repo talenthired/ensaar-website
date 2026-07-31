@@ -65,7 +65,7 @@ export function Footer() {
             <Link href="/legal/privacy" className="hover:text-ink-secondary">Privacy</Link>
             <Link href="/legal/refund-policy" className="hover:text-ink-secondary">Refunds</Link>
             <Link href="/verify" className="hover:text-ink-secondary">Certificate verification</Link>
-            <Link href="/workspace/login" className="hover:text-ink-secondary">Lead workspace</Link>
+            <Link href="/basecamp" className="hover:text-ink-secondary">Basecamp</Link>
             <span>Crafted with AI.</span>
           </div>
         </div>

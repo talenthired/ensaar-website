@@ -4,50 +4,79 @@ import { Container } from '@/components/ui/Container';
 import { Section } from '@/components/ui/Section';
 import { Button } from '@/components/ui/Button';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
-import { upcomingEvents, pastEvents, type EnsaarEvent } from '@/lib/content/events';
+import { listPublishedEvents } from '@/lib/events/store';
+import type { EventType } from '@/lib/events/types';
 import { Calendar, MapPin, Users, Mic } from 'lucide-react';
 import { BcepEventGallery } from '@/components/sections/BcepEventGallery';
+
+// Events are managed in Basecamp. Mutations call revalidatePath('/events'); this bound
+// keeps the page fresh even if a revalidation is missed, and rolls events into the past
+// group as dates pass without needing an edit.
+export const revalidate = 900;
 
 export const metadata: Metadata = pageMetadata({
   title: 'Events - Workshops, Webinars, Meetups',
   description:
     'Explore Ensaar BCEP AI readiness workshops, academic programs, industry meetups, startup Centre of Excellence initiatives, and certified courses.',
   path: '/events',
+  eyebrow: 'Events and programs',
 });
 
-const TYPE_META: Record<EnsaarEvent['type'], { Icon: typeof Calendar; label: string }> = {
+const TYPE_META: Record<EventType, { Icon: typeof Calendar; label: string }> = {
   webinar: { Icon: Mic, label: 'Webinar' },
   workshop: { Icon: Users, label: 'Workshop' },
   meetup: { Icon: Calendar, label: 'Meetup' },
   conference: { Icon: Mic, label: 'Conference' },
 };
 
-export default function EventsPage() {
-  const upcoming = upcomingEvents();
-  const past = pastEvents();
+export default async function EventsPage() {
+  const { upcoming, past } = await listPublishedEvents();
   const url = `${siteConfig.url}/events`;
 
-  // Lightweight Event JSON-LD
-  const eventSchemas = upcoming.map((e) => ({
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: e.title,
-    description: e.summary,
-    startDate: e.date,
-    eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode:
-      e.location === 'Online'
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Events', url },
+  ];
+
+  // Physical events need a full PostalAddress, not just a place name, or the entry is
+  // dropped from event rich results. `location` holds "City, Region" for in-person events.
+  const eventSchemas = upcoming.map((e) => {
+    const online = e.location === 'Online';
+    const [locality, region] = e.location.split(',').map((part) => part.trim());
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Event',
+      '@id': `${url}#${e.id}`,
+      name: e.title,
+      description: e.summary,
+      url: e.href ?? url,
+      startDate: e.date,
+      eventStatus: 'https://schema.org/EventScheduled',
+      eventAttendanceMode: online
         ? 'https://schema.org/OnlineEventAttendanceMode'
         : 'https://schema.org/OfflineEventAttendanceMode',
-    location:
-      e.location === 'Online'
-        ? { '@type': 'VirtualLocation', url: siteConfig.url }
-        : { '@type': 'Place', name: e.location },
-    organizer: { '@type': 'Organization', name: siteConfig.legalName, url: siteConfig.url },
-  }));
+      location: online
+        ? { '@type': 'VirtualLocation', url }
+        : {
+            '@type': 'Place',
+            name: e.location,
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: locality,
+              ...(region ? { addressRegion: region } : {}),
+              addressCountry: siteConfig.countryCode,
+            },
+          },
+      ...(e.speakers && e.speakers.length > 0
+        ? { performer: e.speakers.map((name) => ({ '@type': 'Organization', name })) }
+        : {}),
+      organizer: { '@id': `${siteConfig.url}/#organization` },
+      inLanguage: 'en',
+    };
+  });
 
   return (
     <>
@@ -57,7 +86,10 @@ export default function EventsPage() {
             name: 'Events',
             description: 'Upcoming Ensaar workshops, webinars, meetups, and conference appearances.',
             url,
+            type: 'CollectionPage',
+            breadcrumb: trail,
           }),
+          breadcrumbSchema(trail, url),
           ...eventSchemas,
         ]}
       />

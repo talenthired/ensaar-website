@@ -11,7 +11,7 @@ import { fadeUp, stagger } from '@/lib/motion';
 const PROOF = [
   ['Since 2014', 'Technology and capability delivery'],
   ['AI pilots', 'Controlled workflow implementation'],
-  ['DailyByte™', 'AI Learn and AI Target paths'],
+  ['DailyByte™', 'AI Learn and AI Jobs paths'],
   ['BCEP', 'Certified AI-ready capability'],
 ] as const;
 
@@ -79,12 +79,12 @@ export function Hero() {
           >
             <div className="mb-4 flex items-center justify-between text-xs font-semibold uppercase tracking-[0.1em] text-emerald-100/70">
               <span className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-[#f5a623]" aria-hidden /> AI adoption in practice</span>
-              <span>AI Learn + AI Target</span>
+              <span>AI Learn + AI Jobs</span>
             </div>
             <div className="relative aspect-[16/10] overflow-hidden border border-white/15 bg-[#0d0f0c] shadow-[0_35px_90px_rgba(0,0,0,0.38)] lg:aspect-[16/9.6]">
               <Image
-                src="/images/dailybyte/dailybyte-ai-target.png"
-                alt="DailyByte AI Target job-specific learning coach"
+                src="/images/dailybyte/dailybyte-ai-jobs.png"
+                alt="DailyByte AI Jobs role preparation coach"
                 width={1188}
                 height={768}
                 priority
@@ -92,7 +92,7 @@ export function Hero() {
               />
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/75 to-transparent" aria-hidden />
               <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
-                {['AI Target', 'Start AI Learn lab', 'Set Daily Code path'].map((label) => (
+                {['AI Jobs', 'Start AI Learn lab', 'Set Daily Code path'].map((label) => (
                   <span key={label} className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/70 px-3 py-1.5 text-[0.6875rem] font-semibold text-white backdrop-blur">
                     <Check className="h-3 w-3 text-[#59d8c8]" aria-hidden />{label}
                   </span>

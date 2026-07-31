@@ -32,7 +32,7 @@ const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
     question: 'What is DailyByte?',
     keywords: ['dailybyte', 'daily byte', 'platform', 'product'],
     answer:
-      'DailyByte is Ensaar\'s practical AI enablement platform for individuals and enterprises. You learn to do real work by directing an AI assistant, and your process and outcome are both evaluated. Its three core features are AI Learn, AI Target, and Daily Code.',
+      'DailyByte is Ensaar\'s practical AI enablement platform for individuals and enterprises. You learn to do real work by directing an AI assistant, and your process and outcome are both evaluated. Its three core features are AI Learn, AI Jobs, and Daily Code.',
     cta: 'individual',
   },
   {
@@ -44,11 +44,13 @@ const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
     cta: 'individual',
   },
   {
-    id: 'db-ai-target',
-    question: 'What is AI Target?',
-    keywords: ['ai target', 'target', 'job description', 'jd', 'job', 'role', 'readiness'],
+    id: 'db-ai-jobs',
+    question: 'What is AI Jobs?',
+    // "ai target" stays as a legacy alias: the feature was renamed, and anyone
+    // who remembers the old name should still land on this answer.
+    keywords: ['ai jobs', 'jobs', 'ai target', 'target', 'job description', 'jd', 'job', 'role', 'readiness'],
     answer:
-      'AI Target turns a job description into an interactive learning path. You save a job, and DailyByte builds skill modules, practice loops, Daily Code paths, and proof artifacts aligned to that role.',
+      'AI Jobs turns a job description into an interactive learning path. You save a job, and DailyByte builds skill modules, practice loops, Daily Code paths, and proof artifacts aligned to that role.',
     cta: 'individual',
   },
   {
@@ -80,7 +82,7 @@ const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
     question: 'How does my company or campus get started?',
     keywords: ['enterprise', 'company', 'organization', 'organisation', 'team', 'teams', 'campus', 'college', 'university', 'cohort', 'business', 'employees', 'staff', 'workforce'],
     answer:
-      'For a team, company, or campus, DailyByte supports a shared workspace and cohort rollout around AI Learn, AI Target, and Daily Code, with capability reporting. Use the button below to open enterprise signup.',
+      'For a team, company, or campus, DailyByte supports a shared workspace and cohort rollout around AI Learn, AI Jobs, and Daily Code, with capability reporting. Use the button below to open enterprise signup.',
     cta: 'enterprise',
   },
   {

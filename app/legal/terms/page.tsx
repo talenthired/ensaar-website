@@ -25,11 +25,15 @@ export default function TermsPage() {
             name: 'Terms of Service',
             description: 'Terms that govern use of the Ensaar Global website and engagements.',
             url,
+            breadcrumb: [{ name: 'Home', url: siteConfig.url }, { name: 'Terms of Service', url }],
           }),
-          breadcrumbSchema([
-            { name: 'Home', url: siteConfig.url },
-            { name: 'Terms of Service', url },
-          ]),
+          breadcrumbSchema(
+            [
+              { name: 'Home', url: siteConfig.url },
+              { name: 'Terms of Service', url },
+            ],
+            url,
+          ),
         ]}
       />
 

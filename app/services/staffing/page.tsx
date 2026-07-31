@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { serviceSchema, webPageSchema } from '@/components/seo/schemas';
+import { serviceDetailSchemas } from '@/components/seo/schemas';
 import { ServiceDetailPage } from '@/components/sections/ServiceDetailPage';
 import { pageMetadata } from '@/lib/metadata';
 import { SERVICES } from '@/lib/content/services';
-import { siteConfig } from '@/lib/utils';
 
 const service = SERVICES.find((item) => item.slug === 'staffing')!;
 
@@ -12,12 +11,16 @@ export const metadata: Metadata = pageMetadata({
   title: 'AI-Ready Engineering Teams',
   description: service.shortDescription,
   path: '/services/staffing',
+  eyebrow: 'Engineering teams',
+  keywords: [
+    'AI augmented staffing',
+    'AI-fluent software engineers',
+    'managed engineering pods',
+    'staff augmentation India',
+    'AI specialists for LLM and RAG',
+  ],
 });
 
 export default function StaffingPage() {
-  const url = `${siteConfig.url}/services/${service.slug}`;
-  return <><JsonLd data={[
-    webPageSchema({ name: service.name, description: service.shortDescription, url }),
-    serviceSchema({ name: service.name, description: service.longDescription, serviceType: service.serviceType, url }),
-  ]} /><ServiceDetailPage service={service} /></>;
+  return <><JsonLd data={serviceDetailSchemas(service)} /><ServiceDetailPage service={service} /></>;
 }

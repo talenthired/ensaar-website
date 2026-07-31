@@ -26,11 +26,18 @@ export default function RefundPolicyPage() {
             description:
               'Cancellation, rescheduling, and refund terms for Ensaar Global engagements.',
             url,
+            breadcrumb: [
+              { name: 'Home', url: siteConfig.url },
+              { name: 'Cancellation and Refund Policy', url },
+            ],
           }),
-          breadcrumbSchema([
-            { name: 'Home', url: siteConfig.url },
-            { name: 'Cancellation and Refund Policy', url },
-          ]),
+          breadcrumbSchema(
+            [
+              { name: 'Home', url: siteConfig.url },
+              { name: 'Cancellation and Refund Policy', url },
+            ],
+            url,
+          ),
         ]}
       />
 

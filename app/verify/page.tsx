@@ -2,16 +2,30 @@ import type { Metadata } from 'next';
 import { BadgeCheck, FileSearch, LockKeyhole } from 'lucide-react';
 import { CertificateVerifier } from '@/components/certificates/CertificateVerifier';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbSchema, webPageSchema } from '@/components/seo/schemas';
 import { Container } from '@/components/ui/Container';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
 
 const description = 'Verify an Ensaar Global BCEP or professional certificate against the official registry using its certificate number or QR code.';
 
+const url = `${siteConfig.url}/verify`;
+const trail = [
+  { name: 'Home', url: siteConfig.url },
+  { name: 'Verify a certificate', url },
+];
+
 export const metadata: Metadata = pageMetadata({
   title: 'Verify an Ensaar Certificate',
   description,
   path: '/verify',
+  eyebrow: 'Credential registry',
+  keywords: [
+    'Ensaar certificate verification',
+    'BCEP certificate lookup',
+    'verify credential',
+    'certificate number check',
+  ],
 });
 
 const STEPS = [
@@ -27,15 +41,23 @@ export default function VerifyCertificatePage() {
 export function VerificationPage({ initialCertificateNumber = '' }: { initialCertificateNumber?: string }) {
   return (
     <>
-      <JsonLd data={{
-        '@context': 'https://schema.org',
-        '@type': 'WebPage',
-        name: 'Ensaar Certificate Verification',
-        description,
-        url: `${siteConfig.url}/verify`,
-        isPartOf: { '@id': `${siteConfig.url}/#website` },
-        about: { '@type': 'EducationalOccupationalCredential', credentialCategory: 'Ensaar professional certificate' },
-      }} />
+      <JsonLd data={[
+        webPageSchema({
+          name: 'Ensaar Certificate Verification',
+          description,
+          url,
+          breadcrumb: trail,
+        }),
+        breadcrumbSchema(trail, url),
+        {
+          '@context': 'https://schema.org',
+          '@type': 'EducationalOccupationalCredential',
+          name: 'Ensaar professional certificate',
+          credentialCategory: 'Ensaar professional certificate',
+          url,
+          recognizedBy: { '@id': `${siteConfig.url}/#organization` },
+        },
+      ]} />
       <section className="relative isolate overflow-hidden bg-[#071a34] pb-20 pt-28 text-white md:pb-24 md:pt-36">
         <div className="absolute inset-y-0 left-0 w-1.5 bg-gradient-brand" aria-hidden />
         <div className="absolute -right-32 top-10 h-80 w-80 rounded-full border border-cyan-300/10" aria-hidden />

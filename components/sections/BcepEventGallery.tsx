@@ -187,7 +187,9 @@ export function BcepEventGallery() {
           ))}
         </div>
 
-        <p className="mt-5 text-right text-[0.68rem] uppercase tracking-[0.1em] text-slate-500">
+        {/* slate-400, not slate-500: this caption sits on the section's dark navy,
+            where slate-500 is only 3.7:1. */}
+        <p className="mt-5 text-right text-[0.68rem] uppercase tracking-[0.1em] text-slate-400">
           Selected moments from an Ensaar BCEP cohort
         </p>
         </Container>

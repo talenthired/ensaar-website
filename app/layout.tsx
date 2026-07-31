@@ -15,6 +15,45 @@ const themeBootstrap = `
 (function(){try{var t=localStorage.getItem('ensaar-theme');if(t!=='light'&&t!=='dark')t='light';document.documentElement.setAttribute('data-theme',t);}catch(e){document.documentElement.setAttribute('data-theme','light');}})();
 `;
 
+/**
+ * Strip attributes injected by browser extensions before React hydrates.
+ *
+ * Form-autofill extensions stamp `fdprocessedid` onto every button and input
+ * between the HTML arriving and React hydrating, which React then reports as a
+ * hydration mismatch on each one. It is harmless, but it buries real errors in
+ * the console. `suppressHydrationWarning` does not help: it only applies one
+ * level deep, so the <html>/<body> flags never reach a nested button.
+ *
+ * The observer disconnects a few seconds after load, by which point hydration
+ * is long finished and the attributes no longer matter.
+ *
+ * This mirrors the same script in DailyByte's layout; keep the two in step.
+ */
+const extensionAttributeCleanup = `
+(function(){
+  var attrs=['fdprocessedid','cz-shortcut-listen','data-berrycast-extension'];
+  function clean(root){
+    if(!root||root.nodeType!==1)return;
+    for(var i=0;i<attrs.length;i++)root.removeAttribute(attrs[i]);
+    if(root.querySelectorAll){
+      for(var j=0;j<attrs.length;j++){
+        var nodes=root.querySelectorAll('['+attrs[j]+']');
+        for(var k=0;k<nodes.length;k++)nodes[k].removeAttribute(attrs[j]);
+      }
+    }
+  }
+  clean(document.documentElement);
+  var observer=new MutationObserver(function(records){
+    for(var i=0;i<records.length;i++){
+      clean(records[i].target);
+      for(var j=0;j<records[i].addedNodes.length;j++)clean(records[i].addedNodes[j]);
+    }
+  });
+  observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:attrs});
+  window.addEventListener('load',function(){setTimeout(function(){clean(document.documentElement);observer.disconnect();},4000);});
+})();
+`;
+
 export const viewport: Viewport = {
   themeColor: '#ffffff',
   width: 'device-width',
@@ -55,7 +94,7 @@ export const metadata: Metadata = {
     'role based AI training',
     'AI capability pilot',
     'DailyByte AI Learn',
-    'DailyByte AI Target',
+    'DailyByte AI Jobs',
     'DailyByte Daily Code',
     'job specific AI learning',
     'BCEP certification',
@@ -91,7 +130,11 @@ export const metadata: Metadata = {
       'en-IN': siteConfig.url,
       'x-default': siteConfig.url,
     },
+    types: {
+      'application/rss+xml': `${siteConfig.url}/insights/feed.xml`,
+    },
   },
+  manifest: '/manifest.webmanifest',
   robots: {
     index: true,
     follow: true,
@@ -117,6 +160,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script
           suppressHydrationWarning
           dangerouslySetInnerHTML={{ __html: themeBootstrap }}
+        />
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{ __html: extensionAttributeCleanup }}
         />
         <JsonLd data={[organizationSchema(), websiteSchema()]} />
         <ThemeProvider>

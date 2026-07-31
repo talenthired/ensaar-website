@@ -22,6 +22,8 @@ const config: Config = {
         },
         accent: {
           primary: withVar('accent-primary'),
+          ink: withVar('accent-ink'),
+          press: withVar('accent-press'),
           secondary: withVar('accent-secondary'),
           glow: withVar('accent-glow'),
           cyan: withVar('accent-cyan'),

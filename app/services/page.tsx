@@ -4,29 +4,53 @@ import { Container } from '@/components/ui/Container';
 import { ServicesSection } from '@/components/sections/ServicesSection';
 import { ContactSection } from '@/components/sections/ContactSection';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { serviceSchema, webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, itemListSchema, serviceSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { SERVICES } from '@/lib/content/services';
 import { siteConfig } from '@/lib/utils';
 
+const description =
+  'Explore Ensaar enterprise AI enablement, software development, AI-ready engineering teams, BCEP AI readiness certification, and industry readiness programs.';
+
 export const metadata: Metadata = pageMetadata({
   title: 'Enterprise AI Enablement, Software Development, and Capability Building',
-  description:
-    'Explore Ensaar enterprise AI enablement, software development, AI-ready engineering teams, BCEP AI readiness certification, and industry readiness programs.',
+  description,
   path: '/services',
+  eyebrow: 'What we do',
 });
 
 export default function ServicesPage() {
   const url = `${siteConfig.url}/services`;
+  const trail = [
+    { name: 'Home', url: siteConfig.url },
+    { name: 'Services', url },
+  ];
   return (
     <>
       <JsonLd data={[
-        webPageSchema({ name: 'Ensaar Services', description: metadata.description as string, url }),
+        webPageSchema({
+          name: 'Ensaar Services',
+          description,
+          url,
+          type: 'CollectionPage',
+          breadcrumb: trail,
+        }),
+        breadcrumbSchema(trail, url),
+        itemListSchema({
+          name: 'Ensaar Global services',
+          url,
+          items: SERVICES.map((service) => ({
+            name: service.name,
+            url: `${url}/${service.slug}`,
+            description: service.shortDescription,
+          })),
+        }),
         ...SERVICES.map((service) => serviceSchema({
           name: service.name,
           description: service.shortDescription,
           serviceType: service.serviceType,
           url: `${url}/${service.slug}`,
+          offerings: service.offerings,
         })),
       ]} />
       <div className="relative isolate overflow-hidden bg-[#0c2343] pb-20 pt-32 text-white md:pb-24 md:pt-40">

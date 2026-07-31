@@ -18,8 +18,13 @@ export default function PrivacyPage() {
   return (
     <>
       <JsonLd data={[
-        webPageSchema({ name: 'Privacy Notice', description: metadata.description as string, url }),
-        breadcrumbSchema([{ name: 'Home', url: siteConfig.url }, { name: 'Privacy Notice', url }]),
+        webPageSchema({
+          name: 'Privacy Notice',
+          description: metadata.description as string,
+          url,
+          breadcrumb: [{ name: 'Home', url: siteConfig.url }, { name: 'Privacy Notice', url }],
+        }),
+        breadcrumbSchema([{ name: 'Home', url: siteConfig.url }, { name: 'Privacy Notice', url }], url),
       ]} />
       <div className="pt-32 pb-10">
         <Container>

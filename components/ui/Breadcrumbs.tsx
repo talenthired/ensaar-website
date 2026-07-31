@@ -1,20 +1,17 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import { JsonLd } from '@/components/seo/JsonLd';
-import { breadcrumbSchema } from '@/components/seo/schemas';
-import { siteConfig } from '@/lib/utils';
 
 type Crumb = { name: string; href: string };
 
+/**
+ * Visual breadcrumb only. The matching BreadcrumbList JSON-LD is emitted by each page
+ * alongside its WebPage node, so the two stay in one graph. Emitting it here as well
+ * produced a second, sometimes conflicting, BreadcrumbList on every page that used it.
+ */
 export function Breadcrumbs({ items }: { items: Crumb[] }) {
   const allItems = [{ name: 'Home', href: '/' }, ...items];
   return (
     <>
-      <JsonLd
-        data={breadcrumbSchema(
-          allItems.map((i) => ({ name: i.name, url: `${siteConfig.url}${i.href}` })),
-        )}
-      />
       <nav aria-label="Breadcrumb" className="mb-8">
         <ol className="flex flex-wrap items-center gap-2 text-sm text-ink-secondary font-mono">
           {allItems.map((item, i) => {

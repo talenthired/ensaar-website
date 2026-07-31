@@ -4,16 +4,23 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Section } from '@/components/ui/Section';
 import { Button } from '@/components/ui/Button';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { faqPageSchema, webPageSchema } from '@/components/seo/schemas';
+import { breadcrumbSchema, faqPageSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { FAQ } from '@/lib/content/faq';
 import { siteConfig } from '@/lib/utils';
+
+const url = `${siteConfig.url}/faq`;
+const trail = [
+  { name: 'Home', url: siteConfig.url },
+  { name: 'FAQ', url },
+];
 
 export const metadata: Metadata = pageMetadata({
   title: 'Frequently Asked Questions',
   description:
     'Answers about Ensaar Global, AI solutions, software development, managed engineering, BCEP AI readiness certification, and how to start an engagement.',
   path: '/faq',
+  eyebrow: 'FAQ',
 });
 
 const CATEGORIES: Array<{ key: typeof FAQ[number]['category']; label: string }> = [
@@ -32,8 +39,10 @@ export default function FaqPage() {
           webPageSchema({
             name: 'FAQ',
             description: 'Frequently asked questions about Ensaar Global.',
-            url: `${siteConfig.url}/faq`,
+            url,
+            breadcrumb: trail,
           }),
+          breadcrumbSchema(trail, url),
           faqPageSchema(
             FAQ.map((item) => ({ question: item.question, answer: item.answer })),
           ),
