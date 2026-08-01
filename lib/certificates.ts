@@ -5,7 +5,6 @@ export const certificateServiceUrl = (
 export type CertificateSearchResult = {
   found: true;
   certificateNumber: string;
-  recipientName: string;
   status: 'active' | 'expired' | 'revoked';
 };
 
@@ -37,4 +36,21 @@ export function absoluteCertificateAsset(value: unknown) {
   if (typeof value !== 'string' || !value) return undefined;
   if (value.startsWith('https://') || value.startsWith('http://')) return value;
   return `${certificateServiceUrl}/${value.replace(/^\/+/, '')}`;
+}
+
+/** The public lookup step proves only that a registry record exists. PII stays behind OTP. */
+export function publicCertificateSearchResult(payload: Record<string, unknown>): CertificateSearchResult {
+  const source = payload.certificate && typeof payload.certificate === 'object'
+    ? payload.certificate as Record<string, unknown>
+    : payload;
+  const certificateNumber = normalizeCertificateNumber(source.certificateNumber ?? payload.certificateNumber);
+  const status = source.status ?? payload.status;
+  if (!certificateNumber || !['active', 'expired', 'revoked'].includes(String(status))) {
+    throw new Error('Certificate service returned an invalid search response.');
+  }
+  return {
+    found: true,
+    certificateNumber,
+    status: status as CertificateSearchResult['status'],
+  };
 }

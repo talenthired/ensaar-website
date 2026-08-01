@@ -6,12 +6,12 @@ import { parseEventInput } from '@/lib/events/validate';
 
 export const runtime = 'nodejs';
 
-function authorized(request: NextRequest) {
+async function authorized(request: NextRequest) {
   return verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value);
 }
 
 export async function GET(request: NextRequest) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     return NextResponse.json({ events: await listEvents() });
   } catch (error) {
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const parsed = parseEventInput((await request.json()) as Record<string, unknown>);
     if (typeof parsed === 'string') return NextResponse.json({ error: parsed }, { status: 400 });

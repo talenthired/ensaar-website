@@ -6,12 +6,12 @@ import { parseEventInput } from '@/lib/events/validate';
 
 export const runtime = 'nodejs';
 
-function authorized(request: NextRequest) {
+async function authorized(request: NextRequest) {
   return verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value);
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!authorized(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const { id } = await params;
     if (!(await deleteEvent(id))) {

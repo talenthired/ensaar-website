@@ -203,7 +203,7 @@ export function CertificateVerifier({ initialCertificateNumber = '' }: { initial
                 <div><div className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-700 dark:text-emerald-300">Certificate found</div><div className="mt-2 font-mono text-sm text-ink-primary">{searchResult.certificateNumber}</div></div>
                 <Status status={searchResult.status} />
               </div>
-              <div className="mt-4 text-lg font-semibold text-ink-primary">{searchResult.recipientName}</div>
+              <div className="mt-4 text-sm leading-relaxed text-ink-secondary">Confirm access to the registered email address to view the credential record.</div>
             </div>
             <div className="mt-7 flex items-start gap-4"><Mail className="mt-1 h-6 w-6 text-accent-secondary" aria-hidden /><div><h2 className="text-2xl leading-tight">Receive a validation code</h2><p className="mt-2 text-sm leading-relaxed text-ink-secondary">Use your email address. We send the full validated record only after OTP confirmation.</p></div></div>
             <form className="mt-6" onSubmit={(event) => { event.preventDefault(); void post('request-otp'); }}>

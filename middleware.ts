@@ -1,0 +1,17 @@
+import { NextResponse, type NextRequest } from 'next/server';
+import { buildContentSecurityPolicy } from '@/lib/csp';
+
+export function middleware(request: NextRequest) {
+  const nonce = crypto.randomUUID();
+  const csp = buildContentSecurityPolicy(nonce, process.env.NODE_ENV !== 'production');
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('content-security-policy', csp);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('Content-Security-Policy', csp);
+  return response;
+}
+
+export const config = {
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+};

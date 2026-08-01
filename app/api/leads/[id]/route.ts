@@ -9,7 +9,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value)) {
+  if (!(await verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

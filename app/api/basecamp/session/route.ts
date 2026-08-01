@@ -3,6 +3,7 @@ import {
   BASECAMP_COOKIE,
   basecampIsConfigured,
   createBasecampToken,
+  revokeBasecampToken,
   verifyBasecampPassword,
 } from '@/lib/basecamp/auth';
 import { clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
@@ -17,7 +18,7 @@ const WINDOW_MS = 10 * 60 * 1000;
 
 /** Sign in. */
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(clientKey(request, 'basecamp-login'), MAX_ATTEMPTS, WINDOW_MS);
+  const limit = await rateLimit(clientKey(request, 'basecamp-login'), MAX_ATTEMPTS, WINDOW_MS);
   if (!limit.ok) {
     return tooManyRequests(limit.retryAfter, 'Too many sign-in attempts. Try again shortly.');
   }
@@ -31,18 +32,19 @@ export async function POST(request: NextRequest) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(BASECAMP_COOKIE, createBasecampToken(), {
+  response.cookies.set(BASECAMP_COOKIE, await createBasecampToken(), {
     httpOnly: true,
     sameSite: 'strict',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: 60 * 60 * 8,
   });
   return response;
 }
 
 /** Sign out. */
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  await revokeBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value);
   const response = NextResponse.json({ ok: true });
   response.cookies.set(BASECAMP_COOKIE, '', { path: '/', maxAge: 0 });
   return response;

@@ -12,6 +12,6 @@ export const metadata: Metadata = {
 export default async function BasecampLoginPage() {
   // Already signed in: skip the form rather than asking for a password twice.
   const cookieStore = await cookies();
-  if (verifyBasecampToken(cookieStore.get(BASECAMP_COOKIE)?.value)) redirect('/basecamp');
+  if (await verifyBasecampToken(cookieStore.get(BASECAMP_COOKIE)?.value)) redirect('/basecamp');
   return <BasecampLogin />;
 }

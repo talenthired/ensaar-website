@@ -31,38 +31,7 @@ const nextConfig = {
     ];
   },
   async headers() {
-    // Content-Security-Policy. 'unsafe-inline' is required for scripts because the
-    // theme bootstrap, the JSON-LD blocks, and the GA config are inline, and Next
-    // injects its own inline hydration scripts. That weakens the XSS benefit, but
-    // the other directives still carry real weight: frame-ancestors blocks
-    // clickjacking of Basecamp, form-action stops form hijacking, base-uri stops
-    // <base> injection, and object-src kills legacy plugin vectors. Moving to a
-    // nonce would need per-request middleware threading through every inline
-    // script, so it is deliberately left as a follow-up rather than a half-done
-    // nonce that silently breaks the theme script.
-    // `next dev` compiles the client bundle with eval-based source maps and
-    // React Fast Refresh, both of which need 'unsafe-eval'. Without it the
-    // bundle throws before hydrating, so every 'use client' component (the
-    // hero, the DailyByte gallery) is frozen in its pre-hydration state and
-    // looks broken. Dev only: the production CSP stays strict.
-    const devEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
-
-    const csp = [
-      "default-src 'self'",
-      `script-src 'self' 'unsafe-inline'${devEval} https://www.googletagmanager.com`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://images.unsplash.com https://verify.ensaar.com https://www.googletagmanager.com https://www.google-analytics.com",
-      "font-src 'self' data:",
-      "connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com",
-      "frame-ancestors 'none'",
-      "form-action 'self'",
-      "base-uri 'self'",
-      "object-src 'none'",
-      'upgrade-insecure-requests',
-    ].join('; ');
-
     const securityHeaders = [
-      { key: 'Content-Security-Policy', value: csp },
       // Belt-and-braces with frame-ancestors, for older browsers.
       { key: 'X-Frame-Options', value: 'DENY' },
       { key: 'X-Content-Type-Options', value: 'nosniff' },

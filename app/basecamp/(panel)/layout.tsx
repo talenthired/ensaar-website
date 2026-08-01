@@ -9,7 +9,7 @@ import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
  */
 export default async function BasecampPanelLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
-  if (!verifyBasecampToken(cookieStore.get(BASECAMP_COOKIE)?.value)) redirect('/basecamp/login');
+  if (!(await verifyBasecampToken(cookieStore.get(BASECAMP_COOKIE)?.value))) redirect('/basecamp/login');
 
   return (
     <div className="min-h-screen bg-bg-secondary pt-24 pb-16">

@@ -8,6 +8,7 @@ import { Analytics } from '@/components/marketing/Analytics';
 import { OpportunityAdvisor } from '@/components/marketing/OpportunityAdvisor';
 import { organizationSchema, websiteSchema } from '@/components/seo/schemas';
 import { siteConfig, ogImage } from '@/lib/utils';
+import { headers } from 'next/headers';
 import './globals.css';
 
 // Inline script to apply theme before paint.
@@ -149,7 +150,8 @@ export const metadata: Metadata = {
   category: 'technology',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
   return (
     <html
       lang="en-IN"
@@ -159,15 +161,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <script
           suppressHydrationWarning
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: themeBootstrap }}
         />
         <script
           suppressHydrationWarning
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: extensionAttributeCleanup }}
         />
-        <JsonLd data={[organizationSchema(), websiteSchema()]} />
+        <JsonLd nonce={nonce} data={[organizationSchema(), websiteSchema()]} />
         <ThemeProvider>
-          <Analytics />
+          <Analytics nonce={nonce} />
           <AttributionCapture />
           <Header />
           <main id="main">{children}</main>

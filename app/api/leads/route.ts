@@ -17,7 +17,7 @@ function clean(value: unknown, max = 500) {
 }
 
 export async function POST(request: NextRequest) {
-  const limit = rateLimit(clientKey(request, 'lead-submit'), MAX_SUBMISSIONS, WINDOW_MS);
+  const limit = await rateLimit(clientKey(request, 'lead-submit'), MAX_SUBMISSIONS, WINDOW_MS);
   if (!limit.ok) {
     return tooManyRequests(limit.retryAfter, 'Too many submissions. Please try again later.');
   }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value)) {
+  if (!(await verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
