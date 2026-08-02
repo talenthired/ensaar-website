@@ -1,6 +1,10 @@
+'use client';
+
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, BadgeCheck, Building2, FileCheck2, HeartHandshake, ShieldCheck } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
+import { fadeUp, stagger, viewportOnce } from '@/lib/motion';
 
 const SIGNALS = [
   { icon: ShieldCheck, label: 'AI readiness for modern work' },
@@ -11,6 +15,7 @@ const SIGNALS = [
 ];
 
 export function BcepCertificationCta() {
+  const reducedMotion = useReducedMotion();
   return (
     <section className="relative overflow-hidden bg-[#0c2343] py-20 text-white md:py-24">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(19,166,148,0.22),transparent_35%)]" aria-hidden />
@@ -42,15 +47,25 @@ export function BcepCertificationCta() {
               </Link>
             </div>
           </div>
-          <div className="border-t border-white/15">
+          <motion.div
+            className="border-t border-white/15"
+            initial={reducedMotion ? 'visible' : 'hidden'}
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={stagger}
+          >
             {SIGNALS.map(({ icon: Icon, label }, index) => (
-              <div key={label} className="flex items-center gap-4 border-b border-white/15 px-2 py-5">
+              <motion.div
+                key={label}
+                variants={fadeUp}
+                className="flex items-center gap-4 border-b border-white/15 px-2 py-5 transition-colors hover:bg-white/[0.04]"
+              >
                 <span className="font-mono text-xs text-cyan-300">0{index + 1}</span>
                 <Icon className="h-5 w-5 text-[#f5a623]" aria-hidden />
                 <span className="font-semibold text-slate-100">{label}</span>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </Container>
     </section>

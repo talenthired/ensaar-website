@@ -131,57 +131,48 @@ export function Header() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="absolute inset-x-0 top-full z-40 h-[calc(100svh-4.25rem)] overflow-y-auto bg-bg-primary lg:hidden"
+          className="absolute inset-x-0 top-full z-40 h-[calc(100svh-4.25rem)] overflow-y-auto overscroll-contain bg-bg-primary lg:hidden"
         >
-          <nav className="container-page flex flex-col items-center gap-5 pt-10 pb-12 text-center">
+          {/* Left-aligned rows, not a centred poster.
+              This panel used to render every link at text-2xl, centred, with the
+              12-item What We Do submenu permanently expanded: 19 links stacked
+              well past the viewport, so Insights, Events and Contact sat below
+              the fold with nothing indicating they were there, and the nested
+              card was left-aligned inside centred parents. A phone menu is a
+              list to scan, so it reads as one, and the section that carries a
+              dozen children collapses instead of pushing everything else off
+              screen. */}
+          <nav className="container-page flex flex-col py-2">
             {NAV.map((item, i) => (
               <motion.div
                 key={item.href}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 + i * 0.05 }}
-                className="w-full"
+                transition={{ delay: 0.03 + i * 0.035 }}
+                className="border-b border-line-subtle last:border-b-0"
               >
-                <Link
-                  href={item.href}
-                  className="block text-2xl font-display text-ink-primary hover:gradient-text transition-all"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-                {item.children && (
-                  <div className="mx-auto mt-4 grid w-[calc(100%-1rem)] max-w-sm gap-5 rounded-xl border border-line-subtle bg-bg-secondary/70 p-5 text-left sm:grid-cols-2">
-                    {(['Services', 'Industries'] as const).map((group) => (
-                      <div key={group}>
-                        <div className="mb-2 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent-secondary">
-                          {group}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          {item.children?.filter((child) => child.group === group).map((child) => (
-                            <Link
-                              key={child.href}
-                              href={child.href}
-                              className="text-sm text-ink-secondary hover:text-accent-secondary"
-                              onClick={() => setMenuOpen(false)}
-                            >
-                              {child.label}
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                {item.children ? (
+                  <MobileNavGroup item={item} onNavigate={() => setMenuOpen(false)} />
+                ) : (
+                  <Link
+                    href={item.href}
+                    // min-h-[52px] keeps every row a comfortable tap target.
+                    className="flex min-h-[52px] items-center text-lg font-display text-ink-primary transition-colors hover:text-accent-secondary"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
                 )}
               </motion.div>
             ))}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="mt-4"
+              transition={{ delay: 0.03 + NAV.length * 0.035 }}
+              className="pt-5 pb-8"
               onClick={() => setMenuOpen(false)}
             >
-              <AdvisorTrigger source="mobile-menu" variant="primary">
+              <AdvisorTrigger source="mobile-menu" variant="primary" className="w-full justify-center">
                 Find Your AI Fit
               </AdvisorTrigger>
             </motion.div>
@@ -189,6 +180,64 @@ export function Header() {
         </motion.div>
       )}
     </motion.header>
+  );
+}
+
+/**
+ * A nav item with children, on mobile.
+ *
+ * Collapsed by default. Expanded, "What We Do" adds twelve links, which is more
+ * than the rest of the menu combined, so leaving it open permanently buried
+ * every item below it.
+ */
+function MobileNavGroup({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <div className="flex items-center">
+        <Link
+          href={item.href}
+          className="flex min-h-[52px] flex-1 items-center text-lg font-display text-ink-primary transition-colors hover:text-accent-secondary"
+          onClick={onNavigate}
+        >
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          // A separate control from the link: tapping the label should still
+          // navigate, and only the chevron expands.
+          className="-mr-2 flex h-[52px] w-12 items-center justify-center text-ink-secondary"
+          aria-label={open ? `Collapse ${item.label}` : `Expand ${item.label}`}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+        >
+          <ChevronDown className={cn('h-5 w-5 transition-transform', open && 'rotate-180')} />
+        </button>
+      </div>
+      {open && (
+        <div className="grid gap-4 pb-4">
+          {(['Services', 'Industries'] as const).map((group) => (
+            <div key={group}>
+              <div className="mb-1.5 font-mono text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-accent-secondary">
+                {group}
+              </div>
+              <div className="flex flex-col">
+                {item.children?.filter((child) => child.group === group).map((child) => (
+                  <Link
+                    key={child.href}
+                    href={child.href}
+                    className="flex min-h-[40px] items-center pl-3 text-sm text-ink-secondary transition-colors hover:text-accent-secondary"
+                    onClick={onNavigate}
+                  >
+                    {child.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

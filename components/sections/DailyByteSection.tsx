@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Eye, Gauge, ShieldCheck } from 'lucide-react';
 import { DailyByteGallery } from '@/components/marketing/DailyByteGallery';
 import { Container } from '@/components/ui/Container';
 import { dailyByteLinks } from '@/lib/dailybyte';
+import { fadeUp, stagger, viewportOnce } from '@/lib/motion';
 
 const MEASURES = [
   {
@@ -23,6 +27,18 @@ const MEASURES = [
 ] as const;
 
 export function DailyByteSection() {
+  const reducedMotion = useReducedMotion();
+  // This section carried no motion at all: the product gallery inside it
+  // rotates, but everything around it, including the three evaluation measures
+  // and the four-step summary, arrived fully formed and never moved again. The
+  // grids below now come in as rows, which is what makes a long page feel like
+  // it is being read rather than scrolled past.
+  const revealGrid = {
+    initial: reducedMotion ? 'visible' : 'hidden',
+    whileInView: 'visible' as const,
+    viewport: viewportOnce,
+    variants: stagger,
+  };
   return (
     <section id="dailybyte" className="overflow-hidden bg-[#102d30] py-20 text-white md:py-28">
       <Container>
@@ -59,33 +75,37 @@ export function DailyByteSection() {
           <DailyByteGallery />
         </div>
 
-        <div className="mt-12 grid border-l border-t border-white/15 md:grid-cols-3">
+        <motion.div className="mt-12 grid border-l border-t border-white/15 md:grid-cols-3" {...revealGrid}>
           {MEASURES.map(({ icon: Icon, title, detail }) => (
-            <div key={title} className="border-b border-r border-white/15 p-6 md:p-8">
+            <motion.div
+              key={title}
+              variants={fadeUp}
+              className="group border-b border-r border-white/15 p-6 transition-colors hover:bg-white/[0.04] md:p-8"
+            >
               <div className="flex items-center gap-3">
                 <Icon className="h-5 w-5 text-[#91e5d7]" aria-hidden />
                 <h3 className="text-lg text-white">{title}</h3>
               </div>
               <p className="mt-4 text-sm leading-relaxed text-emerald-50/70">{detail}</p>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
-        <div className="mt-12 grid gap-5 border-y border-white/15 py-7 sm:grid-cols-2 lg:grid-cols-4">
+        <motion.div className="mt-12 grid gap-5 border-y border-white/15 py-7 sm:grid-cols-2 lg:grid-cols-4" {...revealGrid}>
           {[
             'Start AI Learn with realistic work labs',
             'Use AI Jobs to learn from a job description',
             'Set a Daily Code path aligned to the target role',
             'Track proof, readiness, and team capability signals',
           ].map((item, index) => (
-            <div key={item} className="flex items-start gap-3 text-sm leading-relaxed text-emerald-50/80">
+            <motion.div key={item} variants={fadeUp} className="flex items-start gap-3 text-sm leading-relaxed text-emerald-50/80">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f5a623] text-[#102d30]">
                 <Check className="h-3.5 w-3.5" aria-hidden />
               </span>
               <span><span className="font-mono text-xs text-[#91e5d7]">0{index + 1}</span><br />{item}</span>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </Container>
     </section>
   );

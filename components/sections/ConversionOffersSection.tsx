@@ -1,8 +1,12 @@
+'use client';
+
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Building2, GraduationCap, UserRound } from 'lucide-react';
 import { AdvisorTrigger } from '@/components/marketing/AdvisorTrigger';
 import { Container } from '@/components/ui/Container';
 import { dailyByteLinks } from '@/lib/dailybyte';
+import { fadeUp, viewportOnce } from '@/lib/motion';
 
 const OFFERS = [
   {
@@ -41,6 +45,7 @@ const OFFERS = [
 ] as const;
 
 export function ConversionOffersSection() {
+  const reducedMotion = useReducedMotion();
   return (
     <section id="start-here" className="bg-bg-primary py-20 md:py-28">
       <Container>
@@ -58,7 +63,16 @@ export function ConversionOffersSection() {
 
         <div className="mt-14 border-y border-line-subtle">
           {OFFERS.map(({ number, icon: Icon, audience, title, description, proof, action, ...offer }) => (
-            <article key={number} className="group grid gap-6 border-b border-line-subtle py-8 last:border-b-0 md:grid-cols-[90px_0.9fr_1.1fr] md:items-start md:py-10">
+            <motion.article
+              key={number}
+              // Each offer arrives on its own: this is the page's main routing
+              // decision, and reading them one at a time is the point.
+              initial={reducedMotion ? 'visible' : 'hidden'}
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={fadeUp}
+              className="group grid gap-6 border-b border-line-subtle py-8 transition-colors last:border-b-0 hover:bg-bg-secondary/40 md:grid-cols-[90px_0.9fr_1.1fr] md:items-start md:py-10"
+            >
               <div className="flex items-center gap-3 text-accent-secondary">
                 <span className="font-mono text-xs tracking-[0.12em]">{number}</span>
                 <Icon className="h-5 w-5" aria-hidden />
@@ -80,7 +94,7 @@ export function ConversionOffersSection() {
                   </AdvisorTrigger>
                 )}
               </div>
-            </article>
+            </motion.article>
           ))}
         </div>
       </Container>
