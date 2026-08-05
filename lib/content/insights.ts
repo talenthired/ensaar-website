@@ -253,6 +253,147 @@ export const INSIGHTS: Insight[] = [
     ],
     relatedOffer: { label: 'Discuss a knowledge AI initiative', href: '/contact' },
   },
+  {
+    slug: 'closing-the-employability-gap',
+    title: 'Closing the Employability Gap: What Organisations Owe Young Professionals',
+    description:
+      'Employers and young professionals want the same things and describe them differently. A practical view of the organisational half of employability, from expectation setting to measurable AI capability.',
+    category: 'Workforce Enablement',
+    published: '2026-08-05',
+    updated: '2026-08-05',
+    readingTime: '7 min read',
+    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1600&q=85&auto=format&fit=crop',
+    imageAlt: 'A team discussing expectations and career growth in an office',
+    summary: [
+      'Both sides value learning, adaptability, and long-term growth. The disconnect is rarely about values.',
+      'Expectations that are assumed rather than discussed become the gap.',
+      'Employability is shared: personal commitment on one side, organisational investment on the other.',
+      'Investment is only credible when it is visible, scheduled, and measured like any other commitment.',
+    ],
+    sections: [
+      {
+        heading: 'The disagreement is smaller than it looks',
+        paragraphs: [
+          'Writing in The Times of India on 5 August 2026, Arti Dua, partner and national talent leader at EY India, described a pattern worth taking seriously: organisations talk about ownership, adaptability, and resilience, while young professionals talk about purpose, growth, flexibility, and meaningful work. These sound like competing demands. They are closer to two descriptions of the same thing.',
+          'Her conclusion is the useful part. Both groups agree on far more than they disagree on, and the disconnect appears when expectations are assumed rather than discussed openly. That reframes the problem. It is not a values gap that needs a culture programme. It is a communication gap that needs specifics.',
+        ],
+      },
+      {
+        heading: 'What has actually changed',
+        paragraphs: [
+          'For decades a career followed a predictable shape: credentials opened the door, experience built expertise, and progression followed time served. In a learning economy the ability to learn, adapt, and reinvent matters more than the starting credential, and AI has accelerated that shift rather than caused it.',
+          'The practical consequence for employers is a change in what they are hiring for. The demand is for people who can work usefully in uncertainty rather than execute predefined tasks, and who combine technical and AI skills with judgment, communication, and collaboration. Those are harder attributes to interview for and much harder to develop by accident.',
+        ],
+      },
+      {
+        heading: 'The organisational half of the bargain',
+        paragraphs: [
+          'If employability is a shared responsibility, the organisation owes a real contribution and not an aspiration. Young professionals are explicitly assessing whether an employer will invest in their long-term growth, and they make that judgment from what they can observe, not from what appears in a values statement.',
+          'Investment reads as credible when it has the same properties as any other commitment the business takes seriously: a named owner, protected time, a defined outcome, and a measure attached.',
+        ],
+        bullets: [
+          'State the capability expectation for the role in plain language, not as a competency grid',
+          'Protect time for practice rather than assuming it happens after delivery hours',
+          'Measure capability against real work, not course completion',
+          'Give managers something concrete to discuss in one-to-ones',
+          'Review the expectation openly at a set interval, so it stays a conversation',
+        ],
+      },
+      {
+        heading: 'Make the conversation specific',
+        paragraphs: [
+          'Assumed expectations are the failure mode, so the remedy is to make them explicit and testable. "Be adaptable" cannot be discussed usefully. "Use AI to produce a first draft of this analysis, verify the numbers against source, and be able to explain what you checked" can be discussed, practised, and evidenced.',
+          'The same applies in the other direction. A young professional asking for growth is easier to support when the request is specific about the capability they want and the work they want to do with it.',
+        ],
+      },
+      {
+        heading: 'Where AI capability fits',
+        paragraphs: [
+          'AI is where this gap is currently most visible, because expectations moved faster than any curriculum. Organisations increasingly assume AI fluency; individuals are unsure what fluency means or how to show they have it.',
+          'The practical answer is to define capability as observable behaviour rather than tool familiarity. Whether someone can frame a task for an assistant, ground it in real source material, verify what comes back, and improve a weak draft is answerable from evidence. Whether they have used a particular product is not, and it predicts very little.',
+        ],
+      },
+    ],
+    faq: [
+      { question: 'Whose responsibility is employability?', answer: 'Both parties. The individual brings personal commitment to keep learning; the organisation brings investment in time, structure, and honest expectation setting. Treating it as only one side\'s job is what produces the gap.' },
+      { question: 'Why do organisations and young professionals seem to want different things?', answer: 'Largely because they use different vocabulary for the same objective. Ownership and adaptability describe the same working reality as growth and meaningful work. The disconnect usually comes from expectations being assumed rather than discussed.' },
+      { question: 'How do you measure capability rather than course completion?', answer: 'Assess observable behaviour on real work: how a person frames a task, grounds it in source material, verifies the output, and improves a weak result. Completion records show attendance, not capability.' },
+    ],
+    relatedOffer: { label: 'Plan a workforce enablement sprint', href: '/services/corporate-training' },
+  },
+  {
+    slug: 'india-ai-adoption-2026',
+    title: 'India\'s AI Adoption in Numbers: What the Infrastructure Means for Enterprises',
+    description:
+      'Enterprise AI adoption at 87 percent, 38,000 GPUs of national compute, and delivery at population scale. What India\'s AI build-out changes for enterprise planning.',
+    category: 'AI Adoption',
+    published: '2026-08-05',
+    updated: '2026-08-05',
+    readingTime: '7 min read',
+    image: 'https://images.unsplash.com/photo-1591696205602-2f950c417cb9?w=1600&q=85&auto=format&fit=crop',
+    imageAlt: 'Data centre infrastructure supporting national AI compute capacity',
+    summary: [
+      'Enterprise AI adoption in India is reported at 87 percent, so the differentiator is no longer whether a company uses AI.',
+      'National compute and connectivity have moved from constraint to assumption.',
+      'The strongest deployments compete on operating cost per user, not model sophistication.',
+      'Capability inside the organisation is now the scarce input.',
+    ],
+    sections: [
+      {
+        heading: 'The numbers worth planning against',
+        paragraphs: [
+          'A Times of India report on 5 August 2026 collected the current picture of AI deployment in India, and the figures are more useful for planning than the usual adoption survey because they describe infrastructure rather than intent.',
+          'India\'s digital economy contributed 31.6 lakh crore rupees in 2022-23, about 11.7 percent of GDP, with a target approaching one fifth of the economy by 2030. The IndiaAI Mission carries an outlay of 10,300 crore rupees and has expanded national compute capacity to roughly 38,000 GPUs. 5G now reaches 99.9 percent of districts. Enterprise AI adoption is reported at 87 percent.',
+        ],
+        bullets: [
+          'Digital economy: 31.6 lakh crore rupees, 11.7 percent of GDP in 2022-23',
+          'IndiaAI Mission outlay: 10,300 crore rupees',
+          'National compute: approximately 38,000 GPUs',
+          '5G coverage: 99.9 percent of districts',
+          'Enterprise AI adoption: 87 percent',
+        ],
+      },
+      {
+        heading: 'What 87 percent actually means',
+        paragraphs: [
+          'When adoption approaches saturation, using AI stops being a position. Almost every competitor, supplier, and candidate is doing the same. The remaining differences are in how well it is deployed: whether the work is chosen sensibly, whether outputs are verified, whether the cost per unit of work is understood, and whether people can operate the system without a specialist beside them.',
+          'This is a familiar transition. Cloud adoption followed the same curve, and the advantage moved from having cloud to running it competently. Planning should assume that AI access is now table stakes and that execution quality is the variable.',
+        ],
+      },
+      {
+        heading: 'The pattern in the deployments that worked',
+        paragraphs: [
+          'The report\'s own conclusion is the most transferable finding: what distinguishes these programmes is not the sophistication of the algorithms but their ability to solve everyday problems at scale. The examples bear that out, and the economics are the striking part.',
+          'Digital Green\'s Farmer.Chat advisory service grew from 15,000 to 250,000 users within a year at an annual cost below 100 rupees per farmer, and the organisation reports reducing the cost of introducing a new farming practice from 3,500 rupees to under 100. Wadhwani AI reports reaching more than 190 million people and helping prioritise over 35,000 villages for tuberculosis screening. Qure.ai is deployed at more than 2,600 sites across 67 countries. Microsoft\'s Shiksha Copilot supports roughly 1,000 teachers across 750 government schools, with lesson planning reduced to around ten minutes.',
+        ],
+        bullets: [
+          'A narrow, repeated task rather than a broad assistant',
+          'Delivery in the language and channel people already use',
+          'Cost per user tracked as a first-class metric',
+          'Existing field, clinical, or teaching workflows kept intact',
+        ],
+      },
+      {
+        heading: 'Language as infrastructure',
+        paragraphs: [
+          'Platforms such as Bhashini are making government services accessible in more than 22 Indian languages, covering grievance redressal, railway enquiries, and citizen services. For an enterprise operating across Indian markets, this is a change in the default: the assumption that a digital service is delivered in English is becoming a choice rather than a constraint, and it is a choice with a measurable reach cost.',
+        ],
+      },
+      {
+        heading: 'The input that has not scaled',
+        paragraphs: [
+          'Compute, connectivity, and model access have all moved from constraint to assumption. Capability has not. Roughly 2 million Indians have been AI-skilled against a stated target of 10 million by 2030, and that gap is now the practical limit on what an organisation can deploy.',
+          'This is the planning consequence worth carrying: infrastructure is no longer the reason an AI programme stalls. The reason is usually that the workflow was chosen badly, the output was never verified, or the people expected to operate it were never given structured practice on their own work.',
+        ],
+      },
+    ],
+    faq: [
+      { question: 'What is enterprise AI adoption in India?', answer: 'Reported at approximately 87 percent as of 2026. At that level adoption itself is no longer a differentiator; the difference is in deployment quality, verification, and operating cost.' },
+      { question: 'How large is India\'s national AI compute capacity?', answer: 'The IndiaAI Mission, with an outlay of 10,300 crore rupees, has expanded national capacity to roughly 38,000 GPUs, alongside 5G coverage across 99.9 percent of districts.' },
+      { question: 'What separates AI deployments that scale from those that stall?', answer: 'Scaled programmes tend to target one repeated task, deliver in the user\'s own language and channel, track cost per user, and preserve the existing workflow. Sophistication of the model is rarely the deciding factor.' },
+    ],
+    relatedOffer: { label: 'Map your first AI workflow', href: '/services/ai-solutions' },
+  },
 ];
 
 export function getInsight(slug: string) {
