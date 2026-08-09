@@ -73,13 +73,30 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
   }
 }
 
-/** Derive a privacy-preserving client bucket. Only proxy-owned identity headers count in production. */
+/**
+ * Derive a privacy-preserving client bucket.
+ *
+ * The provider-specific headers come first because a proxy sets them itself and
+ * a client cannot forge them. `x-forwarded-for` is the generic fallback, and it
+ * has to be honoured in production too: on any host that is not Vercel or
+ * Cloudflare the two headers above are absent, every visitor hashed to
+ * "unknown", and the whole site shared one bucket. For lead submission that is
+ * five per hour across all traffic, after which every genuine prospect is told
+ * "Too many submissions" and the primary conversion is silently shut.
+ *
+ * The trade is deliberate. `x-forwarded-for` is client-spoofable when the app is
+ * not behind a trusted proxy, so a determined abuser can rotate buckets. That is
+ * strictly better than one shared bucket, which needs no effort at all to
+ * exhaust and takes everyone down with it.
+ */
 export function clientKey(request: Request, scope: string): string {
-  const proxyIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-vercel-forwarded-for');
-  const developmentIp = process.env.NODE_ENV !== 'production'
-    ? request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')
-    : undefined;
-  const ip = proxyIp || developmentIp || 'unknown';
+  const ip =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-vercel-forwarded-for') ||
+    // Left-most entry is the originating client; the rest are proxy hops.
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
   const digest = createHash('sha256').update(ip).digest('hex');
   return `${scope}:${digest}`;
 }
