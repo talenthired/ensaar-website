@@ -2,14 +2,16 @@ import { describe, expect, it, afterEach, vi } from 'vitest';
 import { clientKey } from '@/lib/rate-limit';
 
 /**
- * Every visitor must get their own rate-limit bucket.
+ * Every visitor must get their own rate-limit bucket, without weakening the
+ * deliberate refusal to trust a caller-supplied header.
  *
- * `x-forwarded-for` used to be read only outside production, so on any host that
- * is not Vercel or Cloudflare the production site hashed every visitor to
- * "unknown" and shared a single bucket. With lead submission capped at five per
- * hour, that meant five leads per hour across all traffic, after which every
- * genuine prospect saw "Too many submissions". The failure is silent: each
- * visitor simply believes they were rate limited.
+ * On a host that is neither Cloudflare nor Vercel, the two proxy-owned headers
+ * are absent and every visitor hashed to "unknown", so the whole site shared one
+ * bucket: five lead submissions an hour across all traffic, after which every
+ * genuine prospect saw "Too many submissions". TRUST_PROXY_IP=1 is the
+ * operator's assertion that x-forwarded-for is overwritten upstream and can be
+ * believed. Without it the old, safe behaviour stands, which rate-limit.test.ts
+ * still asserts.
  */
 
 const req = (headers: Record<string, string>) => new Request('https://ensaar.com/api/leads', { headers });
@@ -17,8 +19,9 @@ const req = (headers: Record<string, string>) => new Request('https://ensaar.com
 afterEach(() => vi.unstubAllEnvs());
 
 describe('clientKey', () => {
-  it('separates visitors by x-forwarded-for in production', () => {
+  it('separates visitors by x-forwarded-for when the operator trusts the proxy', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     const a = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 'lead-submit');
     const b = clientKey(req({ 'x-forwarded-for': '198.51.100.4' }), 'lead-submit');
     expect(a).not.toBe(b);
@@ -26,6 +29,7 @@ describe('clientKey', () => {
 
   it('takes the originating client, not a proxy hop', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     const viaProxy = clientKey(req({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1, 10.0.0.2' }), 'lead-submit');
     const direct = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 'lead-submit');
     expect(viaProxy).toBe(direct);
@@ -33,6 +37,7 @@ describe('clientKey', () => {
 
   it('prefers the headers a proxy owns over the forgeable one', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     const cf = clientKey(req({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': '1.2.3.4' }), 's');
     const plain = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 's');
     expect(cf).toBe(plain);
@@ -40,6 +45,7 @@ describe('clientKey', () => {
 
   it('falls back to x-real-ip', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     const a = clientKey(req({ 'x-real-ip': '203.0.113.7' }), 's');
     const b = clientKey(req({ 'x-real-ip': '198.51.100.4' }), 's');
     expect(a).not.toBe(b);
@@ -47,6 +53,7 @@ describe('clientKey', () => {
 
   it('scopes buckets so one endpoint cannot exhaust another', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     const lead = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 'lead-submit');
     const login = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 'basecamp-login');
     expect(lead).not.toBe(login);
@@ -57,8 +64,18 @@ describe('clientKey', () => {
     expect(clientKey(req({}), 's')).toBe(clientKey(req({}), 's'));
   });
 
+  it('keeps ignoring x-forwarded-for when the operator has not opted in', () => {
+    // The guarantee rate-limit.test.ts asserts: without TRUST_PROXY_IP a caller
+    // cannot rotate the header to get a fresh bucket.
+    vi.stubEnv('NODE_ENV', 'production');
+    const a = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 'lead');
+    const b = clientKey(req({ 'x-forwarded-for': '198.51.100.4' }), 'lead');
+    expect(a).toBe(b);
+  });
+
   it('never puts a raw address in the key', () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
     expect(clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 's')).not.toContain('203.0.113.7');
   });
 });

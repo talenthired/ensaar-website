@@ -76,27 +76,39 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
 /**
  * Derive a privacy-preserving client bucket.
  *
- * The provider-specific headers come first because a proxy sets them itself and
- * a client cannot forge them. `x-forwarded-for` is the generic fallback, and it
- * has to be honoured in production too: on any host that is not Vercel or
- * Cloudflare the two headers above are absent, every visitor hashed to
- * "unknown", and the whole site shared one bucket. For lead submission that is
- * five per hour across all traffic, after which every genuine prospect is told
+ * cf-connecting-ip and x-vercel-forwarded-for are set by the proxy itself and a
+ * client cannot forge them, so they are always trusted. Refusing to trust
+ * anything else in production is deliberate: x-forwarded-for is caller-supplied
+ * unless something upstream overwrites it, and trusting it blindly lets an
+ * abuser rotate the header and skip the limit entirely.
+ *
+ * The cost of that stance is real on any host which is neither Cloudflare nor
+ * Vercel: both headers are absent, every visitor hashes to "unknown", and the
+ * whole site shares one bucket. At five lead submissions an hour that is five
+ * leads an hour across all traffic, after which every genuine prospect is told
  * "Too many submissions" and the primary conversion is silently shut.
  *
- * The trade is deliberate. `x-forwarded-for` is client-spoofable when the app is
- * not behind a trusted proxy, so a determined abuser can rotate buckets. That is
- * strictly better than one shared bucket, which needs no effort at all to
- * exhaust and takes everyone down with it.
+ * TRUST_PROXY_IP=1 is how an operator resolves that, by asserting the app is
+ * behind a proxy that overwrites the header. It is opt-in rather than inferred,
+ * because getting it wrong in the permissive direction removes the protection
+ * altogether and nothing visible changes.
  */
 export function clientKey(request: Request, scope: string): string {
-  const ip =
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-vercel-forwarded-for') ||
-    // Left-most entry is the originating client; the rest are proxy hops.
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
+  const proxyIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-vercel-forwarded-for');
+
+  /* x-forwarded-for is only as trustworthy as the hop that set it, so it counts
+     only where the operator has said the app sits behind a proxy that
+     overwrites it (TRUST_PROXY_IP=1), or outside production. Set it on Railway,
+     Fly, Render or anything behind your own nginx. Do not set it if the app is
+     reachable directly, or a caller can rotate the header and skip the limit
+     entirely. */
+  const trustForwardedFor = process.env.TRUST_PROXY_IP === '1' || process.env.NODE_ENV !== 'production';
+  const forwarded = trustForwardedFor
+    ? // Left-most entry is the originating client; the rest are proxy hops.
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')
+    : undefined;
+
+  const ip = proxyIp || forwarded || 'unknown';
   const digest = createHash('sha256').update(ip).digest('hex');
   return `${scope}:${digest}`;
 }
