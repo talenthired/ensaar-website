@@ -45,15 +45,18 @@ function localRateLimit(key: string, limit: number, windowMs: number): RateLimit
 }
 
 /**
- * Use the Supabase RPC in deployed environments so every serverless instance
- * shares the same counter. A missing or unhealthy shared store fails closed in
- * production; development retains a local limiter for offline work.
+ * Use the Supabase RPC when it is configured so every serverless instance shares
+ * one counter. When it is not, fall back to the in-memory limiter: this service
+ * runs as a single web instance on Railway, so the local buckets count
+ * accurately. Failing closed here (the previous behaviour) 429'd every lead,
+ * support, login and certificate request in production the moment Supabase was
+ * absent, silently shutting the primary conversion. If the service is ever
+ * scaled past one instance, set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY so the
+ * counter is shared; an unhealthy shared store still fails closed below.
  */
 export async function rateLimit(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
   if (!hasSupabase()) {
-    return process.env.NODE_ENV === 'production'
-      ? { ok: false, remaining: 0, retryAfter: 60 }
-      : localRateLimit(key, limit, windowMs);
+    return localRateLimit(key, limit, windowMs);
   }
 
   try {
