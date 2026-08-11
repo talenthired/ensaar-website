@@ -7,6 +7,7 @@ import {
   Building2,
   Check,
   GraduationCap,
+  Headphones,
   MessageCircleQuestion,
   SendHorizontal,
   Sparkles,
@@ -21,8 +22,9 @@ import { trackEvent, type AdvisorIntent } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { dailyByteLinks } from '@/lib/dailybyte';
 import { answerQuestion, type AnswerResult, type KnowledgeCta } from '@/lib/content/knowledge';
+import { EnsaarLiveSupport } from '@/components/marketing/EnsaarLiveSupport';
 
-type AdvisorStage = 'choose' | 'ask' | 'questions' | 'result' | 'form' | 'success';
+type AdvisorStage = 'choose' | 'ask' | 'questions' | 'result' | 'form' | 'support' | 'success';
 type AnswerMap = Record<string, string>;
 
 type Question = {
@@ -184,7 +186,7 @@ function EnaiMark({ className }: { className?: string }) {
   );
 }
 
-export function OpportunityAdvisor() {
+export function OpportunityAdvisor({ liveSupportEnabled = false }: { liveSupportEnabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [showNudge, setShowNudge] = useState(false);
@@ -302,6 +304,10 @@ export function OpportunityAdvisor() {
   }
 
   function goBack() {
+    if (stage === 'support') {
+      setStage('choose');
+      return;
+    }
     if (stage === 'ask') {
       setStage('choose');
       return;
@@ -510,6 +516,14 @@ export function OpportunityAdvisor() {
                       </div>
                     </form>
 
+                    {liveSupportEnabled && (
+                      <button type="button" onClick={() => { setStage('support'); trackEvent('advisor_contact_started', { source: 'live-support' }); }} className="mt-4 flex w-full items-center gap-4 rounded-lg border border-[#59d8c8]/45 bg-[#59d8c8]/[0.08] p-4 text-left transition hover:bg-[#59d8c8]/[0.14]">
+                        <Headphones className="h-5 w-5 shrink-0 text-[#59d8c8]" aria-hidden />
+                        <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Chat with our team</span><span className="mt-1 block text-xs leading-relaxed text-slate-400">Start a live conversation and return here for replies.</span></span>
+                        <ArrowRight className="h-4 w-4 text-[#59d8c8]" aria-hidden />
+                      </button>
+                    )}
+
                     <p className="mt-7 text-xs font-semibold uppercase tracking-[0.1em] text-slate-500">Or start with a goal</p>
                     <div className="mt-3 space-y-2.5">
                       {(Object.keys(PATHS) as AdvisorIntent[]).map((pathId) => {
@@ -541,6 +555,8 @@ export function OpportunityAdvisor() {
                     onPickIntent={(nextIntent) => startPath(nextIntent)}
                   />
                 )}
+
+                {liveSupportEnabled && stage === 'support' && <EnsaarLiveSupport />}
 
                 {stage === 'questions' && intent && activeQuestion && (
                   <div>

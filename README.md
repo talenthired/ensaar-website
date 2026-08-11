@@ -37,6 +37,8 @@ Copy the values in `.env.example` into `.env.local`.
 - `LEAD_PORTAL_SECRET`: long random value used to sign the workspace session
 - `SUPABASE_URL`: Supabase project URL
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only service role key
+- `SUPPORT_BRIDGE_SECRET`: shared server-only secret for the DailyByte support inbox
+- `DAILYBYTE_SUPPORT_API_URL`: DailyByte's `/api/support/bridge` endpoint
 
 Run `supabase/leads.sql` once in the Supabase SQL editor. The service role key must never be exposed
 through a `NEXT_PUBLIC_` variable.

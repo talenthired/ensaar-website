@@ -176,7 +176,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Header />
           <main id="main">{children}</main>
           <Footer />
-          <OpportunityAdvisor />
+          <OpportunityAdvisor liveSupportEnabled={Boolean(process.env.SUPPORT_BRIDGE_SECRET?.trim())} />
         </ThemeProvider>
       </body>
     </html>
