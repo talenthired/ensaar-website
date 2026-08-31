@@ -36,12 +36,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
   }));
 
   // Article entries carry their hero image so it is eligible for image search.
+  // The sizing query is stripped: Next's sitemap serializer writes image URLs
+  // into <image:loc> without XML-escaping them, so a raw "&q=85&auto=format"
+  // made the whole document invalid XML and Search Console rejected it. The
+  // bare Unsplash URL resolves fine (at full resolution), and with no
+  // ampersands the output stays valid whatever the serializer does.
   const insights: MetadataRoute.Sitemap = INSIGHTS.map((insight) => ({
     url: `${base}/insights/${insight.slug}`,
     lastModified: new Date(`${insight.updated}T00:00:00Z`),
     changeFrequency: 'monthly',
     priority: 0.75,
-    images: [insight.image],
+    images: [insight.image.split('?')[0]],
   }));
 
   return [...topLevel, ...trainingTracks, ...insights];
