@@ -13,6 +13,14 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // www answered 200 alongside the apex, so Google saw two copies of every
+      // page. One host, permanently; the canonical tag alone only advises.
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.ensaar.com' }],
+        destination: 'https://ensaar.com/:path*',
+        permanent: true,
+      },
       { source: '/services/engineering', destination: '/services/ai-solutions', permanent: true },
       { source: '/services/technology', destination: '/services/ai-solutions', permanent: true },
       { source: '/ai', destination: '/services/ai-solutions', permanent: true },
