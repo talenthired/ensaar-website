@@ -27,10 +27,10 @@ export function IndustriesSection() {
           eyebrow="Industries Served"
           title={
             <>
-              We work where AI meets <span className="gradient-text">real industry constraints.</span>
+              We build where the work meets <span className="gradient-text">real industry constraints.</span>
             </>
           }
-          lede="A decade of delivery across regulated, complex, and fast-moving sectors. Each engagement teaches us where AI changes the equation - and where it doesn't."
+          lede="A decade of delivery across regulated, complex, and fast-moving sectors. The teams we hire and run in India are staffed for the constraints each one carries."
         />
 
         <motion.div

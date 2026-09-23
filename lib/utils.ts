@@ -10,9 +10,9 @@ export const siteConfig = {
   legalName: 'Ensaar Global Pvt. Ltd.',
   url: 'https://ensaar.com',
   description:
-    'Ensaar Global helps enterprises turn valuable workflows into controlled AI pilots and helps students, engineers, teams, and campuses build practical AI capability through realistic work, software engineering, secure deployment, and governance.',
-  tagline: 'AI that works. People ready to use it.',
-  taglineLong: 'Enterprise AI implementation, practical workforce enablement, software engineering, secure deployment, BCEP AI readiness, and measurable AI capability.',
+    'Ensaar Global helps companies outside India build teams inside it. Hire through our Employer of Record without setting up a company, grow that team into your own capability centre, and use the same people for software engineering and practical AI work. Operating from Hyderabad and Noida since 2014.',
+  tagline: 'Your team in India, employed properly.',
+  taglineLong: 'Employer of Record in India, capability centre setup, software engineering, and practical AI enablement through DailyByte and BCEP.',
   email: 'info@ensaar.com',
   trainingEmail: 'info@ensaar.com',
   refundUrl: '/legal/refund-policy',
@@ -35,6 +35,13 @@ export const siteConfig = {
   // Topics the organization is an authority on. Emitted as Organization.knowsAbout and
   // used by answer engines when deciding which entity a question belongs to.
   knowsAbout: [
+    'Employer of Record in India',
+    'India payroll and statutory compliance',
+    'Provident fund, ESI, gratuity, and professional tax',
+    'Permanent establishment risk for foreign employers in India',
+    'Global capability centre setup in India',
+    'Indian subsidiary incorporation and FDI filings',
+    'Captive centre transfer pricing and safe harbour',
     'Enterprise AI implementation',
     'AI workflow discovery and pilot design',
     'Multi-model AI strategy',
@@ -58,7 +65,7 @@ export const siteConfig = {
  * instead of `new Date()` so `dateModified` stays stable between builds - a value
  * that moves on every deploy tells crawlers nothing and erodes trust in the signal.
  */
-export const SITE_LAST_MODIFIED = '2026-07-23';
+export const SITE_LAST_MODIFIED = '2026-09-23';
 
 /** Date the site first published, used as the default `datePublished`. */
 export const SITE_PUBLISHED = '2024-01-01';

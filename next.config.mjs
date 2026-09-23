@@ -24,6 +24,11 @@ const nextConfig = {
       { source: '/services/engineering', destination: '/services/ai-solutions', permanent: true },
       { source: '/services/technology', destination: '/services/ai-solutions', permanent: true },
       { source: '/ai', destination: '/services/ai-solutions', permanent: true },
+      // Short URLs for the lead services, for use in email signatures and decks.
+      { source: '/eor', destination: '/services/employer-of-record', permanent: true },
+      { source: '/employer-of-record', destination: '/services/employer-of-record', permanent: true },
+      { source: '/gcc', destination: '/services/gcc', permanent: true },
+      { source: '/india', destination: '/services/employer-of-record', permanent: true },
       { source: '/bcep', destination: '/services/corporate-training', permanent: true },
       { source: '/bcep/:track', destination: '/services/corporate-training/:track', permanent: true },
       { source: '/certificate-verification', destination: '/verify', permanent: true },

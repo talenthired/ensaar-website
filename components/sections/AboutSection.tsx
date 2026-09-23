@@ -20,9 +20,15 @@ const TIMELINE = [
     active: false,
   },
   {
-    year: '2024 - Present',
+    year: '2024 - 2025',
     title: 'Enterprise AI Enablement',
     body: 'Supporting students, engineers, and organizations with model strategy, AI-assisted software delivery, cloud deployment, governance, and practical adoption programs.',
+    active: false,
+  },
+  {
+    year: '2026 - Present',
+    title: 'Employment and Capability Centres in India',
+    body: 'Acting as Employer of Record so companies abroad can hire in India without their own entity, and building those hires into capability centres that can convert into the client\'s own subsidiary.',
     active: true,
   },
 ];
@@ -43,10 +49,10 @@ export function AboutSection() {
           eyebrow="About"
           title={
             <>
-              Two Decades of Expertise. <span className="gradient-text">AI-First Future.</span>
+              Two Decades of Expertise. <span className="gradient-text">Now Building Teams in India.</span>
             </>
           }
-          lede="We combine technology delivery, enterprise AI enablement, and human capability development to help people and organizations move forward with confidence."
+          lede="We employ people in India for companies abroad, grow those teams into capability centres our clients can own, and bring engineering, AI enablement, and certification to the same relationship."
         />
 
         <motion.div

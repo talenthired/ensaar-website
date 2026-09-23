@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Brain, Braces, GraduationCap, Users } from 'lucide-react';
+import { ArrowRight, Brain, Braces, Building2, Globe2, GraduationCap, Users } from 'lucide-react';
 import { Container } from '@/components/ui/Container';
 import { Section, SectionHeader } from '@/components/ui/Section';
 import { SERVICES } from '@/lib/content/services';
 import { fadeUp, stagger, viewportOnce } from '@/lib/motion';
 
 const ICONS = {
+  'employer-of-record': Building2,
+  gcc: Globe2,
   'ai-solutions': Brain,
   'software-development': Braces,
   staffing: Users,
@@ -25,10 +27,10 @@ export function ServicesSection({ variant = 'home' }: { variant?: 'home' | 'full
           eyebrow="What We Do"
           title={
             <>
-              Build the technology. <span className="gradient-text">Enable the people.</span>
+              Six services. <span className="gradient-text">One accountable relationship.</span>
             </>
           }
-          lede="Enterprise AI creates value only when software, infrastructure, governance, and human capability move together."
+          lede="Most clients start with employment and compliance in India, then add engineering, AI enablement, and certification using the same team."
         />
 
         <motion.div

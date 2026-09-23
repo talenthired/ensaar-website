@@ -10,7 +10,7 @@ import { siteConfig } from '@/lib/utils';
 export const metadata: Metadata = pageMetadata({
   title: 'Terms of Service',
   description:
-    'The terms that govern use of the Ensaar Global website, enquiries, and engagements for AI enablement, software engineering, and training.',
+    'The terms that govern use of the Ensaar Global website, enquiries, and engagements for Employer of Record, capability centres, AI enablement, software engineering, and training.',
   path: '/legal/terms',
 });
 
@@ -63,11 +63,19 @@ export default function TermsPage() {
             </PolicySection>
 
             <PolicySection title="What we provide">
-              {siteConfig.name} provides enterprise AI enablement, software engineering, secure
-              deployment, AI-ready engineering teams, the Business Communication Excellence Program
-              (BCEP), and the DailyByte practical AI capability platform. This website presents
-              information about those services and lets you request a conversation. Availability,
-              features, and content may change.
+              {siteConfig.name} provides Employer of Record services in India, India capability centre
+              setup and operation, enterprise AI enablement, software engineering, secure deployment,
+              AI-ready engineering teams, the Business Communication Excellence Program (BCEP), and the
+              DailyByte practical AI capability platform. This website presents information about those
+              services and lets you request a conversation. Availability, features, and content may change.
+            </PolicySection>
+
+            <PolicySection title="Employment services are separate">
+              Where Ensaar acts as Employer of Record, the employment relationship is between Ensaar and
+              the employee under Indian law, and the commercial relationship between you and Ensaar is
+              governed by a separate signed services agreement. Nothing on this website creates that
+              arrangement, sets its fees, or constitutes legal, tax, or immigration advice. Prices shown
+              here are indicative and are confirmed in that agreement.
             </PolicySection>
 
             <PolicySection title="Engagements are governed by a separate agreement">

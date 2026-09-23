@@ -20,7 +20,7 @@ const trail = [
 export const metadata: Metadata = pageMetadata({
   title: 'About Ensaar Global',
   description:
-    'Ensaar Global is an enterprise AI enablement and software engineering company founded in 2014, with locations in Hyderabad and Noida.',
+    'Ensaar Global employs and builds teams in India for companies abroad, and delivers software and AI enablement with them. Founded in 2014, with locations in Hyderabad and Noida.',
   path: '/about',
   eyebrow: 'Our story',
 });
@@ -33,7 +33,7 @@ export default function AboutPage() {
           webPageSchema({
             name: 'About Ensaar Global',
             description:
-              'Ensaar Global helps students, engineers, and organizations adopt enterprise-grade AI from Hyderabad and Noida.',
+              'Ensaar Global helps companies outside India hire, employ, and build teams inside it, from Hyderabad and Noida.',
             url,
             type: 'AboutPage',
             breadcrumb: trail,
@@ -53,10 +53,10 @@ export default function AboutPage() {
             <div>
               <span className="eyebrow mb-6">Our Story</span>
               <h1 className="text-[clamp(2.25rem,5.5vw,4.25rem)] mt-6 mb-6 text-balance leading-[1.05]">
-                Two decades of building. <span className="gradient-text">One AI-first future.</span>
+                Two decades of building. <span className="gradient-text">In India, for companies elsewhere.</span>
               </h1>
               <p className="text-lg md:text-xl text-ink-secondary">
-                Ensaar Global was founded in 2014 as an engineering design and technology services company. Today, from Hyderabad and Noida, we help students, engineers, and organizations adopt enterprise-grade AI with practical support across technology and human capability.
+                Ensaar Global was founded in 2014 as an engineering design and technology services company. From Hyderabad and Noida, we now employ people in India on behalf of companies abroad, grow those hires into capability centres our clients can own, and build software and AI capability with the same teams.
               </p>
             </div>
             <HeroImage
@@ -79,7 +79,10 @@ export default function AboutPage() {
                 <strong className="text-ink-primary">We start with people and outcomes.</strong> Every engagement begins with the audience, the work, and the controls that matter, not a pre-selected toolchain.
               </p>
               <p>
-                <strong className="text-ink-primary">We build durable capability.</strong> Our AI work leaves clients with internal expertise, documentation, and ownership, not vendor lock-in.
+                <strong className="text-ink-primary">We say what India actually requires.</strong> Statutory costs, notice rules, and permanent establishment risk get stated before you commit to a hire, not after. Where the honest answer is that you do not need us yet, we say that too.
+              </p>
+              <p>
+                <strong className="text-ink-primary">We build durable capability.</strong> Our work leaves clients with their own team, documentation, and ownership. A capability centre that can convert into your entity is the plan from the first hire, not an exit we resist.
               </p>
               <p>
                 <strong className="text-ink-primary">We respect confidentiality.</strong> Our client names are not listed publicly. Engagement references available on request.

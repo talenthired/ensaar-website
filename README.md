@@ -4,10 +4,18 @@ Next.js website and lead operations workspace for Ensaar Global Pvt. Ltd.
 
 ## Positioning
 
-Ensaar sells managed AI execution, not anonymous freelancer access. Prospects submit costly work,
-receive an AI reduction plan, and can engage a fixed-scope pod or ongoing managed capacity.
+Ensaar helps companies outside India build teams inside it. The site leads with two India services
+and treats the rest as what those teams then do:
 
-The website also retains Ensaar's AI-augmented staffing and corporate training practices.
+1. Employer of Record: Ensaar is the legal employer, so a foreign company hires in India without
+   its own entity. The published price is a flat fee per employee per month.
+2. India capability centres: a pod of three to fifteen people that converts into the client's own
+   subsidiary once headcount makes that cheaper.
+3. Software engineering, enterprise AI enablement, DailyByte, and BCEP certification.
+
+Every India figure the site quotes (the EOR price, statutory rates, entity timelines) lives in
+`lib/content/india.ts` and is asserted by `test/india-content.test.ts`. Change it there, not in a
+page, or the test fails.
 
 ## Stack
 
@@ -49,13 +57,20 @@ requires Supabase because the deployment filesystem is not durable.
 ## Routes
 
 - `/`: conversion-focused home page
-- `/services`: AI Solutions, Staffing, and Corporate Training
-- `/pricing`: productized audits, pods, and managed capacity
-- `/calculator`: AI cost reduction estimator and lead capture
+- `/services`: the service index, generated from `lib/content/services.ts`
+- `/services/employer-of-record`: EOR pricing, inclusions, statutory costs, PE position
+- `/services/gcc`: pod to capability centre, cost model, entity conversion facts
+- `/services/ai-solutions`, `/services/software-development`, `/services/staffing`,
+  `/services/corporate-training`: the remaining service detail pages
+- `/ai-work-lab`: the DailyByte product page
 - `/contact`: structured work brief with campaign attribution
-- `/workspace`: private lead operations interface
-- `/about`, `/events`, `/faq`: supporting inbound content
+- `/basecamp`: private lead operations interface, noindex and session gated
+- `/about`, `/events`, `/faq`, `/insights`, `/verify`: supporting inbound content
+- `/pricing` and `/calculator`: legacy redirects
 - `/llms.txt`, `/sitemap.xml`, `/robots.txt`: crawler discovery assets
+
+A new page must be added to `app/sitemap.ts`, `components/layout/Header.tsx`, and
+`components/layout/Footer.tsx` by hand. None of those is generated from the route tree.
 
 ## Lead workflow
 

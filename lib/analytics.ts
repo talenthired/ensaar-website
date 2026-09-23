@@ -1,4 +1,4 @@
-export type AdvisorIntent = 'enterprise' | 'individual' | 'institution';
+export type AdvisorIntent = 'india' | 'enterprise' | 'individual' | 'institution';
 
 type AnalyticsValue = string | number | boolean | undefined;
 

@@ -79,6 +79,13 @@ export function organizationSchema() {
         areaServed: 'Worldwide',
         availableLanguage: ['English'],
       },
+      {
+        '@type': 'ContactPoint',
+        email: siteConfig.email,
+        contactType: 'employer of record and India capability centre enquiries',
+        areaServed: 'Worldwide',
+        availableLanguage: ['English'],
+      },
     ],
   };
 }

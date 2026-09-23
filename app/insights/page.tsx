@@ -12,17 +12,17 @@ import { siteConfig } from '@/lib/utils';
 
 const url = `${siteConfig.url}/insights`;
 const description =
-  'Practical guides to enterprise AI adoption, multi-model strategy, IDE-native engineering, RAG, governance, observability, and secure deployment.';
+  'Practical guides to employing people in India, building a capability centre, enterprise AI adoption, multi-model strategy, governance, and secure deployment.';
 const trail = [
   { name: 'Home', url: siteConfig.url },
   { name: 'Insights', url },
 ];
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Enterprise AI Adoption and Engineering Insights',
+  title: 'India Expansion, Engineering, and AI Insights',
   description,
   path: '/insights',
-  eyebrow: 'AI adoption guides',
+  eyebrow: 'Practical guides',
   feeds: { 'application/rss+xml': `${url}/feed.xml` },
 });
 
@@ -34,7 +34,7 @@ export default function InsightsPage() {
     <>
       <JsonLd data={[
         webPageSchema({
-          name: 'Enterprise AI Adoption and Engineering Insights',
+          name: 'India Expansion, Engineering, and AI Insights',
           description,
           url,
           type: 'CollectionPage',
@@ -55,13 +55,13 @@ export default function InsightsPage() {
         <Container>
           <Breadcrumbs items={[{ name: 'Insights', href: '/insights' }]} />
           <div className="max-w-4xl">
-            <span className="eyebrow">AI Adoption Guides</span>
+            <span className="eyebrow">Practical Guides</span>
             <h1 className="mt-6 text-[clamp(2.4rem,5.5vw,4.75rem)] leading-[1.03] text-balance">
-              Move from AI interest to <span className="gradient-text">operating capability.</span>
+              The numbers behind <span className="gradient-text">the decisions.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-ink-secondary">
-              Practical frameworks for leaders and engineers choosing models, workflows,
-              infrastructure, controls, and adoption paths. Written for decisions, not trend commentary.
+              What it costs to employ someone in India, when a team should become your own entity, and
+              how to choose models, workflows, and controls. Written for decisions, not trend commentary.
             </p>
           </div>
         </Container>

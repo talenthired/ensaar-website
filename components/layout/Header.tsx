@@ -20,6 +20,8 @@ const NAV: NavItem[] = [
     label: 'What We Do',
     href: '/services',
     children: [
+      { label: 'Employer of Record', href: '/services/employer-of-record', description: 'Hire in India without setting up a company', group: 'Services' },
+      { label: 'India Capability Centres', href: '/services/gcc', description: 'Start with a pod, grow into your own centre', group: 'Services' },
       { label: 'Enterprise AI Enablement', href: '/services/ai-solutions', description: 'Adoption, engineering support, and governance', group: 'Services' },
       { label: 'Software Development', href: '/services/software-development', description: 'Web, mobile, SaaS, and enterprise applications', group: 'Services' },
       { label: 'AI-Ready Engineering Teams', href: '/services/staffing', description: 'Supported AI-fluent delivery capacity', group: 'Services' },
@@ -107,7 +109,7 @@ export function Header() {
           )}
           <ThemeToggle />
           <AdvisorTrigger source="header" variant="primary" className="px-5 py-2.5">
-            Find Your AI Fit
+            Find your starting point
           </AdvisorTrigger>
         </nav>
 
@@ -173,7 +175,7 @@ export function Header() {
               onClick={() => setMenuOpen(false)}
             >
               <AdvisorTrigger source="mobile-menu" variant="primary" className="w-full justify-center">
-                Find Your AI Fit
+                Find your starting point
               </AdvisorTrigger>
             </motion.div>
           </nav>

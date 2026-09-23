@@ -18,7 +18,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-ink-secondary text-[0.9375rem] max-w-[320px]">
-              {siteConfig.tagline} Supporting AI adoption from India since {siteConfig.foundedYear}.
+              {siteConfig.tagline} Building and running India teams for companies worldwide since {siteConfig.foundedYear}.
             </p>
           </div>
 
@@ -28,6 +28,8 @@ export function Footer() {
               { label: 'Home', href: '/' },
               { label: 'About', href: '/about' },
               { label: 'Services', href: '/services' },
+              { label: 'Employer of Record', href: '/services/employer-of-record' },
+              { label: 'India Capability Centres', href: '/services/gcc' },
               { label: 'AI Enablement', href: '/services/ai-solutions' },
               { label: 'DailyByte™', href: '/ai-work-lab' },
               { label: 'Insights', href: '/insights' },
@@ -47,7 +49,7 @@ export function Footer() {
                 <a href={`mailto:${siteConfig.email}`} className="hover:text-ink-primary transition-colors">
                   {siteConfig.email}
                 </a>
-                <span className="block text-xs text-ink-muted font-mono mt-0.5">AI, software, and BCEP enquiries</span>
+                <span className="block text-xs text-ink-muted font-mono mt-0.5">EOR, capability centre, software, AI, and BCEP enquiries</span>
               </li>
               {siteConfig.locations.map((location) => (
                 <li key={location.city} className="first:mt-2">

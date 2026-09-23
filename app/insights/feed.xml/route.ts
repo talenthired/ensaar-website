@@ -44,7 +44,7 @@ export function GET(): Response {
   <channel>
     <title>${escapeXml(`${siteConfig.name} Insights`)}</title>
     <link>${url}/insights</link>
-    <description>${escapeXml('Practical guidance on enterprise AI adoption, model strategy, AI-assisted engineering, and workforce capability.')}</description>
+    <description>${escapeXml('Practical guidance on employing people in India, building a capability centre, enterprise AI adoption, model strategy, and engineering.')}</description>
     <language>en-IN</language>
     <copyright>${escapeXml(siteConfig.legalName)}</copyright>
     <lastBuildDate>${lastBuild}</lastBuildDate>

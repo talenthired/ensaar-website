@@ -78,10 +78,11 @@ export function ContactSection() {
           >
             <span className="eyebrow mb-5">Start a Conversation</span>
             <h2 className="text-[clamp(2rem,5vw,3.5rem)] mt-5 mb-5 text-balance">
-              Tell us what should work better because of AI.
+              Tell us who you need in India, or what should work better.
             </h2>
             <p className="text-[1.0625rem] text-ink-secondary mb-10">
-              Bring one workflow, role, or cohort. We will respond with a starting hypothesis, the questions that matter, and a practical first step within one business day.
+              Bring a role you want filled, a team you want built, or one workflow worth improving. We
+              will respond with the practical first step, and the cost, within one business day.
             </p>
 
             <div className="mb-10 border-y border-line-subtle py-6">
@@ -129,13 +130,16 @@ export function ContactSection() {
             <Field
               label="I am reaching out as"
               name="audience"
-              options={['Student or recent graduate', 'Engineer or technology professional', 'Startup or growing team', 'Enterprise or institution', 'Other']}
+              options={['Company hiring or building a team in India', 'Startup or growing team', 'Enterprise or institution', 'Engineer or technology professional', 'Student or recent graduate', 'Other']}
             />
             <Field
               label="What do you need?"
               name="workType"
               required
               options={[
+                'Hiring in India through an Employer of Record',
+                'Building an India team or capability centre',
+                'Moving an existing India team into our own entity',
                 'Enterprise AI adoption and strategy',
                 'AI engineering enablement',
                 'IDE-native AI workflows',
@@ -151,9 +155,9 @@ export function ContactSection() {
               ]}
             />
             <Field
-              label="Current AI adoption stage"
+              label="Where are you in the process?"
               name="adoptionStage"
-              options={['Exploring possibilities', 'Running individual experiments', 'Planning a pilot', 'Scaling across teams', 'Improving governance and control']}
+              options={['Exploring options', 'Have a role or team in mind', 'Ready to start now', 'Already running something in India', 'Improving what we have']}
             />
             <Field
               label="Desired timeline"

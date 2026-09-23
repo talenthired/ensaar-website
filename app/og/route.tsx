@@ -13,7 +13,7 @@ export function GET(request: NextRequest): ImageResponse {
   const eyebrow = (searchParams.get('eyebrow') || '').slice(0, 42);
   const subtitle =
     searchParams.get('subtitle') ||
-    'Enterprise AI implementation, practical enablement, and the DailyByte™ platform.';
+    'Employer of Record in India, capability centres, software engineering, and AI enablement.';
 
   // Long titles need to step down a size or they overflow the 630px canvas.
   const titleSize = title.length > 78 ? 46 : title.length > 46 ? 56 : 68;

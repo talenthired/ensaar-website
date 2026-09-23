@@ -10,7 +10,22 @@ import { HeroImage } from '@/components/ui/HeroImage';
 import { fadeUp, stagger, viewportOnce } from '@/lib/motion';
 import type { Service } from '@/lib/content/services';
 
-const HERO_IMAGES: Record<Service['slug'], { src: string; alt: string; tint: 'brand' | 'fresh' | 'warm' }> = {
+type HeroImageSpec = { src: string; alt: string; tint: 'brand' | 'fresh' | 'warm' };
+
+/* Keyed by slug, but `Service['slug']` is `string`, so a missing key is not a
+   type error: it spreads `undefined` into HeroImage and breaks the page at
+   runtime. DEFAULT_HERO below makes an unlisted service render instead. */
+const HERO_IMAGES: Record<string, HeroImageSpec> = {
+  'employer-of-record': {
+    src: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1400&q=85&auto=format&fit=crop',
+    alt: 'Colleagues working together in an office',
+    tint: 'fresh',
+  },
+  gcc: {
+    src: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1400&q=85&auto=format&fit=crop',
+    alt: 'Open plan office prepared for a growing team',
+    tint: 'brand',
+  },
   'ai-solutions': {
     src: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&q=85&auto=format&fit=crop',
     alt: 'Close view of modern computing infrastructure for enterprise AI systems',
@@ -31,6 +46,12 @@ const HERO_IMAGES: Record<Service['slug'], { src: string; alt: string; tint: 'br
     alt: 'Business professionals aligning on an enterprise capability plan',
     tint: 'warm',
   },
+};
+
+const DEFAULT_HERO: HeroImageSpec = {
+  src: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1400&q=85&auto=format&fit=crop',
+  alt: 'Professional workspace prepared for a delivery team',
+  tint: 'brand',
 };
 
 export function ServiceDetailPage({ service }: { service: Service }) {
@@ -82,7 +103,7 @@ export function ServiceDetailPage({ service }: { service: Service }) {
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
               className="lg:pl-4 xl:-mr-8"
             >
-              <HeroImage {...HERO_IMAGES[service.slug]} className="aspect-[16/10] lg:aspect-[16/9.6]" />
+              <HeroImage {...(HERO_IMAGES[service.slug] ?? DEFAULT_HERO)} className="aspect-[16/10] lg:aspect-[16/9.6]" />
             </motion.div>
           </div>
         </Container>

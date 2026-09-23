@@ -18,12 +18,17 @@ const trail = [
 export const metadata: Metadata = pageMetadata({
   title: 'Frequently Asked Questions',
   description:
-    'Answers about Ensaar Global, AI solutions, software development, managed engineering, BCEP AI readiness certification, and how to start an engagement.',
+    'Answers about hiring in India through an Employer of Record, building a capability centre, statutory costs, AI solutions, software development, BCEP certification, and how to start an engagement.',
   path: '/faq',
   eyebrow: 'FAQ',
 });
 
+/**
+ * Every category in `lib/content/faq.ts` must appear here, or its questions are
+ * silently dropped from this page. `test/india-content.test.ts` asserts it.
+ */
 const CATEGORIES: Array<{ key: typeof FAQ[number]['category']; label: string }> = [
+  { key: 'india', label: 'Hiring and Teams in India' },
   { key: 'company', label: 'About Ensaar' },
   { key: 'services', label: 'Services' },
   { key: 'ai', label: 'AI Capabilities' },
@@ -78,7 +83,7 @@ export default function FaqPage() {
                       <details
                         key={item.question}
                         className="group border border-line-subtle bg-bg-secondary p-6 transition-colors open:border-line-glow"
-                        open={cat.key === 'company' && i === 0}
+                        open={cat.key === CATEGORIES[0].key && i === 0}
                       >
                         <summary className="flex items-center justify-between gap-4 cursor-pointer list-none">
                           <h3 className="text-lg md:text-xl font-display font-bold text-ink-primary flex-1">

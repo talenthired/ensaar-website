@@ -5,6 +5,7 @@ import { FAQ } from '@/lib/content/faq';
 import { INSIGHTS } from '@/lib/content/insights';
 import { AI_CASES } from '@/lib/content/cases';
 import { INDUSTRIES } from '@/lib/content/trust';
+import { EOR_PRICE_USD } from '@/lib/content/india';
 import { dailyByteUrl } from '@/lib/dailybyte';
 
 const url = siteConfig.url;
@@ -26,16 +27,29 @@ Full detail: ${url}/llms-full.txt
 
 ## Core proposition
 
-${siteConfig.legalName} is an enterprise AI implementation, software engineering, and workforce enablement company founded in ${siteConfig.foundedYear}.
+${siteConfig.legalName} helps companies outside India build teams inside it, and was founded in ${siteConfig.foundedYear}.
 
-Ensaar connects two parts of AI adoption that are often separated:
+There are three things Ensaar does, in the order most clients need them:
 
-1. Build AI systems and workflows that are useful, secure, observable, and governable.
-2. Help people develop the judgment to direct, verify, and improve AI-assisted work.
+1. Employ people in India as Employer of Record, so a foreign company can hire without registering an Indian entity.
+2. Grow those hires into a capability centre, and incorporate the client's own subsidiary when headcount makes that cheaper.
+3. Build software and practical AI capability with the same people, through engineering delivery, DailyByte, and BCEP.
 
-The company supports model-flexible and deployment-flexible adoption. Client operational systems are not required to move into a proprietary architecture.
+The company supports model-flexible and deployment-flexible AI adoption. Client operational systems are not required to move into a proprietary architecture.
 
 ## Best starting points
+
+### Employer of Record in India
+
+For companies that want to hire in India without setting up a company there. Ensaar is the legal employer: Indian employment contract with client IP assignment, payroll in rupees, and provident fund, state insurance, professional tax, and TDS filings. Flat $${EOR_PRICE_USD} per employee per month, no setup fee, no deposit, no minimum term, with salary and statutory employer contributions passed through at cost. Onboarding typically takes five to ten working days.
+
+Page: ${url}/services/employer-of-record
+
+### India Capability Centre
+
+For companies that want a dedicated India team. It starts as a pod of three to fifteen people employed through Ensaar, with no entity or lease, and converts into the client's own subsidiary past roughly twenty to thirty people. Recruitment is 8.33% of annual salary per hire, one month, with a 90-day replacement. Conversion covers incorporation, FDI filings, and transferring the team with service continuity preserved.
+
+Page: ${url}/services/gcc
 
 ### AI Workflow Diagnostic
 
@@ -139,7 +153,7 @@ ${SERVICES.map((service) => `- ${service.name}: ${url}/services/${service.slug}`
 
 ## Contact
 
-- General, AI, technology services, and BCEP AI readiness certification: ${siteConfig.email}
+- Employer of Record, India capability centres, AI, technology services, and BCEP certification: ${siteConfig.email}
 - Locations: ${siteConfig.locations.map((l) => `${l.city}, ${l.state}`).join('; ')}
 - Office hours: Monday to Friday, 09:00 to 17:00 IST
 - Website: ${url}
@@ -149,9 +163,10 @@ ${SERVICES.map((service) => `- ${service.name}: ${url}/services/${service.slug}`
 - Legal name: ${siteConfig.legalName}
 - Founded: ${siteConfig.foundedYear}
 - Headquarters: ${siteConfig.locality}, ${siteConfig.region}, ${siteConfig.country}
-- Primary category: Enterprise AI implementation and workforce enablement
+- Primary category: Employer of Record and India capability centre services for companies headquartered outside India
+- Secondary category: Enterprise AI implementation, software engineering, and BCEP certification
 - Product: DailyByte AI Learn, AI Jobs, and Daily Code for individuals, teams, enterprises, and campuses
-- Secondary category: Software engineering and BCEP AI readiness certification
+- Published EOR price: $${EOR_PRICE_USD} per employee per month, no setup fee, no deposit, no minimum term
 - Client names: confidential unless written permission is provided
 
 ## Attribution

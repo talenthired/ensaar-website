@@ -10,10 +10,10 @@ import { SERVICES } from '@/lib/content/services';
 import { siteConfig } from '@/lib/utils';
 
 const description =
-  'Explore Ensaar enterprise AI enablement, software development, AI-ready engineering teams, BCEP AI readiness certification, and industry readiness programs.';
+  'Employer of Record in India, capability centre setup, enterprise AI enablement, software development, AI-ready engineering teams, and BCEP certification.';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Enterprise AI Enablement, Software Development, and Capability Building',
+  title: 'Employer of Record, India Capability Centres, Software, and AI',
   description,
   path: '/services',
   eyebrow: 'What we do',
@@ -56,7 +56,7 @@ export default function ServicesPage() {
       <div className="relative isolate overflow-hidden bg-[#0c2343] pb-20 pt-32 text-white md:pb-24 md:pt-40">
         <Image
           src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=2000&q=88&auto=format&fit=crop"
-          alt="Technology team planning an enterprise AI and software initiative"
+          alt="Team planning an India hiring and technology delivery programme"
           fill
           priority
           sizes="100vw"
@@ -66,13 +66,13 @@ export default function ServicesPage() {
         <Container>
           <div className="max-w-4xl">
             <div className="text-xs uppercase tracking-[0.1em] text-cyan-200">Home / What We Do</div>
-            <span className="mt-8 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-[#f5a623]">Technology and Capability</span>
+            <span className="mt-8 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-[#f5a623]">India Teams, Technology, and Capability</span>
             <h1 className="mt-6 text-[clamp(2.7rem,6vw,5.2rem)] leading-[0.99] text-balance">
-              Build the systems. Enable the people who use them.
+              Employ the people. Build the systems.
             </h1>
             <p className="mt-7 max-w-3xl text-lg leading-relaxed text-slate-200 md:text-xl">
-              Ensaar brings enterprise AI enablement, application engineering, cloud support, AI-ready
-              teams, and BCEP AI readiness capability building together under one accountable relationship.
+              Ensaar employs your team in India, grows it into a capability centre you can own, and
+              brings engineering, AI enablement, and BCEP certification to the same relationship.
             </p>
           </div>
         </Container>

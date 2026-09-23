@@ -10,7 +10,7 @@ import { siteConfig } from '@/lib/utils';
 export const metadata: Metadata = pageMetadata({
   title: 'Cancellation and Refund Policy',
   description:
-    'Cancellation, rescheduling, and refund terms for Ensaar Global technology, AI enablement, and corporate training engagements.',
+    'Cancellation, rescheduling, and refund terms for Ensaar Global Employer of Record, recruitment, technology, AI enablement, and corporate training engagements.',
   path: '/legal/refund-policy',
 });
 
@@ -60,6 +60,22 @@ export default function RefundPolicyPage() {
       <Section>
         <Container>
           <article className="max-w-3xl space-y-10 text-[1rem] leading-relaxed text-ink-secondary">
+            <PolicySection title="Employer of Record and employment services">
+              The monthly fee per employee is invoiced monthly and there is no minimum term. Ending the
+              arrangement follows the notice period in the signed services agreement, and the current
+              billing period is not partially refundable. Salary, statutory contributions, and any
+              amounts already paid to or on behalf of an employee are not refundable, because they have
+              been paid to the employee or to a government authority. Notice, final settlement, and
+              statutory dues owed to a departing employee remain payable in every case.
+            </PolicySection>
+
+            <PolicySection title="Recruitment">
+              The recruitment fee is charged when a candidate joins. It is covered by a replacement
+              rather than a refund: if the person leaves within the guarantee period stated in the
+              agreement, Ensaar sources a replacement at no further recruitment fee. A refund applies
+              only where Ensaar cannot provide that replacement.
+            </PolicySection>
+
             <PolicySection title="Advisory and discovery engagements">
               An advisory or discovery engagement can be cancelled for a full refund before the
               first working session begins. Once work has started, completed work is chargeable and

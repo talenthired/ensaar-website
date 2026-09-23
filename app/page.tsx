@@ -14,7 +14,7 @@ import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Enterprise AI Implementation and Practical AI Enablement',
+  title: 'Employer of Record and Capability Centres in India',
   description: siteConfig.description,
   path: '/',
   eyebrow: siteConfig.tagline,
@@ -33,8 +33,11 @@ export default function HomePage() {
       />
       <Hero />
       <ConversionOffersSection />
-      <DailyByteSection />
+      {/* AI sits below the India services now. It is one of the things Ensaar
+          sells rather than the reason the company exists, and the homepage
+          should read in that order. */}
       <EnterpriseAISection />
+      <DailyByteSection />
       <AICaseStudiesSection limit={4} />
       <IndustriesSection />
       <BcepCertificationCta />

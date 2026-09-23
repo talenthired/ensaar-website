@@ -12,6 +12,7 @@ import {
   SendHorizontal,
   Sparkles,
   UserRound,
+  Users,
   X,
 } from 'lucide-react';
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
@@ -43,6 +44,34 @@ const PATHS: Record<
     questions: Question[];
   }
 > = {
+  india: {
+    label: 'Hire or build a team in India',
+    shortLabel: 'India',
+    description: 'Employ people without an entity, or build a capability centre.',
+    icon: Users,
+    questions: [
+      {
+        id: 'need',
+        prompt: 'What do you need in India?',
+        options: [
+          { label: 'Employ someone we have already found', value: 'have-candidate' },
+          { label: 'Find and employ people for us', value: 'hire-for-us' },
+          { label: 'A dedicated team that can grow', value: 'team' },
+          { label: 'Move an existing team into our own entity', value: 'convert' },
+        ],
+      },
+      {
+        id: 'size',
+        prompt: 'How many people, realistically, within a year?',
+        options: [
+          { label: '1 to 2', value: '1-2' },
+          { label: '3 to 15', value: '3-15' },
+          { label: '16 to 30', value: '16-30' },
+          { label: 'More than 30', value: '30+' },
+        ],
+      },
+    ],
+  },
   enterprise: {
     label: 'Use AI in my organization',
     shortLabel: 'Enterprise',
@@ -145,6 +174,35 @@ const CTA_LABEL: Record<'individual' | 'enterprise' | 'pricing', string> = {
 };
 
 function getRecommendation(intent: AdvisorIntent, answers: AnswerMap) {
+  if (intent === 'india') {
+    // Size decides the shape of the answer, because it decides the economics:
+    // below a handful of people an EOR is simply cheaper than a company, and
+    // past thirty the fees outgrow the cost of running one.
+    const large = answers.size === '16-30' || answers.size === '30+';
+    if (answers.need === 'convert' || large) {
+      return {
+        title: 'India capability centre, with a conversion plan',
+        description:
+          'At this size your own subsidiary is likely to beat per-person fees. We would start the team through our Employer of Record, then incorporate and move everyone across with their service continuity intact.',
+        workType: 'India capability centre and entity conversion',
+      };
+    }
+    if (answers.size === '1-2') {
+      return {
+        title: 'Employer of Record',
+        description:
+          'Ensaar employs your hires in India, runs payroll and every statutory filing, and you manage the work. A flat fee per person per month, with no entity to set up.',
+        workType: 'Employer of Record hiring in India',
+      };
+    }
+    return {
+      title: 'An India pod',
+      description:
+        'Three to fifteen people employed through Ensaar and working only for you, with no entity or lease. It proves the operating model before anything structural is committed.',
+      workType: 'India capability centre pod',
+    };
+  }
+
   if (intent === 'individual') {
     return {
       title: 'DailyByte AI Learn and AI Jobs',
@@ -400,7 +458,7 @@ export function OpportunityAdvisor({ liveSupportEnabled = false }: { liveSupport
   const activeQuestion = intent ? PATHS[intent].questions[questionIndex] : null;
 
   return (
-    <>
+    <div className="ensaar-opportunity-advisor">
       <AnimatePresence>
         {showNudge && !open && !navigationOpen && !dailyByteInView && (
           <motion.div
@@ -475,7 +533,7 @@ export function OpportunityAdvisor({ liveSupportEnabled = false }: { liveSupport
                   </span>
                   <div>
                     <div className="text-sm font-semibold">EnAI</div>
-                    <div className="text-[0.6875rem] text-slate-400">Ask about Ensaar and DailyByte, or find your start</div>
+                    <div className="text-[0.6875rem] text-slate-400">Ask about hiring in India, our services, or DailyByte</div>
                   </div>
                 </div>
                 <button type="button" onClick={closeAdvisor} aria-label="Close" className="rounded-md p-2 text-slate-400 transition hover:bg-white/10 hover:text-white">
@@ -505,7 +563,7 @@ export function OpportunityAdvisor({ liveSupportEnabled = false }: { liveSupport
                         <input
                           value={question}
                           onChange={(event) => setQuestion(event.target.value)}
-                          placeholder="e.g. What is AI Jobs? How do I sign up?"
+                          placeholder="e.g. What does EOR cost in India? What is AI Jobs?"
                           aria-label="Ask EnAI a question"
                           maxLength={300}
                           className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
@@ -667,7 +725,7 @@ export function OpportunityAdvisor({ liveSupportEnabled = false }: { liveSupport
           </>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
 
@@ -734,7 +792,7 @@ function AskAnswer({
       {(result?.kind === 'unknown' || result?.kind === 'empty') && (
         <div>
           <p className="text-sm leading-relaxed text-slate-200">
-            EnAI answers only with information it can verify about Ensaar and DailyByte, so it does not guess. It does not have a confident answer to that one. Our team can help you directly.
+            EnAI answers only with information it can verify about Ensaar, its India services, and DailyByte, so it does not guess. It does not have a confident answer to that one. Our team can help you directly.
           </p>
           <button type="button" onClick={onContact} className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-[#f5a623] px-5 py-3 font-semibold text-[#0c2343] transition hover:bg-[#f7b83e]">
             Ask our team <ArrowRight className="h-4 w-4" aria-hidden />
@@ -753,7 +811,7 @@ function AskAnswer({
           <input
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            placeholder="Ask about Ensaar or DailyByte"
+            placeholder="Ask about India hiring, services, or DailyByte"
             aria-label="Ask EnAI another question"
             maxLength={300}
             className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"

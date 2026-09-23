@@ -16,8 +16,8 @@ const trail = [
 ];
 
 export const metadata: Metadata = pageMetadata({
-  title: 'Start an Enterprise AI or AI Capability Conversation',
-  description: `Bring Ensaar one workflow, role, or cohort. Request an AI workflow diagnostic, AI capability pilot, software discussion, BCEP AI readiness certification, or event collaboration. Individuals and teams can begin directly through DailyByte. General enquiries: ${siteConfig.email}.`,
+  title: 'Hire in India, Build a Team, or Start an AI Conversation',
+  description: `Talk to Ensaar about hiring in India through an Employer of Record, building a capability centre, software engineering, an AI workflow diagnostic, or BCEP certification. Individuals and teams can begin directly through DailyByte. General enquiries: ${siteConfig.email}.`,
   path: '/contact',
   eyebrow: 'Contact',
 });
@@ -29,7 +29,7 @@ export default function ContactPage() {
         data={[
           webPageSchema({
             name: 'Contact Ensaar Global',
-            description: 'Contact Ensaar about enterprise AI, software engineering, BCEP AI readiness certification, academic programs, and events.',
+            description: 'Contact Ensaar about Employer of Record hiring in India, capability centre setup, enterprise AI, software engineering, BCEP certification, academic programs, and events.',
             url,
             type: 'ContactPage',
             breadcrumb: trail,
@@ -54,10 +54,11 @@ export default function ContactPage() {
           <div className="max-w-4xl">
             <div className="text-xs uppercase tracking-[0.1em] text-cyan-200">Home / Contact</div>
             <h1 className="mt-7 text-[clamp(2.7rem,6vw,5.2rem)] leading-[0.99] text-balance">
-              Bring one workflow, one role, or one cohort.
+              Bring one hire, one team, or one workflow.
             </h1>
             <p className="mt-7 max-w-3xl text-lg leading-relaxed text-slate-200 md:text-xl">
-              Tell us where AI should create value or where people need practical capability. We will help define the evidence, controls, and first step that make the decision easier.
+              Tell us who you need employed in India, what team you want built there, or where AI should
+              create value. We will come back with the first step and what it costs, inside one business day.
             </p>
             <p className="mt-4 max-w-3xl text-sm leading-relaxed text-slate-300">
               From campus to corporate, we also deliver BCEP AI readiness workshops, academic programs, industry meetups, Centre of Excellence initiatives for startups, and certified courses. Interested in attending, hosting, or inviting us? Get in touch.

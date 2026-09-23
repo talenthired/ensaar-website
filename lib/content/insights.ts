@@ -22,6 +22,128 @@ export type Insight = {
 
 export const INSIGHTS: Insight[] = [
   {
+    slug: 'cost-of-employing-someone-in-india',
+    title: 'What It Actually Costs to Employ Someone in India',
+    description:
+      'Salary is the smaller question. A breakdown of statutory employer contributions, the costs that only appear later, and how an Employer of Record fee compares with running your own entity.',
+    category: 'India Employment',
+    published: '2026-09-23',
+    updated: '2026-09-23',
+    readingTime: '7 min read',
+    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1600&q=85&auto=format&fit=crop',
+    imageAlt: 'Desk with a calculator and payroll documents',
+    summary: [
+      'Statutory contributions add roughly 13% to 18% at junior and mid salaries, and less at senior ones.',
+      'Provident fund is usually calculated on a Rs 15,000 wage ceiling, which caps the largest component.',
+      'Gratuity is a real monthly cost from day one even though it is paid after five years.',
+      'Below about twenty to thirty people, an EOR fee is cheaper than running your own company.',
+    ],
+    sections: [
+      {
+        heading: 'The four statutory employer costs',
+        paragraphs: [
+          'India does not have a single payroll tax. An employer owes several separate contributions, and each has its own base, threshold, and filing. The headline percentages mislead unless you know which part of the salary they apply to.',
+        ],
+        bullets: [
+          'Provident fund: 12% of basic pay, commonly applied on the statutory wage ceiling of Rs 15,000, so about Rs 1,800 a month, plus small administrative charges.',
+          'State insurance: 3.25% of gross, but only where gross pay is Rs 21,000 a month or below, which excludes most engineering salaries.',
+          'Gratuity: about 4.81% of basic, accrued monthly as a liability and paid after five years of continuous service.',
+          'Professional tax: set by each state, typically Rs 200 a month, and capped at Rs 2,500 a year by constitutional limit.',
+        ],
+      },
+      {
+        heading: 'Why one percentage is the wrong answer',
+        paragraphs: [
+          'Providers usually quote a single figure, often "13 to 18 percent on top of salary". That is fair at junior and mid salaries. It is wrong at senior ones, because provident fund stops growing once the wage ceiling is reached while the salary keeps going.',
+          'A senior engineer on a high package can carry a statutory load below 5% of gross, and a junior hire close to 18%. Budget from the actual salary bands you intend to hire, not from an average someone published.',
+        ],
+      },
+      {
+        heading: 'The costs that appear later',
+        paragraphs: [
+          'The contributions above are visible from month one. Three others are not, and they are the ones that surprise first-time employers in India.',
+        ],
+        bullets: [
+          'Notice periods of 30 to 90 days are normal and contractual, so an exit is rarely immediate.',
+          'Dismissal is more prescriptive than in the US: cause, documentation, and notice matter, and shortcuts create liability.',
+          'Equipment, reimbursements, and insurance are expected for professional roles even where no statute compels them.',
+        ],
+      },
+      {
+        heading: 'EOR fee against your own entity',
+        paragraphs: [
+          'An Employer of Record charges a flat fee per employee per month, and India specialists generally sit between $99 and $399 while global platforms charge $499 to $699 for the same hire. Your own subsidiary replaces that fee with fixed costs: incorporation, accounting, audit, filings, and the management attention all of it consumes.',
+          'The crossover usually sits somewhere past twenty to thirty people. Below it, per-person fees are the cheaper and faster answer. Above it, your own company wins, and the fee you were paying becomes the budget for running it.',
+        ],
+      },
+    ],
+    faq: [
+      { question: 'How much do employer contributions add to salary in India?', answer: 'Roughly 13% to 18% at junior and mid salaries. At senior salaries the share is lower, often below 5%, because provident fund is calculated on a Rs 15,000 wage ceiling while the salary is not capped.' },
+      { question: 'Is gratuity a cost from the first month?', answer: 'Yes. It is only paid out after five years of continuous service, but it accrues from day one at about 4.81% of basic pay and should be provisioned monthly rather than discovered later.' },
+      { question: 'When is an Indian entity cheaper than an Employer of Record?', answer: 'Usually past twenty to thirty people. Below that, the per-person fee is smaller than the cost and management load of incorporation, accounting, audit, and the compliance calendar.' },
+    ],
+    relatedOffer: { label: 'See Employer of Record pricing', href: '/services/employer-of-record' },
+  },
+  {
+    slug: 'eor-to-own-entity-india',
+    title: 'When to Move Your India Team From an EOR to Your Own Entity',
+    description:
+      'The arithmetic behind the switch, what incorporation actually involves for a foreign parent, how a captive is paid, and how to move employees without resetting their service.',
+    category: 'India Expansion',
+    published: '2026-09-23',
+    updated: '2026-09-23',
+    readingTime: '8 min read',
+    image: 'https://images.unsplash.com/photo-1524749292158-7540c2494485?w=1600&q=85&auto=format&fit=crop',
+    imageAlt: 'Office building viewed from below against the sky',
+    summary: [
+      'The switch is arithmetic: per-person fees against the fixed cost of running a company.',
+      'Incorporation takes seven to ten working days with clean documents, and 100% foreign ownership is automatic in most sectors.',
+      'A resident Indian director is the requirement that most often delays a foreign parent.',
+      'Transfer the team with service continuity intact, or you reset gratuity and goodwill at once.',
+    ],
+    sections: [
+      {
+        heading: 'Do the arithmetic before the ambition',
+        paragraphs: [
+          'An Employer of Record costs a predictable amount per person per month. Your own subsidiary costs a largely fixed amount per year: accounting, audit, statutory filings, and the attention of someone senior enough to own them.',
+          'Divide the fixed cost by the per-person fee and you have your crossover headcount. For most companies it lands past twenty to thirty people. Recalculate it with your own salary bands rather than accepting the number a provider gives you, because the provider has an interest in the answer.',
+        ],
+      },
+      {
+        heading: 'What incorporation involves',
+        paragraphs: [
+          'A wholly owned subsidiary is the normal structure. A foreign parent can hold 100% under the automatic FDI route in most sectors, which means no prior government approval.',
+        ],
+        bullets: [
+          'Two directors minimum, at least one resident in India for 182 days or more in the previous calendar year.',
+          'Seven to ten working days with clean documents; name rejections are the usual cause of delay.',
+          'Government filing fees are nil up to Rs 15 lakh of authorised capital, with stamp duty varying by state.',
+          'Share allotment money must arrive within 60 days, and Form FC-GPR must reach the RBI within 30 days of allotment.',
+        ],
+      },
+      {
+        heading: 'How a captive gets paid',
+        paragraphs: [
+          'A centre that serves only its parent has no external revenue, so it is paid on a cost-plus basis: it recovers its costs plus a margin, and that margin is what India taxes.',
+          'Budget 2026 set a uniform 15.5% safe harbour margin for IT and ITeS services and raised the eligibility threshold to Rs 2,000 crore. Electing the safe harbour keeps most new centres out of transfer pricing disputes, which is worth more than the small margin difference a negotiation might win.',
+        ],
+      },
+      {
+        heading: 'Moving the people without resetting them',
+        paragraphs: [
+          'The transfer is the part that damages trust if handled carelessly. Employees moving from the EOR to your entity should carry their service continuity, because gratuity eligibility and notice terms depend on it, and because asking someone to restart their tenure is a resignation trigger.',
+          'Provident fund follows the employee through their UAN, so the account does not change. What does change is the name on the contract, the payroll that pays them, and the entity that owes them. Say so clearly and in writing before the date, not after.',
+        ],
+      },
+    ],
+    faq: [
+      { question: 'How long does it take to set up an Indian subsidiary?', answer: 'Seven to ten working days with clean documents. A foreign parent can own 100% under the automatic FDI route in most sectors, and needs at least two directors with one resident in India.' },
+      { question: 'What margin does an India captive centre charge its parent?', answer: 'A cost-plus margin. Budget 2026 set a uniform 15.5% safe harbour for IT and ITeS services, with the eligibility threshold raised to Rs 2,000 crore, which removes most transfer pricing disputes for new centres.' },
+      { question: 'Do employees lose anything when they move from an EOR to our entity?', answer: 'They should not. Handled properly the transfer preserves service continuity, which protects gratuity eligibility and notice terms, and provident fund follows the employee through their UAN.' },
+    ],
+    relatedOffer: { label: 'Plan an India capability centre', href: '/services/gcc' },
+  },
+  {
     slug: 'enterprise-ai-adoption-roadmap',
     title: 'Enterprise AI Adoption Roadmap: From Experiments to Governed Use',
     description:

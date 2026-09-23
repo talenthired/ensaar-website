@@ -28,7 +28,7 @@ export function AICaseStudiesSection({ showHeader = true, limit }: Props) {
                 Technology applied to <span className="gradient-text">real operating contexts.</span>
               </>
             }
-            lede="An anonymized view of international work across trading, learning, marketing, and mobility. Client identities remain confidential."
+            lede="An anonymized view of international delivery work across trading, learning, marketing, and mobility, built by teams in India. Client identities remain confidential."
           />
         )}
 

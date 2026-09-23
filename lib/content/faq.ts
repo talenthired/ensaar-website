@@ -1,16 +1,117 @@
 export type FaqItem = {
   question: string;
   answer: string;
-  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement' | 'pricing';
+  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement' | 'pricing' | 'india';
 };
 
+/**
+ * Employer of Record questions.
+ *
+ * Kept as its own export so the EOR page can render exactly these and emit them
+ * as FAQPage structured data, while they still reach /faq and the EnAI
+ * assistant through the combined FAQ array below. Prices and statutory rates
+ * here must match `lib/content/india.ts`; a test asserts it.
+ */
+export const EOR_FAQ: FaqItem[] = [
+  {
+    category: 'india',
+    question: 'What is an Employer of Record in India?',
+    answer:
+      'An Employer of Record is the company that legally employs someone on your behalf. Ensaar issues the Indian employment contract, pays the salary in rupees, and files provident fund, state insurance, professional tax, and TDS. You direct the work day to day. It is how a foreign company hires in India without first registering a company there.',
+  },
+  {
+    category: 'india',
+    question: 'How much does an Employer of Record cost in India?',
+    answer:
+      'Ensaar charges a flat $199 per employee per month, with no setup fee, no security deposit, and no minimum term. On top of that you pay the salary itself and the statutory employer contributions, both passed through at cost. India specialists generally charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+  },
+  {
+    category: 'india',
+    question: 'How quickly can we hire someone in India?',
+    answer:
+      'Five to ten working days from the point we have the candidate details and documents is typical, and it can be faster when documents arrive clean. If Ensaar is also finding the candidate, add the recruitment time, which depends on the role.',
+  },
+  {
+    category: 'india',
+    question: 'What does an employer pay on top of salary in India?',
+    answer:
+      'Provident fund at 12% of basic pay, commonly applied on the statutory wage ceiling of Rs 15,000 so about Rs 1,800 a month; state insurance at 3.25% of gross, only where gross is Rs 21,000 a month or below; gratuity accrued at about 4.81% of basic; and professional tax set by each state, typically Rs 200 a month and capped at Rs 2,500 a year. That adds roughly 13% to 18% at junior and mid salaries, and proportionally less at senior salaries because provident fund is capped.',
+  },
+  {
+    category: 'india',
+    question: 'Does hiring through an EOR create permanent establishment risk in India?',
+    answer:
+      'Not automatically, and an EOR does not automatically protect you either. Permanent establishment turns on conduct, mainly whether someone in India habitually concludes contracts in your name or a fixed place of business is treated as yours. An engineer building your product sits differently from a salesperson closing your deals. Ensaar will say which side of that line a role sits on before you hire.',
+  },
+  {
+    category: 'india',
+    question: 'Who owns the work and the IP?',
+    answer:
+      'You do. IP assignment and confidentiality terms sit in the employment contract Ensaar issues to the employee, and in the service agreement between Ensaar and you, so the rights land with you rather than with the employer of record.',
+  },
+  {
+    category: 'india',
+    question: 'Can we move EOR employees into our own Indian entity later?',
+    answer:
+      'Yes, and it is worth planning for from the start. When your own subsidiary becomes the cheaper option, Ensaar incorporates it and transfers the team across with their service continuity preserved, which matters for gratuity and for notice. Employees keep their provident fund through their UAN.',
+  },
+  {
+    category: 'india',
+    question: 'What happens when an employee resigns or has to be let go?',
+    answer:
+      'Ensaar runs the exit: notice period as written in the contract, final settlement, statutory dues, and the paperwork. Indian dismissal rules are more prescriptive than in the US, so a termination needs cause, documentation, and notice. We will tell you what is possible before you commit to a decision.',
+  },
+];
+
+/** India capability centre questions. Rendered on /services/gcc and in /faq. */
+export const GCC_FAQ: FaqItem[] = [
+  {
+    category: 'india',
+    question: 'What is a GCC, and do we need one?',
+    answer:
+      'A global capability centre is a team in India that belongs to you rather than to a vendor, doing continuing work such as engineering, data, or support. You need one when the work is ongoing and you want the knowledge to stay in your organisation. If the work is a fixed project with an end date, a contract with a services firm is usually the better instrument.',
+  },
+  {
+    category: 'india',
+    question: 'Can we start with fewer than ten people?',
+    answer:
+      'Yes, and most companies should. Ensaar starts teams at three to fifteen people employed through our Employer of Record, which needs no Indian entity, no lease, and no local registration. It tests the operating model, the time zone overlap, and the hiring profile before anything structural is committed.',
+  },
+  {
+    category: 'india',
+    question: 'When does our own Indian entity become cheaper than an EOR?',
+    answer:
+      'Usually somewhere past twenty to thirty people. Below that, per-person fees are smaller than the cost and management attention of running an Indian company with its own filings, audit, and compliance calendar. Above it, the arithmetic reverses. The crossover depends on salary levels, so it is worth recalculating rather than assuming.',
+  },
+  {
+    category: 'india',
+    question: 'How long does it take to incorporate an Indian subsidiary?',
+    answer:
+      'Seven to ten working days with clean documents. A foreign parent can own 100% under the automatic FDI route in most sectors. You need at least two directors, one of whom must have been resident in India for 182 days or more in the previous calendar year, and that requirement is the most common cause of delay.',
+  },
+  {
+    category: 'india',
+    question: 'How is a captive centre paid by its parent company?',
+    answer:
+      'On a cost-plus basis: the India entity recovers its costs plus a margin, because it serves only its parent and has no external revenue. Budget 2026 set a uniform 15.5% safe harbour margin for IT and ITeS services and raised the eligibility threshold to Rs 2,000 crore, which keeps most new centres out of transfer pricing disputes.',
+  },
+  {
+    category: 'india',
+    question: 'What does Ensaar charge to build an India team?',
+    answer:
+      'Recruitment is 8.33% of annual salary per hire, which is one month, charged when the person joins, with a 90-day replacement. Employment through our Employer of Record is $199 per person per month, with salary and statutory costs passed through at cost. Converting to your own entity is quoted per engagement once the structure is known.',
+  },
+];
+
 export const FAQ: FaqItem[] = [
+  ...EOR_FAQ,
+  ...GCC_FAQ,
   // Company
   {
     category: 'company',
     question: 'What does Ensaar Global do?',
     answer:
-      'Ensaar Global Pvt. Ltd. helps students, engineers, and organizations adopt enterprise-grade AI. Services include AI strategy and enablement, software engineering, secure cloud deployment, AI-ready engineering teams, industry readiness, and BCEP AI readiness certification. Ensaar has operated since 2014.',
+      'Ensaar Global Pvt. Ltd. helps companies outside India build teams inside it. We act as Employer of Record so you can hire in India without your own entity, build those teams into capability centres and later into your own subsidiary, and deliver software engineering and practical AI enablement with the same people. Ensaar has operated since 2014 from Hyderabad and Noida.',
   },
   {
     category: 'company',
@@ -36,7 +137,7 @@ export const FAQ: FaqItem[] = [
     category: 'services',
     question: 'What services does Ensaar Global offer?',
     answer:
-      'Ensaar offers Enterprise AI Enablement for model strategy, engineering workflows, secure deployment, observability, governance, and adoption support; Software Development for web, mobile, SaaS, and enterprise applications; AI-Ready Engineering Teams; BCEP AI readiness certification; and industry readiness programs for students.',
+      'Six: Employer of Record in India, so you can hire without an entity; India capability centres that start as a small pod and can convert into your own subsidiary; Enterprise AI Enablement covering model strategy, engineering workflows, deployment, observability, and governance; Software Development for web, mobile, SaaS, and enterprise applications; AI-Ready Engineering Teams; and BCEP certification for AI readiness and business communication.',
   },
   {
     category: 'services',

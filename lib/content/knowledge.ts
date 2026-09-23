@@ -25,6 +25,115 @@ export interface KnowledgeEntry {
   cta?: KnowledgeCta;
 }
 
+/**
+ * India services: Employer of Record and capability centres.
+ *
+ * These carry heavy keyword lists on purpose. A buyer types "can you run payroll
+ * in india" or "do we need an entity", not the question as written, and the
+ * matcher scores keyword hits above answer prose. Every figure here must match
+ * `lib/content/india.ts`, which `test/india-content.test.ts` checks.
+ */
+const INDIA_ENTRIES: KnowledgeEntry[] = [
+  {
+    id: 'in-eor',
+    question: 'What is Employer of Record and can Ensaar hire someone in India for us?',
+    keywords: [
+      'eor', 'employer of record', 'hire in india', 'hiring in india', 'employ', 'employment',
+      'legal employer', 'without entity', 'no entity', 'india hire', 'record',
+    ],
+    answer:
+      'Yes. Ensaar acts as the legal employer in India so you can hire without registering a company there. We issue the Indian employment contract with your IP terms, pay salary in rupees, and file provident fund, state insurance, professional tax, and TDS. You manage the work day to day. Onboarding usually takes five to ten working days.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-eor-price',
+    question: 'How much does Employer of Record cost in India?',
+    keywords: [
+      'eor cost', 'eor price', 'eor pricing', 'cost per employee', 'per employee per month',
+      'how much', 'price', 'pricing', 'fee', 'rate', 'charges', 'deposit', 'setup fee',
+    ],
+    answer:
+      'Ensaar charges a flat $199 per employee per month, with no setup fee, no security deposit, and no minimum term. Salary and statutory employer contributions are passed through at cost. For comparison, India specialists usually charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-statutory',
+    question: 'What statutory costs does an employer pay in India?',
+    keywords: [
+      'statutory', 'pf', 'epf', 'provident fund', 'esi', 'esic', 'gratuity', 'professional tax',
+      'tds', 'payroll', 'employer cost', 'contributions', 'form 16', 'uan', 'compliance',
+    ],
+    answer:
+      'Provident fund at 12% of basic, commonly applied on the Rs 15,000 wage ceiling so about Rs 1,800 a month; state insurance at 3.25% of gross where gross is Rs 21,000 or below; gratuity accrued at about 4.81% of basic; and state professional tax, typically Rs 200 a month and capped at Rs 2,500 a year. Together that is roughly 13% to 18% on top of gross at junior and mid salaries, and less at senior salaries because provident fund is capped.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-pe',
+    question: 'Does an EOR create permanent establishment risk in India?',
+    keywords: [
+      'permanent establishment', 'pe risk', 'pe', 'tax risk', 'taxable presence', 'corporate tax',
+      'exposure', 'liability',
+    ],
+    answer:
+      'Not automatically, and an EOR does not automatically protect you either. Permanent establishment turns on conduct, mainly whether someone in India habitually concludes contracts in your name. An engineer building your product is a different case from a salesperson closing your deals. Ensaar will tell you which side of that line a role sits on before you hire.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-gcc',
+    question: 'Can Ensaar help us set up a GCC or capability centre in India?',
+    keywords: [
+      'gcc', 'capability centre', 'capability center', 'global capability', 'captive',
+      'offshore development centre', 'odc', 'india team', 'build a team', 'pod', 'centre', 'center',
+      'build operate transfer', 'bot',
+    ],
+    answer:
+      'Yes, and Ensaar starts smaller than most. Your team begins as a pod of three to fifteen people employed through our Employer of Record, working only for you, with no entity or lease required. Ensaar handles hiring, employment, payroll, equipment, and India-side operations. When headcount makes your own subsidiary cheaper, we incorporate it and move the team across with service continuity intact.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-entity',
+    question: 'Do we need our own Indian entity, and when is it worth it?',
+    keywords: [
+      'entity', 'subsidiary', 'incorporate', 'incorporation', 'register a company', 'private limited',
+      'wholly owned', 'fdi', 'fc-gpr', 'rbi', 'transfer pricing', 'safe harbour', 'safe harbor',
+      'when to convert',
+    ],
+    answer:
+      'Not to start, and usually not until past roughly twenty to thirty people, below which per-person fees cost less than running an Indian company. When you do convert, a foreign parent can own 100% under the automatic FDI route in most sectors, incorporation takes seven to ten working days with clean documents, and you need two directors with one resident in India. A captive is paid cost-plus, and Budget 2026 set a uniform 15.5% safe harbour margin for IT and ITeS.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-speed',
+    question: 'How fast can we get someone working in India?',
+    keywords: [
+      'how fast', 'how long', 'timeline', 'onboarding', 'start date', 'quickly', 'speed', 'notice period',
+      'recruitment', 'recruit', 'hiring fee', 'replacement',
+    ],
+    answer:
+      'Five to ten working days from having the candidate details and documents, sometimes faster. If Ensaar is also finding the person, recruitment comes first and is charged at 8.33% of annual salary, which is one month, payable when they join, with a 90-day replacement guarantee.',
+    cta: 'contact',
+  },
+  {
+    id: 'in-ip',
+    question: 'Who owns the IP and the work product?',
+    keywords: ['ip', 'intellectual property', 'ownership', 'own the work', 'confidentiality', 'nda', 'source code'],
+    answer:
+      'You do. IP assignment and confidentiality sit in the employment contract Ensaar issues to the employee and in the service agreement between Ensaar and you, so the rights land with you rather than with the employer of record.',
+    cta: 'contact',
+  },
+  {
+    id: 'co-what',
+    question: 'What does Ensaar do?',
+    keywords: [
+      'what does ensaar do', 'about ensaar', 'services', 'offerings', 'what do you do', 'company',
+      'ensaar', 'help with',
+    ],
+    answer:
+      'Ensaar helps companies outside India build teams inside it. We employ people in India for you as Employer of Record, grow those teams into your own capability centre when the scale justifies it, and build software and practical AI capability with the same people. Ensaar has operated from Hyderabad and Noida since 2014.',
+    cta: 'contact',
+  },
+];
+
 // DailyByte product and signup entries, grounded in the site's own copy.
 const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
   {
@@ -132,10 +241,13 @@ const FAQ_ENTRIES: KnowledgeEntry[] = FAQ.map((item, index) => ({
   question: item.question,
   keywords: deriveAcronyms(`${item.question} ${item.answer}`),
   answer: item.answer,
-  cta: item.category === 'bcep' || item.category === 'engagement' ? 'contact' : null,
+  cta:
+    item.category === 'bcep' || item.category === 'engagement' || item.category === 'india'
+      ? 'contact'
+      : null,
 }));
 
-export const KNOWLEDGE: KnowledgeEntry[] = [...DAILYBYTE_ENTRIES, ...FAQ_ENTRIES];
+export const KNOWLEDGE: KnowledgeEntry[] = [...INDIA_ENTRIES, ...DAILYBYTE_ENTRIES, ...FAQ_ENTRIES];
 
 // --- Profanity filter -------------------------------------------------------
 // A small, word-boundary matched blocklist. The goal is to keep the assistant

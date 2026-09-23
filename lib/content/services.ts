@@ -12,6 +12,60 @@ export type Service = {
 
 export const SERVICES: Service[] = [
   {
+    slug: 'employer-of-record',
+    name: 'Employer of Record in India',
+    tagline: 'Hire in India without setting up a company',
+    shortDescription:
+      'Ensaar employs your hire in India as the legal employer, runs payroll and every statutory filing, and leaves you to manage the work. A flat fee per employee per month, with no setup charge and no deposit.',
+    longDescription:
+      'Setting up an Indian entity to make your first two hires costs more in time and attention than the hires are worth. An Employer of Record removes that step: Ensaar issues a compliant Indian employment contract, pays salary in rupees, files provident fund, state insurance, professional tax, and TDS, accrues gratuity, and issues Form 16, while your managers direct the work exactly as they would for any other team member. Your IP and confidentiality terms are assigned to you in the employment contract. When headcount makes your own subsidiary the cheaper answer, the same team can move into it with their service continuity intact.',
+    serviceType: 'Employer of Record and India Payroll Compliance',
+    offerings: [
+      'Compliant Indian employment contracts with IP assignment',
+      'Monthly payroll in rupees, with payslips and Form 16',
+      'Provident fund, ESI, professional tax, and TDS filings',
+      'Gratuity accrual and statutory leave administration',
+      'State-specific Shops and Establishments compliance',
+      'Onboarding in five to ten working days',
+      'Equipment, reimbursement, and access administration',
+      'Lawful offboarding, and transfer to your own entity later',
+    ],
+    outcomes: [
+      'An Indian hire working in weeks, not quarters',
+      'Statutory filings that are somebody else\'s job',
+      'One flat monthly fee, with statutory costs passed through at cost',
+      'A clean path to your own entity when the numbers justify it',
+    ],
+    accent: 'cyan',
+  },
+  {
+    slug: 'gcc',
+    name: 'India Capability Centres',
+    tagline: 'Start with a pod, grow into your own centre',
+    shortDescription:
+      'A dedicated India team that starts at three to fifteen people employed through Ensaar, and converts into your own subsidiary when scale makes that cheaper. No entity required on day one.',
+    longDescription:
+      'Most India capability centre plans fail on sequencing, not ambition: an entity, a lease, and a leadership hire are committed before anyone knows whether the operating model works across time zones. Ensaar reverses the order. Your pod starts as people employed through our Employer of Record, working only for you and managed by you. Ensaar carries the India-side load: hiring, employment, payroll, equipment, access, and the monthly operational reporting. When the team is large enough that per-person fees exceed the cost of running a company, we incorporate your subsidiary, move the team across with their service continuity preserved, and hand over a centre that is already working.',
+    serviceType: 'Global Capability Centre Setup and Managed India Operations',
+    offerings: [
+      'Role mix and location planning for an India team',
+      'Recruitment at one month of salary per hire, with a 90-day replacement',
+      'Employment and payroll through Ensaar as Employer of Record',
+      'Equipment, security, and access administration',
+      'A named India operations contact and monthly reporting',
+      'Subsidiary incorporation and FDI filings when you convert',
+      'Employee transfer into your entity with service continuity',
+      'Transfer pricing and safe harbour groundwork for a captive',
+    ],
+    outcomes: [
+      'A working India team before any entity exists',
+      'Costs that scale with headcount instead of preceding it',
+      'An exit from the pod model that was planned from the start',
+      'Your own centre, running, when the maths supports it',
+    ],
+    accent: 'indigo',
+  },
+  {
     slug: 'ai-solutions',
     name: 'Enterprise AI Implementation',
     tagline: 'Build a controlled AI pilot',

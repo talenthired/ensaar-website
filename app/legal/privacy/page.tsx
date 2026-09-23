@@ -39,8 +39,14 @@ export default function PrivacyPage() {
       <Section>
         <Container>
           <article className="max-w-3xl space-y-10 text-[1rem] leading-relaxed text-ink-secondary">
+            <Policy title="What this notice covers">
+              This notice covers information collected through this website. Where Ensaar acts as
+              Employer of Record, the personal information of employees and candidates, including
+              identity, tax, bank, and payroll data, is processed under the separate employment and
+              services agreements that govern that relationship, not under this page.
+            </Policy>
             <Policy title="Information we collect">
-              We collect information you provide in a work brief, calculator request, or email. This
+              We collect information you provide in a work brief, enquiry form, or email. This
               can include your name, business email, phone number, company, requested work, current
               cost range, timeline, and message. We also record the first landing page, referrer, and
               campaign parameters used to reach the site.
