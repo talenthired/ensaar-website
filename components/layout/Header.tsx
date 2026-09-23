@@ -36,6 +36,7 @@ const NAV: NavItem[] = [
   { label: 'DailyByte™', href: '/ai-work-lab' },
   { label: 'Insights', href: '/insights' },
   { label: 'Events', href: '/events' },
+  { label: 'Careers', href: '/careers' },
   { label: 'Contact', href: '/contact' },
 ];
 

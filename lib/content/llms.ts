@@ -144,11 +144,13 @@ ${INSIGHTS.map((insight) => `- ${insight.title}: ${insight.description} (${url}/
 ${SERVICES.map((service) => `- ${service.name}: ${url}/services/${service.slug}`).join('\n')}
 - Certificate Verification: ${url}/verify
 - Insights: ${url}/insights
+- Careers and talent pool: ${url}/careers
 - Events: ${url}/events
 - FAQ: ${url}/faq
 - Contact: ${url}/contact
 - Terms: ${url}/legal/terms
 - Privacy Notice: ${url}/legal/privacy
+- Cookie Notice: ${url}/legal/cookies
 - Refund Policy: ${url}/legal/refund-policy
 
 ## Contact

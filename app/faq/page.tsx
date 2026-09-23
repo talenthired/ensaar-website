@@ -29,6 +29,7 @@ export const metadata: Metadata = pageMetadata({
  */
 const CATEGORIES: Array<{ key: typeof FAQ[number]['category']; label: string }> = [
   { key: 'india', label: 'Hiring and Teams in India' },
+  { key: 'careers', label: 'For Candidates' },
   { key: 'company', label: 'About Ensaar' },
   { key: 'services', label: 'Services' },
   { key: 'ai', label: 'AI Capabilities' },

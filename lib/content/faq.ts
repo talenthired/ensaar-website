@@ -1,8 +1,36 @@
 export type FaqItem = {
   question: string;
   answer: string;
-  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement' | 'pricing' | 'india';
+  category: 'company' | 'services' | 'ai' | 'bcep' | 'engagement' | 'pricing' | 'india' | 'careers';
 };
+
+/** Candidate questions. Rendered on /careers and in /faq. */
+export const CAREERS_FAQ: FaqItem[] = [
+  {
+    category: 'careers',
+    question: 'Do you have open roles right now?',
+    answer:
+      'Sometimes, and sometimes not. Ensaar hires for specific client teams rather than maintaining a standing list of vacancies, so registering puts you in front of us when a matching role appears. We would rather tell you that than publish roles that do not exist.',
+  },
+  {
+    category: 'careers',
+    question: 'Who would I actually work for?',
+    answer:
+      'Ensaar employs you in India and is your legal employer: the contract, payroll, provident fund, and Form 16 come from us. Your day-to-day work sits with the client company and their managers. It is one job, with employment and work responsibilities split between two organisations.',
+  },
+  {
+    category: 'careers',
+    question: 'Do you charge candidates anything?',
+    answer:
+      'No, never, for any reason. Our fees are paid by the client company. If someone claiming to represent Ensaar asks you for a placement fee, a training fee, or a deposit, it is not us, and we would like to know about it.',
+  },
+  {
+    category: 'careers',
+    question: 'What happens if the client opens their own company in India?',
+    answer:
+      'You transfer to it, with your service continuity preserved, which matters for gratuity and notice. Your provident fund follows you through your UAN. This is planned from the first hire rather than handled as an afterthought.',
+  },
+];
 
 /**
  * Employer of Record questions.
@@ -106,6 +134,7 @@ export const GCC_FAQ: FaqItem[] = [
 export const FAQ: FaqItem[] = [
   ...EOR_FAQ,
   ...GCC_FAQ,
+  ...CAREERS_FAQ,
   // Company
   {
     category: 'company',

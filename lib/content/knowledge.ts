@@ -122,6 +122,18 @@ const INDIA_ENTRIES: KnowledgeEntry[] = [
     cta: 'contact',
   },
   {
+    id: 'in-jobs',
+    question: 'Are you hiring, and how do I apply for a job?',
+    keywords: [
+      'job', 'jobs', 'hiring', 'vacancy', 'vacancies', 'opening', 'openings', 'apply', 'application',
+      'career', 'careers', 'resume', 'cv', 'candidate', 'recruit me', 'work at ensaar', 'placement',
+      'fresher', 'interview',
+    ],
+    answer:
+      'Ensaar hires in India for client companies abroad, so roles appear when a client needs them rather than sitting on a permanent vacancy list. Register on the careers page and we will contact you when something matches your work. Ensaar never charges a candidate a fee of any kind.',
+    cta: 'contact',
+  },
+  {
     id: 'co-what',
     question: 'What does Ensaar do?',
     keywords: [

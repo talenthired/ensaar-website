@@ -173,6 +173,45 @@ export const ENTITY_FACTS: StatutoryItem[] = [
 ];
 
 /**
+ * What Ensaar actually commits to operationally.
+ *
+ * Deliberately process commitments, not badges. Competitors in this market lean
+ * on certification logos and "100% compliant" claims; a buyer can check the
+ * items below against what arrives in their inbox each month, which is worth
+ * more than a logo and is true today.
+ */
+export const COMPLIANCE_COMMITMENTS: StatutoryItem[] = [
+  {
+    name: 'Filed on the statutory calendar',
+    rate: 'Monthly',
+    note: 'Provident fund and ESI by the 15th, TDS by the 7th, professional tax on the state schedule. Late filing is our cost to carry, not yours.',
+  },
+  {
+    name: 'Documented at onboarding',
+    rate: 'Every hire',
+    note: 'Identity, PAN, prior employment, and education verified before the first working day, with the records retained for audit.',
+  },
+  {
+    name: 'A statutory policy pack',
+    rate: 'From day one',
+    note: 'Leave, working hours, notice, and the POSH policy with its internal committee, matched to the state Shops and Establishments Act that applies.',
+  },
+  {
+    name: 'Records you can inspect',
+    rate: 'On request',
+    note: 'Payslips, challans, filing acknowledgements, and the employment file for anyone we employ for you. You should be able to audit your provider, so we assume you will.',
+  },
+];
+
+/**
+ * Scope, stated before a buyer assumes otherwise. India specialists beat global
+ * platforms on India and lose to them everywhere else, and pretending
+ * differently wastes a call.
+ */
+export const SCOPE_NOTE =
+  'Ensaar employs people in India, and only in India. If you need employment in several countries at once, a global platform will serve you better and we will say so on the first call. What we offer instead is depth in one country: the statutory detail, the state differences, and the entity path when you outgrow an EOR.';
+
+/**
  * Permanent establishment. Stated plainly because the confident version of this
  * answer, in either direction, is wrong, and a buyer who later discovers that
  * has a tax problem and a trust problem.

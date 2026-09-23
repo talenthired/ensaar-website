@@ -49,6 +49,19 @@ describe('India services are wired into every route list', () => {
     }
   });
 
+  it('keep careers and the cookie notice reachable and indexed', () => {
+    const urls = sitemap().map((entry) => entry.url);
+    expect(urls).toContain('https://ensaar.com/careers');
+    expect(urls).toContain('https://ensaar.com/legal/cookies');
+    expect(read('components/layout/Header.tsx'), 'careers missing from header').toContain("href: '/careers'");
+    expect(read('components/layout/Footer.tsx'), 'careers missing from footer').toContain("href: '/careers'");
+    expect(read('components/layout/Footer.tsx'), 'cookie notice missing from footer').toContain('/legal/cookies');
+    // The header nav is hand-written, so a page can vanish from it in an edit.
+    for (const href of ['/', '/about', '/services', '/insights', '/events', '/careers', '/contact']) {
+      expect(read('components/layout/Header.tsx'), `${href} missing from header nav`).toContain(`href: '${href}'`);
+    }
+  });
+
   it('render on /faq, because that page lists categories by hand', () => {
     const page = read('app/faq/page.tsx');
     for (const category of new Set(FAQ.map((item) => item.category))) {

@@ -33,6 +33,7 @@ export function Footer() {
               { label: 'AI Enablement', href: '/services/ai-solutions' },
               { label: 'DailyByte™', href: '/ai-work-lab' },
               { label: 'Insights', href: '/insights' },
+              { label: 'Careers', href: '/careers' },
               { label: 'Events', href: '/events' },
               { label: 'Verify Certificate', href: '/verify' },
               { label: 'FAQ', href: '/faq' },
@@ -66,6 +67,7 @@ export function Footer() {
             <Link href="/legal/terms" className="hover:text-ink-secondary">Terms</Link>
             <Link href="/legal/privacy" className="hover:text-ink-secondary">Privacy</Link>
             <Link href="/legal/refund-policy" className="hover:text-ink-secondary">Refunds</Link>
+            <Link href="/legal/cookies" className="hover:text-ink-secondary">Cookies</Link>
             <Link href="/verify" className="hover:text-ink-secondary">Certificate verification</Link>
             <Link href="/basecamp" className="hover:text-ink-secondary">Basecamp</Link>
             <span>Crafted with AI.</span>

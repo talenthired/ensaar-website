@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/services/staffing`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/services/corporate-training`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${base}/ai-work-lab`, lastModified: now, changeFrequency: 'weekly', priority: 0.95 },
+    { url: `${base}/careers`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/events`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${base}/verify`, lastModified: now, changeFrequency: 'monthly', priority: 0.85 },
     { url: `${base}/insights`, lastModified: now, changeFrequency: 'weekly', priority: 0.85 },
@@ -28,6 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/legal/terms`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/legal/refund-policy`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
     { url: `${base}/legal/privacy`, lastModified: now, changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${base}/legal/cookies`, lastModified: now, changeFrequency: 'monthly', priority: 0.3 },
   ];
 
   const trainingTracks: MetadataRoute.Sitemap = BCEP_TRACKS.map((track) => ({

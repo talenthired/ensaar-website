@@ -9,6 +9,7 @@ import { pageMetadata } from '@/lib/metadata';
 import { SERVICES } from '@/lib/content/services';
 import { EOR_FAQ } from '@/lib/content/faq';
 import {
+  COMPLIANCE_COMMITMENTS,
   EOR_EXCLUDED,
   EOR_INCLUDED,
   EOR_PRICE_USD,
@@ -17,6 +18,7 @@ import {
   PE_POSITION,
   RECRUITMENT_FEE_PERCENT,
   REPLACEMENT_GUARANTEE_DAYS,
+  SCOPE_NOTE,
   STATUTORY_COSTS,
   STATUTORY_SUMMARY,
 } from '@/lib/content/india';
@@ -220,6 +222,29 @@ export default function EmployerOfRecordPage() {
               </div>
             ))}
           </div>
+        </Container>
+      </section>
+
+      <section className="border-b border-line-subtle bg-bg-secondary py-16 md:py-20">
+        <Container>
+          <span className="eyebrow mb-5">What we commit to</span>
+          <h2 className="mt-5 max-w-[720px] text-[clamp(2rem,4vw,3rem)] leading-tight text-balance">
+            Compliance you can check, not a badge.
+          </h2>
+          <div className="mt-10 grid border-l border-t border-line-subtle sm:grid-cols-2">
+            {COMPLIANCE_COMMITMENTS.map((item) => (
+              <div key={item.name} className="border-b border-r border-line-subtle p-6 md:p-7">
+                <div className="font-mono text-xs uppercase tracking-[0.12em] text-accent-secondary">
+                  {item.rate}
+                </div>
+                <h3 className="mt-5 text-lg">{item.name}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-ink-secondary">{item.note}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-8 max-w-3xl border-l-2 border-[#f5a623] pl-5 leading-relaxed text-ink-secondary">
+            {SCOPE_NOTE}
+          </p>
         </Container>
       </section>
 
