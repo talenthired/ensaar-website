@@ -537,7 +537,7 @@ export function OnboardingPortal() {
         </dl>
         <p className="mt-3 text-xs text-ink-secondary">
           Salary and statutory employer contributions are passed through at cost. Anything wrong here? Write to
-          info@ensaar.com before you sign and we will correct it.
+          support@ensaar.com before you sign and we will correct it.
         </p>
       </section>
 
@@ -1046,7 +1046,7 @@ export function RecoverForm() {
         {state.kind === 'done' || state.kind === 'error' ? state.text : ''}
       </p>
       <p className="text-xs text-ink-secondary">
-        Still stuck? Write to <a href="mailto:info@ensaar.com" className="underline">info@ensaar.com</a>.
+        Still stuck? Write to <a href="mailto:support@ensaar.com" className="underline">support@ensaar.com</a>.
       </p>
     </form>
   );

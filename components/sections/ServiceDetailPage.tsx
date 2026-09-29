@@ -90,7 +90,7 @@ export function ServiceDetailPage({ service }: { service: Service }) {
                 {service.slug === 'ai-solutions' ? (
                   <AdvisorTrigger intent="enterprise" source="ai-service-hero" variant="primary">Map one workflow</AdvisorTrigger>
                 ) : (
-                  <Button href={service.slug === 'corporate-training' ? `mailto:info@ensaar.com` : '/contact'} withArrow>
+                  <Button href={service.slug === 'corporate-training' ? `mailto:support@ensaar.com` : '/contact'} withArrow>
                     {service.slug === 'corporate-training' ? 'Start BCEP AI Readiness' : 'Discuss your project'}
                   </Button>
                 )}
@@ -194,7 +194,7 @@ export function ServiceDetailPage({ service }: { service: Service }) {
               {service.slug === 'ai-solutions' ? (
                 <AdvisorTrigger intent="enterprise" source="ai-service-outcomes" variant="primary">Request a workflow diagnostic</AdvisorTrigger>
               ) : (
-                <Button href={service.slug === 'corporate-training' ? `mailto:info@ensaar.com` : '/contact'} withArrow>
+                <Button href={service.slug === 'corporate-training' ? `mailto:support@ensaar.com` : '/contact'} withArrow>
                   {service.slug === 'corporate-training' ? 'Get BCEP Certified' : 'Start a conversation'}
                 </Button>
               )}

@@ -2,7 +2,7 @@
 
 ## Header/Navigation
 - **Logo**: Ensaar Global Pvt. Ltd. (with website logo image)
-- **Contact**: [info@ensaar.com](mailto:info@ensaar.com)
+- **Contact**: [support@ensaar.com](mailto:support@ensaar.com)
 
 ## Hero Section
 **Main Heading**: "Technology Meets Design"
@@ -57,7 +57,7 @@
 ### Company Information
 - **Name**: ENSAAR GLOBAL PVT LTD
 - **Location**: Begumpet, Hyderabad, Telangana State, India
-- **Email**: [info@ensaar.com](mailto:info@ensaar.com)
+- **Email**: [support@ensaar.com](mailto:support@ensaar.com)
 
 ### Hours of Operation
 - Monday - Friday: 9am - 5pm

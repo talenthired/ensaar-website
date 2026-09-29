@@ -264,7 +264,7 @@ export function CertificateVerifier({ initialCertificateNumber = '' }: { initial
       </div>
 
       <div className="border-t border-line-subtle bg-bg-secondary/50 px-5 py-4 text-center text-xs leading-relaxed text-ink-muted md:px-7">
-        Need help with a credential? <Link href="mailto:info@ensaar.com" className="font-semibold text-ink-primary hover:text-accent-primary">Contact the BCEP team</Link>.
+        Need help with a credential? <Link href="mailto:support@ensaar.com" className="font-semibold text-ink-primary hover:text-accent-primary">Contact the BCEP team</Link>.
       </div>
     </div>
   );

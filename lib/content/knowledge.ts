@@ -219,7 +219,7 @@ const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
     question: 'How do I contact Ensaar or what is your email?',
     keywords: ['contact', 'email', 'reach', 'reach out', 'get in touch', 'phone', 'call', 'support', 'talk to', 'speak to', 'enquiry', 'inquiry'],
     answer:
-      'You can reach Ensaar at info@ensaar.com for AI, software, managed engineering, and BCEP enquiries. Office hours are Monday through Friday, 9am to 5pm IST, with Saturdays by appointment. Ensaar has locations in Hyderabad and Noida.',
+      'You can reach Ensaar at support@ensaar.com for AI, software, managed engineering, and BCEP enquiries. Office hours are Monday through Friday, 9am to 5pm IST, with Saturdays by appointment. Ensaar has locations in Hyderabad and Noida.',
     cta: 'contact',
   },
   {
@@ -227,7 +227,7 @@ const DAILYBYTE_ENTRIES: KnowledgeEntry[] = [
     question: 'What is BCEP?',
     keywords: ['bcep', 'business communication', 'certification', 'certificate', 'training', 'course', 'courses', 'leadership', 'professional excellence', 'facilitator'],
     answer:
-      'BCEP is Ensaar\'s Business Communication Excellence Program. AI readiness and emotional intelligence are core across its Leadership Execution, Business Communication, Professional Excellence, and Enterprise Facilitation pathways. Participants complete structured learning, workplace application, and an assessed demonstration before certification. For enquiries, email info@ensaar.com.',
+      'BCEP is Ensaar\'s Business Communication Excellence Program. AI readiness and emotional intelligence are core across its Leadership Execution, Business Communication, Professional Excellence, and Enterprise Facilitation pathways. Participants complete structured learning, workplace application, and an assessed demonstration before certification. For enquiries, email support@ensaar.com.',
     cta: 'contact',
   },
   {

@@ -158,7 +158,7 @@ export const FAQ: FaqItem[] = [
     category: 'company',
     question: 'How do I contact Ensaar Global?',
     answer:
-      'For AI, software, managed engineering, and Business Communication Excellence Program (BCEP) AI readiness certification enquiries, email info@ensaar.com. Our office hours are Monday through Friday, 9am to 5pm IST; Saturdays by appointment.',
+      'For AI, software, managed engineering, and Business Communication Excellence Program (BCEP) AI readiness certification enquiries, email support@ensaar.com. Our office hours are Monday through Friday, 9am to 5pm IST; Saturdays by appointment.',
   },
 
   // Services
@@ -236,7 +236,7 @@ export const FAQ: FaqItem[] = [
     category: 'bcep',
     question: 'How do I start BCEP certification?',
     answer:
-      'Email info@ensaar.com with the certification pathway, participant profile, AI readiness goal, and whether you are applying individually or for an enterprise cohort. Ensaar will confirm the pathway format, assessment model, and next intake.',
+      'Email support@ensaar.com with the certification pathway, participant profile, AI readiness goal, and whether you are applying individually or for an enterprise cohort. Ensaar will confirm the pathway format, assessment model, and next intake.',
   },
   {
     category: 'bcep',
@@ -288,6 +288,6 @@ export const FAQ: FaqItem[] = [
     category: 'engagement',
     question: 'How does a typical Ensaar engagement start?',
     answer:
-      'Most engagements start with a short scoping conversation to understand the business outcome you are trying to achieve. From there, we propose a focused first engagement - often a time-boxed prototype or pilot - before committing to larger phases. Contact info@ensaar.com to start the conversation.',
+      'Most engagements start with a short scoping conversation to understand the business outcome you are trying to achieve. From there, we propose a focused first engagement - often a time-boxed prototype or pilot - before committing to larger phases. Contact support@ensaar.com to start the conversation.',
   },
 ];

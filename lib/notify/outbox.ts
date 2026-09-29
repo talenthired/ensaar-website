@@ -54,8 +54,8 @@ export function emailConfigured(): boolean {
 }
 
 /**
- * Where customers reply and who they are told to write to. EMAIL_REPLY_TO lets
- * support@ take customer mail while info@ stays the public sales address.
+ * Where customers reply and who they are told to write to. Defaults to the
+ * site contact address (siteConfig.email); EMAIL_REPLY_TO overrides it.
  */
 export function supportAddress(): string {
   return process.env.EMAIL_REPLY_TO || siteConfig.email;

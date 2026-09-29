@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Lead submission failed', error);
     return NextResponse.json(
-      { error: 'The request could not be saved. Please email info@ensaar.com.' },
+      { error: 'The request could not be saved. Please email support@ensaar.com.' },
       { status: 503 },
     );
   }
