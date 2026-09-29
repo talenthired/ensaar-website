@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { renderEmail } from '@/lib/notify/outbox';
+import { renderEmail, supportAddress } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
 import { formatDay, ONBOARDING_TTL_DAYS, VERIFY_CODE_TTL_MINUTES } from './onboarding';
 
@@ -49,7 +49,7 @@ export function linkEmail(input: { contactName: string; employeeName: string; li
         `It works for ${ONBOARDING_TTL_DAYS} days. Any earlier link for this onboarding no longer works.`,
       ],
       action: { label: 'Open onboarding', href: input.link },
-      footer: `If you did not ask for this, you can ignore it. Questions? Write to ${siteConfig.email}.`,
+      footer: `If you did not ask for this, you can ignore it. Questions? Write to ${supportAddress()}.`,
     }),
   };
 }
@@ -64,7 +64,7 @@ export function verifyCodeEmail(input: { signatoryName: string; companyName: str
         `Hi ${firstName(input.signatoryName)}, you were named as the person signing the Employer of Record agreement for ${input.companyName}.`,
         `Enter this code on the onboarding page to confirm it is you. It expires in ${VERIFY_CODE_TTL_MINUTES} minutes.`,
       ],
-      footer: `If you are not the signatory for ${input.companyName}, do not share this code and tell us at ${siteConfig.email}.`,
+      footer: `If you are not the signatory for ${input.companyName}, do not share this code and tell us at ${supportAddress()}.`,
     }),
   };
 }

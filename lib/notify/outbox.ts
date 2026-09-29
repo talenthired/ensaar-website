@@ -53,6 +53,14 @@ export function emailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY);
 }
 
+/**
+ * Where customers reply and who they are told to write to. EMAIL_REPLY_TO lets
+ * support@ take customer mail while info@ stays the public sales address.
+ */
+export function supportAddress(): string {
+  return process.env.EMAIL_REPLY_TO || siteConfig.email;
+}
+
 function fromAddress(): string {
   return process.env.EMAIL_FROM || `Ensaar <hello@${new URL(siteConfig.url).hostname}>`;
 }
@@ -95,7 +103,7 @@ async function send(row: Row): Promise<{ ok: true } | { ok: false; error: string
       body: JSON.stringify({
         from: fromAddress(),
         to: row.to_addresses,
-        reply_to: siteConfig.email,
+        reply_to: supportAddress(),
         subject: row.subject,
         text: row.text_body,
         html: row.html_body,
@@ -265,7 +273,7 @@ export function renderEmail(input: {
     '',
     ...input.paragraphs.flatMap((p) => [p, '']),
     ...(input.action ? [`${input.action.label}: ${input.action.href}`, ''] : []),
-    input.footer ?? `Questions? Reply to this email or write to ${siteConfig.email}.`,
+    input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`,
     '',
     'Ensaar Global',
   ].join('\n');
@@ -281,7 +289,7 @@ export function renderEmail(input: {
         ? `<p style="margin:20px 0"><a href="${escapeHtml(input.action.href)}" style="display:inline-block;background:#0c2343;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:6px">${escapeHtml(input.action.label)}</a></p>`
         : ''
     }
-    <p style="font-size:12px;line-height:1.6;color:#5b6b82;margin:16px 0 0">${escapeHtml(input.footer ?? `Questions? Reply to this email or write to ${siteConfig.email}.`)}</p>
+    <p style="font-size:12px;line-height:1.6;color:#5b6b82;margin:16px 0 0">${escapeHtml(input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`)}</p>
   </div>
 </body></html>`;
   return { text, html };
