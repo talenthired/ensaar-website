@@ -69,6 +69,14 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
       },
+      {
+        source: '/onboard/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
       { source: '/api/onboard/:path*', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
       // Basecamp holds lead PII: never cache it, never let it be indexed.
       {

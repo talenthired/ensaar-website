@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Duplicate identical invite",
+    "first": 201,
+    "second": 201,
+    "distinctIds": true
+  },
+  {
+    "name": "Stale agreement hash",
+    "status": 409,
+    "body": {
+      "error": "The agreement changed since you opened it. Please review the updated version and sign again.",
+      "changed": true
+    }
+  },
+  {
+    "name": "Consent required",
+    "status": 400
+  },
+  {
+    "name": "Mismatched name rejected",
+    "status": 400
+  },
+  {
+    "name": "Past start date and malformed PDFs can sign",
+    "status": 200,
+    "startDate": "2026-09-01",
+    "documents": 2
+  },
+  {
+    "name": "Untrusted signer IP stored in local direct request",
+    "signedIp": "203.0.113.99"
+  },
+  {
+    "name": "Approve past start date",
+    "status": 200
+  },
+  {
+    "name": "Approved agreement inaccessible after invite expiry",
+    "status": 404
+  },
+  {
+    "name": "Missing Indian state rejected",
+    "status": 400,
+    "body": {
+      "error": "Please check the highlighted fields.",
+      "errors": {
+        "workState": "Choose the state the employee will work from."
+      }
+    }
+  },
+  {
+    "name": "Sensitive list headers",
+    "cacheControl": null
+  },
+  {
+    "name": "Live customer portal",
+    "status": 404,
+    "text": "Home\nAbout\nWhat We Do\nDailyByte™\nInsights\nEvents\nCareers\nContact\nFind your starting point\n404\nThis page drifted out of orbit.\n\nThe URL doesn't match any page on Ensaar Global. Let's get you back to familiar ground.\n\nBack to home\nOr contact us\n\nYour team in India, employed properly. Building and running India teams for companies worldwide since 2014.\n\nEXPLORE\nHome\nAbout\nServices\nEmployer of Record\nIndia Capability Centres\nAI Enablement\nDailyByte™\n"
+  },
+  {
+    "name": "Mobile unsaved form overflow",
+    "width": 390,
+    "scrollWidth": 390
+  },
+  {
+    "name": "Mobile validation focus",
+    "activeElement": "Save and continue",
+    "scrollY": 2134,
+    "invalidAttributes": 0,
+    "describedErrors": 0
+  },
+  {
+    "name": "Tablet overflow",
+    "scrollWidth": 768,
+    "width": 768
+  }
+]

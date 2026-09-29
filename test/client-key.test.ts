@@ -35,9 +35,21 @@ describe('clientKey', () => {
     expect(viaProxy).toBe(direct);
   });
 
-  it('prefers the headers a proxy owns over the forgeable one', () => {
+  it('ignores a caller-supplied cf-connecting-ip unless the site is really behind Cloudflare', () => {
+    // Production on Railway, 2026-09-29: rotating this header reset every limit.
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('TRUST_PROXY_IP', '1');
+    const forgedA = clientKey(req({ 'cf-connecting-ip': '198.51.100.7', 'x-forwarded-for': '203.0.113.7' }), 's');
+    const forgedB = clientKey(req({ 'cf-connecting-ip': '198.51.100.8', 'x-forwarded-for': '203.0.113.7' }), 's');
+    expect(forgedA).toBe(forgedB);
+    const vercelA = clientKey(req({ 'x-vercel-forwarded-for': '198.51.100.7', 'x-forwarded-for': '203.0.113.7' }), 's');
+    expect(vercelA).toBe(forgedA);
+  });
+
+  it('prefers the headers a proxy owns over the forgeable one, when that proxy is real', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('TRUST_PROXY_IP', '1');
+    vi.stubEnv('TRUST_CLOUDFLARE_IP', '1');
     const cf = clientKey(req({ 'cf-connecting-ip': '203.0.113.7', 'x-forwarded-for': '1.2.3.4' }), 's');
     const plain = clientKey(req({ 'x-forwarded-for': '203.0.113.7' }), 's');
     expect(cf).toBe(plain);

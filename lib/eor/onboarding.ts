@@ -18,12 +18,13 @@
 
 export const ONBOARDING_TTL_DAYS = 30;
 
-export const CLIENT_STATUSES = ['invited', 'in_progress', 'signed', 'approved', 'cancelled'] as const;
+export const CLIENT_STATUSES = ['invited', 'in_progress', 'changes_requested', 'signed', 'approved', 'cancelled'] as const;
 export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 
 export const STATUS_LABELS: Record<ClientStatus, string> = {
   invited: 'Invited',
   in_progress: 'In progress',
+  changes_requested: 'Changes requested',
   signed: 'Signed, awaiting review',
   approved: 'Approved',
   cancelled: 'Cancelled',
@@ -31,7 +32,7 @@ export const STATUS_LABELS: Record<ClientStatus, string> = {
 
 /** The customer can still change answers and documents only before signing. */
 export function isEditable(status: ClientStatus): boolean {
-  return status === 'invited' || status === 'in_progress';
+  return status === 'invited' || status === 'in_progress' || status === 'changes_requested';
 }
 
 export const US_STATES: ReadonlyArray<readonly [code: string, name: string]> = [
@@ -59,10 +60,14 @@ export function usStateName(code: string): string {
  * Establishments Act governs leave and notice, so it is asked up front.
  */
 export const INDIA_STATES = [
-  'Andhra Pradesh', 'Assam', 'Bihar', 'Chandigarh', 'Chhattisgarh', 'Delhi', 'Goa', 'Gujarat',
-  'Haryana', 'Himachal Pradesh', 'Jammu and Kashmir', 'Jharkhand', 'Karnataka', 'Kerala',
-  'Madhya Pradesh', 'Maharashtra', 'Odisha', 'Puducherry', 'Punjab', 'Rajasthan', 'Tamil Nadu',
-  'Telangana', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  // States
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana',
+  'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
+  'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana',
+  'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  // Union territories
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi',
+  'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ] as const;
 
 export const ENTITY_TYPES = [
@@ -116,10 +121,67 @@ export function isDocumentKind(value: unknown): boolean {
   return typeof value === 'string' && DOCUMENT_KINDS.some((d) => d.kind === value);
 }
 
-export function missingRequiredDocuments(uploadedKinds: string[]): DocumentKind[] {
-  const have = new Set(uploadedKinds);
+export const DOCUMENT_REVIEW = ['pending', 'accepted', 'rejected'] as const;
+export type DocumentReview = (typeof DOCUMENT_REVIEW)[number];
+
+/**
+ * Required kinds with no usable file. A rejected file does not count: the
+ * customer has to replace it. Pass plain kind strings (legacy callers) or
+ * documents with a review status.
+ */
+export function missingRequiredDocuments(
+  uploaded: Array<string | { kind: string; reviewStatus?: DocumentReview }>,
+): DocumentKind[] {
+  const have = new Set(
+    uploaded
+      .filter((d) => typeof d === 'string' || d.reviewStatus !== 'rejected')
+      .map((d) => (typeof d === 'string' ? d : d.kind)),
+  );
   return DOCUMENT_KINDS.filter((d) => d.required && !have.has(d.kind));
 }
+
+/** Required kinds that staff have not yet accepted. Approval needs this empty. */
+export function unacceptedRequiredDocuments(uploaded: Array<{ kind: string; reviewStatus: DocumentReview }>): DocumentKind[] {
+  const accepted = new Set(uploaded.filter((d) => d.reviewStatus === 'accepted').map((d) => d.kind));
+  return DOCUMENT_KINDS.filter((d) => d.required && !accepted.has(d.kind));
+}
+
+/**
+ * What happens after countersignature. Approval opens this checklist so "the
+ * agreement is signed" and "the employee is ready to start" are never confused.
+ */
+export const EMPLOYEE_STEPS = [
+  { key: 'contract_issued', label: 'Employment contract issued to the employee' },
+  { key: 'contract_signed', label: 'Employee signed the employment contract' },
+  { key: 'identity', label: 'Identity, PAN and right to work verified' },
+  { key: 'bank_tax', label: 'Bank and tax details collected' },
+  { key: 'uan', label: 'Provident fund (UAN) linked' },
+  { key: 'payroll', label: 'Added to payroll' },
+  { key: 'equipment', label: 'Equipment and access arranged' },
+  { key: 'first_day', label: 'First working day confirmed' },
+] as const;
+export type EmployeeStepKey = (typeof EMPLOYEE_STEPS)[number]['key'];
+export type EmployeeCase = {
+  owner: string | null;
+  dueDate: string;
+  steps: Record<string, { doneAt: string; doneBy: string } | null>;
+};
+
+export function isEmployeeStep(value: unknown): value is EmployeeStepKey {
+  return typeof value === 'string' && EMPLOYEE_STEPS.some((s) => s.key === value);
+}
+
+/** Today's date in India, where the employment happens, as YYYY-MM-DD. */
+export function todayInIndia(now = new Date()): string {
+  return new Date(now.getTime() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** Onboarding link lifetime after the customer signs, so they can collect the countersigned copy. */
+export const POST_SIGN_ACCESS_DAYS = 30;
+
+/** Signatory email verification. */
+export const VERIFY_CODE_TTL_MINUTES = 15;
+export const VERIFY_MAX_ATTEMPTS = 5;
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 export const MAX_DOCUMENTS = 12;
@@ -135,6 +197,45 @@ export function sniffDocumentType(bytes: Uint8Array): 'application/pdf' | 'image
   if (starts([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return 'image/png';
   if (starts([0xff, 0xd8, 0xff])) return 'image/jpeg';
   return null;
+}
+
+/**
+ * Check that a file is structurally complete, not just correctly labelled.
+ *
+ * A file that merely starts with "%PDF-" used to count as a certificate. These
+ * checks catch truncated, corrupt and password-protected files at upload, which
+ * are the ones staff cannot open. They do not prove the file is the right
+ * evidence: that is what the per-document staff review is for.
+ */
+export function validateDocumentBytes(
+  bytes: Uint8Array,
+): { ok: true; contentType: 'application/pdf' | 'image/png' | 'image/jpeg' } | { ok: false; reason: string } {
+  const type = sniffDocumentType(bytes);
+  if (!type) return { ok: false, reason: 'Upload a PDF, PNG or JPEG file.' };
+  const tail = (n: number) => bytes.subarray(Math.max(0, bytes.length - n));
+  // TextDecoder rather than Buffer: this module also runs in the browser. Only ASCII markers are checked.
+  const latin1 = (b: Uint8Array) => new TextDecoder('latin1').decode(b);
+
+  if (type === 'application/pdf') {
+    const text = latin1(bytes);
+    if (!latin1(tail(2048)).includes('%%EOF')) return { ok: false, reason: 'That PDF looks incomplete or damaged. Please export it again.' };
+    if (!/\d+\s+\d+\s+obj\b/.test(text) || !/startxref/.test(text)) {
+      return { ok: false, reason: 'That PDF looks incomplete or damaged. Please export it again.' };
+    }
+    if (/\/Encrypt\b/.test(text)) return { ok: false, reason: 'That PDF is password-protected. Please upload an unprotected copy.' };
+    return { ok: true, contentType: type };
+  }
+  if (type === 'image/png') {
+    const ihdr = latin1(bytes.subarray(12, 16)) === 'IHDR';
+    if (!ihdr || !latin1(tail(12)).includes('IEND')) return { ok: false, reason: 'That image looks incomplete or damaged.' };
+    return { ok: true, contentType: type };
+  }
+  // JPEG: must end with an end-of-image marker (allowing a little trailing padding).
+  const end = tail(64);
+  let hasEoi = false;
+  for (let i = 0; i < end.length - 1; i++) if (end[i] === 0xff && end[i + 1] === 0xd9) hasEoi = true;
+  if (!hasEoi || bytes.length < 128) return { ok: false, reason: 'That image looks incomplete or damaged.' };
+  return { ok: true, contentType: type };
 }
 
 /** Keep a filename displayable and safe inside a Content-Disposition header. */

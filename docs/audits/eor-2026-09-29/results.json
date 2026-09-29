@@ -1,0 +1,140 @@
+[
+  {
+    "name": "UI create onboarding",
+    "status": 201,
+    "emailed": false
+  },
+  {
+    "name": "Token removed from address bar",
+    "removed": true
+  },
+  {
+    "name": "Invalid form feedback",
+    "messages": [
+      "Please check the highlighted fields."
+    ],
+    "focused": "<button type=\"submit\" class=\"inline-flex items-center gap-2 rounded-lg bg-ink-primary px-5 py-2.5 text-sm font-medium text-bg-primary disabled:opacity-60\">Save "
+  },
+  {
+    "name": "Company save",
+    "companySaved": true
+  },
+  {
+    "name": "Browser upload formation",
+    "status": 201
+  },
+  {
+    "name": "Browser upload ein",
+    "status": 201
+  },
+  {
+    "name": "Resume after reload",
+    "works": true,
+    "customerDocumentLinks": 0
+  },
+  {
+    "name": "Admin document download",
+    "status": 200,
+    "bytes": 68
+  },
+  {
+    "name": "Delete failure feedback",
+    "statusText": [],
+    "fileStillPresent": true
+  },
+  {
+    "name": "Signing while editing unsaved company",
+    "enabled": true,
+    "storedCompany": "AUDIT ONLY Example Inc"
+  },
+  {
+    "name": "UI sign agreement",
+    "status": 200
+  },
+  {
+    "name": "Post-sign mutation protection",
+    "save": 409,
+    "upload": 409,
+    "repeatSign": 409
+  },
+  {
+    "name": "UI approve",
+    "status": "approved"
+  },
+  {
+    "name": "Mobile customer overflow",
+    "width": 390,
+    "scrollWidth": 390
+  },
+  {
+    "name": "Mobile admin overflow",
+    "width": 390,
+    "scrollWidth": 390
+  },
+  {
+    "name": "RBAC editor",
+    "clients": 403,
+    "detail": 403
+  },
+  {
+    "name": "RBAC viewer",
+    "clients": 403,
+    "detail": 403
+  },
+  {
+    "name": "Unauthenticated access",
+    "admin": 401,
+    "portal": 404
+  },
+  {
+    "name": "Cross-customer delete denied",
+    "status": 404
+  },
+  {
+    "name": "Link rotation",
+    "old": 404,
+    "new": 200
+  },
+  {
+    "name": "Cancelled link",
+    "status": 404
+  },
+  {
+    "name": "Concurrent delete versus sign",
+    "deleteStatus": 200,
+    "signStatus": 200,
+    "status": "signed",
+    "missingDocuments": [
+      "formation"
+    ]
+  },
+  {
+    "name": "Approve signed record missing document",
+    "status": 200,
+    "missingDocuments": [
+      "formation"
+    ]
+  },
+  {
+    "name": "Malformed PDF upload",
+    "status": 201
+  },
+  {
+    "name": "Malformed PDF counts required",
+    "missing": [
+      "ein"
+    ]
+  },
+  {
+    "name": "Missing required documents prevents sign",
+    "status": 400
+  },
+  {
+    "name": "Approved agreement after link expires",
+    "status": 404
+  },
+  {
+    "name": "Browser uncaught errors",
+    "errors": []
+  }
+]

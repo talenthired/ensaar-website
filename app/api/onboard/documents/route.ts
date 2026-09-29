@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeAudit } from '@/lib/basecamp/audit';
-import {
-  MAX_DOCUMENTS,
-  MAX_DOCUMENT_BYTES,
-  cleanFilename,
-  isDocumentKind,
-  isEditable,
-  sniffDocumentType,
-} from '@/lib/eor/onboarding';
+import { MAX_DOCUMENT_BYTES, cleanFilename, isDocumentKind, isEditable, validateDocumentBytes } from '@/lib/eor/onboarding';
 import { portalGate } from '@/lib/eor/portal';
-import { addDocument, listDocuments } from '@/lib/eor/store';
+import { addDocument } from '@/lib/eor/store';
 
 export const runtime = 'nodejs';
 
-/** Upload one document. PDF, PNG or JPEG only, identified by content, 10 MB at most. */
+/**
+ * Upload one document: PDF, PNG or JPEG, identified by content and checked for
+ * structural completeness, 10 MB at most.
+ */
 export async function POST(request: NextRequest) {
   const gate = await portalGate(request, 'upload', 30);
   if (!gate.ok) return gate.response;
@@ -48,30 +44,25 @@ export async function POST(request: NextRequest) {
   }
 
   const data = Buffer.from(await file.arrayBuffer());
-  const contentType = sniffDocumentType(data);
-  if (!contentType) return NextResponse.json({ error: 'Upload a PDF, PNG or JPEG file.' }, { status: 415 });
+  const checked = validateDocumentBytes(data);
+  if (!checked.ok) return NextResponse.json({ error: checked.reason }, { status: 422 });
 
   try {
-    if ((await listDocuments(client.id)).length >= MAX_DOCUMENTS) {
-      return NextResponse.json(
-        { error: 'That is the most documents one onboarding can hold. Remove one first.' },
-        { status: 409 },
-      );
-    }
-    const document = await addDocument({
+    const added = await addDocument({
       clientId: client.id,
       kind: kind as string,
       filename: cleanFilename(file.name),
-      contentType,
+      contentType: checked.contentType,
       data,
     });
+    if (!added.ok) return NextResponse.json({ error: added.error }, { status: added.status });
     await writeAudit({
       actorEmail: client.contactEmail,
       action: 'eor.document.upload',
       target: client.id,
       metadata: { kind, bytes: data.length },
     });
-    return NextResponse.json({ document }, { status: 201 });
+    return NextResponse.json({ document: added.value }, { status: 201 });
   } catch (error) {
     console.error('Onboarding upload failed', error);
     return NextResponse.json({ error: 'Unable to upload. Please try again.' }, { status: 500 });

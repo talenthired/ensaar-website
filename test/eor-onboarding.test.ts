@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { AGREEMENT_VERSION, agreementToText, buildAgreement } from '@/lib/eor/agreement';
 import {
+  INDIA_STATES,
   cleanFilename,
   missingRequiredDocuments,
+  todayInIndia,
+  unacceptedRequiredDocuments,
+  validateDocumentBytes,
   normalizeEin,
   signatureMatches,
   sniffDocumentType,
@@ -224,5 +228,78 @@ describe('lead permissions', () => {
   it('keeps a viewer from changing leads', () => {
     expect(can('viewer', 'leads:write')).toBe(false);
     expect(can('editor', 'leads:write')).toBe(true);
+  });
+});
+
+describe('validateDocumentBytes (EOR-03)', () => {
+  const enc = (s: string) => new TextEncoder().encode(s);
+  const pdf = (body = '1 0 obj\n<< /Type /Catalog >>\nendobj\n') =>
+    enc(`%PDF-1.7\n${body}xref\n0 1\ntrailer\n<< /Root 1 0 R >>\nstartxref\n9\n%%EOF\n`);
+
+  it('accepts a structurally complete PDF', () => {
+    expect(validateDocumentBytes(pdf())).toEqual({ ok: true, contentType: 'application/pdf' });
+  });
+
+  it('rejects the corrupt file the audit used', () => {
+    expect(validateDocumentBytes(enc('%PDF-not-a-document')).ok).toBe(false);
+  });
+
+  it('rejects a truncated PDF and a password-protected one', () => {
+    const whole = pdf();
+    expect(validateDocumentBytes(whole.subarray(0, whole.length - 10)).ok).toBe(false);
+    const locked = validateDocumentBytes(pdf('1 0 obj\n<< /Encrypt 2 0 R >>\nendobj\n'));
+    expect(locked.ok).toBe(false);
+    if (!locked.ok) expect(locked.reason).toMatch(/password/);
+  });
+
+  it('rejects a PNG without its end chunk and a JPEG without its end marker', () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52, ...new Array(40).fill(0)]);
+    expect(validateDocumentBytes(png).ok).toBe(false);
+    const withEnd = new Uint8Array([...png, 0, 0, 0, 0, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82]);
+    expect(validateDocumentBytes(withEnd).ok).toBe(true);
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...new Array(200).fill(1)]);
+    expect(validateDocumentBytes(jpeg).ok).toBe(false);
+    expect(validateDocumentBytes(new Uint8Array([...jpeg, 0xff, 0xd9])).ok).toBe(true);
+  });
+});
+
+describe('document review rules (EOR-02, GAP-01)', () => {
+  it('does not count a rejected document as provided', () => {
+    const docs = [
+      { kind: 'formation', reviewStatus: 'rejected' as const },
+      { kind: 'ein', reviewStatus: 'pending' as const },
+    ];
+    expect(missingRequiredDocuments(docs).map((d) => d.kind)).toEqual(['formation']);
+  });
+
+  it('requires staff to accept every required kind before approval', () => {
+    expect(
+      unacceptedRequiredDocuments([
+        { kind: 'formation', reviewStatus: 'accepted' },
+        { kind: 'ein', reviewStatus: 'pending' },
+      ]).map((d) => d.kind),
+    ).toEqual(['ein']);
+    expect(
+      unacceptedRequiredDocuments([
+        { kind: 'formation', reviewStatus: 'accepted' },
+        { kind: 'ein', reviewStatus: 'accepted' },
+      ]),
+    ).toHaveLength(0);
+  });
+});
+
+describe('work locations (EOR-09)', () => {
+  it('accepts every state and union territory, Sikkim included', () => {
+    expect(INDIA_STATES).toHaveLength(36);
+    for (const place of ['Sikkim', 'Ladakh', 'Lakshadweep', 'Arunachal Pradesh']) {
+      expect(validateHire({ ...hire, workState: place }, NOW).ok, place).toBe(true);
+    }
+  });
+});
+
+describe('todayInIndia', () => {
+  it('rolls over at Indian midnight, not UTC midnight', () => {
+    expect(todayInIndia(new Date('2026-09-29T18:29:00Z'))).toBe('2026-09-29');
+    expect(todayInIndia(new Date('2026-09-29T18:31:00Z'))).toBe('2026-09-30');
   });
 });

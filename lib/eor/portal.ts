@@ -2,10 +2,18 @@ import 'server-only';
 
 import { createHash } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
+import { clientIp, clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import { agreementToText } from './agreement';
-import { currentAgreement, getClientByToken, getSignedAgreementText, listDocuments, type EorClient } from './store';
-import { missingRequiredDocuments } from './onboarding';
+import {
+  currentAgreement,
+  getClientByToken,
+  getSignedAgreementText,
+  getTemplateApproval,
+  listDocuments,
+  type EorClient,
+} from './store';
+import { EMPLOYEE_STEPS, missingRequiredDocuments } from './onboarding';
+import { emailConfigured } from '@/lib/notify/outbox';
 
 /**
  * The customer's link is ensaar.com/onboard#<token>. The token lives in the URL
@@ -56,16 +64,20 @@ export function hashText(text: string): string {
 
 /**
  * What the customer sees. Deliberately a subset of the record: no internal
- * notes and no signer IP.
+ * notes, no signer IP, no reviewer identities.
  */
 export async function portalView(client: EorClient) {
-  const documents = await listDocuments(client.id);
+  const [documents, approval] = await Promise.all([listDocuments(client.id), getTemplateApproval()]);
   const signed = Boolean(client.signedAt);
   const agreement = currentAgreement(client);
   const draftText = agreementToText(agreement);
+  const verified =
+    Boolean(client.company) &&
+    client.signatoryVerifiedEmail?.toLowerCase() === client.company?.signatoryEmail.toLowerCase();
   return {
     status: client.status,
     expiresAt: client.tokenExpiresAt,
+    changesNote: client.status === 'changes_requested' ? client.changesNote : null,
     hire: {
       companyName: client.companyName,
       contactName: client.contactName,
@@ -78,8 +90,23 @@ export async function portalView(client: EorClient) {
       monthlyFeeUsd: client.monthlyFeeUsd,
     },
     company: client.company,
-    documents,
-    missingDocuments: missingRequiredDocuments(documents.map((d) => d.kind)).map((d) => d.kind),
+    documents: documents.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      filename: d.filename,
+      sizeBytes: d.sizeBytes,
+      createdAt: d.createdAt,
+      reviewStatus: d.reviewStatus,
+      reviewNote: d.reviewStatus === 'rejected' ? d.reviewNote : null,
+    })),
+    missingDocuments: missingRequiredDocuments(documents).map((d) => d.kind),
+    signatory: {
+      verified,
+      // Whether the page can offer "email me a code", or must say Ensaar will verify by other means.
+      emailAvailable: emailConfigured(),
+    },
+    // The agreement version has a recorded legal sign-off; until it does, nobody can sign.
+    readyToSign: Boolean(approval),
     agreement,
     // After signing, the stored snapshot is the agreement, not today's template.
     agreementText: signed ? await getSignedAgreementText(client.id) : draftText,
@@ -97,20 +124,21 @@ export async function portalView(client: EorClient) {
           countersignedAt: client.countersignedAt,
         }
       : null,
+    employee: client.employeeCase
+      ? {
+          dueDate: client.employeeCase.dueDate,
+          steps: EMPLOYEE_STEPS.map((s) => ({ key: s.key, label: s.label, done: Boolean(client.employeeCase?.steps[s.key]) })),
+        }
+      : null,
   };
 }
 
 export type PortalView = Awaited<ReturnType<typeof portalView>>;
 
 /**
- * The signer's network origin, recorded as evidence rather than used for any
- * decision. A trusted edge header when present; otherwise the whole
- * x-forwarded-for chain as received. The chain's left-most entry can be forged
- * by the client, but the entries appended by Railway's proxy cannot, so keeping
- * all of it is more useful evidence than keeping none.
+ * The signer's address for the evidence record: only an address a trusted proxy
+ * set (see clientIp), never a header the signer could have typed.
  */
 export function signerNetwork(request: Request): string | null {
-  const edge = request.headers.get('cf-connecting-ip') || request.headers.get('x-vercel-forwarded-for');
-  const chain = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip');
-  return (edge || chain || null)?.slice(0, 200) ?? null;
+  return clientIp(request);
 }

@@ -77,41 +77,43 @@ export async function rateLimit(key: string, limit: number, windowMs: number): P
 }
 
 /**
- * Derive a privacy-preserving client bucket.
+ * The caller's address, from headers only a proxy in front of this app can set.
  *
- * cf-connecting-ip and x-vercel-forwarded-for are set by the proxy itself and a
- * client cannot forge them, so they are always trusted. Refusing to trust
- * anything else in production is deliberate: x-forwarded-for is caller-supplied
- * unless something upstream overwrites it, and trusting it blindly lets an
- * abuser rotate the header and skip the limit entirely.
+ * cf-connecting-ip and x-vercel-forwarded-for are only unforgeable when the app
+ * really sits behind Cloudflare or Vercel. On any other host (Railway included)
+ * they pass straight through from the caller: verified on production on
+ * 2026-09-29, when rotating a made-up cf-connecting-ip reset the rate limit on
+ * every request, which bypassed every limit on the site, the staff login
+ * included, and let a signer forge the IP in their signature evidence. So each
+ * is trusted only where the operator says that edge is real.
  *
- * The cost of that stance is real on any host which is neither Cloudflare nor
- * Vercel: both headers are absent, every visitor hashes to "unknown", and the
- * whole site shares one bucket. At five lead submissions an hour that is five
- * leads an hour across all traffic, after which every genuine prospect is told
- * "Too many submissions" and the primary conversion is silently shut.
- *
- * TRUST_PROXY_IP=1 is how an operator resolves that, by asserting the app is
- * behind a proxy that overwrites the header. It is opt-in rather than inferred,
- * because getting it wrong in the permissive direction removes the protection
- * altogether and nothing visible changes.
+ * x-forwarded-for is caller-supplied unless the proxy overwrites it.
+ * TRUST_PROXY_IP=1 is the operator's assertion that it does. Railway's does:
+ * rotating a forged x-forwarded-for on production did not reset the limit.
+ * Outside production it is trusted so local testing works.
  */
-export function clientKey(request: Request, scope: string): string {
-  const proxyIp = request.headers.get('cf-connecting-ip') || request.headers.get('x-vercel-forwarded-for');
+export function clientIp(request: Request): string | null {
+  const cloudflare = process.env.TRUST_CLOUDFLARE_IP === '1' ? request.headers.get('cf-connecting-ip') : null;
+  const vercel = process.env.VERCEL ? request.headers.get('x-vercel-forwarded-for') : null;
 
-  /* x-forwarded-for is only as trustworthy as the hop that set it, so it counts
-     only where the operator has said the app sits behind a proxy that
-     overwrites it (TRUST_PROXY_IP=1), or outside production. Set it on Railway,
-     Fly, Render or anything behind your own nginx. Do not set it if the app is
-     reachable directly, or a caller can rotate the header and skip the limit
-     entirely. */
   const trustForwardedFor = process.env.TRUST_PROXY_IP === '1' || process.env.NODE_ENV !== 'production';
   const forwarded = trustForwardedFor
     ? // Left-most entry is the originating client; the rest are proxy hops.
       request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip')
-    : undefined;
+    : null;
 
-  const ip = proxyIp || forwarded || 'unknown';
+  const ip = (cloudflare || vercel || forwarded || '').trim();
+  return ip ? ip.slice(0, 64) : null;
+}
+
+/**
+ * Derive a privacy-preserving client bucket from clientIp. Without a trusted
+ * address every caller shares the "unknown" bucket, which fails safe (limits
+ * still apply) at the cost of fairness; set TRUST_PROXY_IP=1 behind a proxy
+ * that overwrites x-forwarded-for.
+ */
+export function clientKey(request: Request, scope: string): string {
+  const ip = clientIp(request) || 'unknown';
   const digest = createHash('sha256').update(ip).digest('hex');
   return `${scope}:${digest}`;
 }

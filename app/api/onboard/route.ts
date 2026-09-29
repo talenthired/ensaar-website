@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeAudit } from '@/lib/basecamp/audit';
-import { isEditable, validateCompany } from '@/lib/eor/onboarding';
+import { validateCompany } from '@/lib/eor/onboarding';
 import { portalGate, portalView } from '@/lib/eor/portal';
-import { getClient, saveCompany } from '@/lib/eor/store';
+import { saveCompany } from '@/lib/eor/store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,10 +22,6 @@ export async function GET(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const gate = await portalGate(request, 'write', 60);
   if (!gate.ok) return gate.response;
-  const { client } = gate;
-  if (!isEditable(client.status)) {
-    return NextResponse.json({ error: 'This onboarding is already signed and can no longer be changed.' }, { status: 409 });
-  }
 
   const result = validateCompany(await request.json().catch(() => ({})));
   if (!result.ok) {
@@ -33,12 +29,10 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    if (!(await saveCompany(client.id, result.value))) {
-      return NextResponse.json({ error: 'This onboarding can no longer be changed.' }, { status: 409 });
-    }
-    await writeAudit({ actorEmail: client.contactEmail, action: 'eor.company.save', target: client.id });
-    const updated = await getClient(client.id);
-    return NextResponse.json(await portalView(updated!));
+    const saved = await saveCompany(gate.client.id, result.value);
+    if (!saved.ok) return NextResponse.json({ error: saved.error }, { status: saved.status });
+    await writeAudit({ actorEmail: gate.client.contactEmail, action: 'eor.company.save', target: gate.client.id });
+    return NextResponse.json(await portalView(saved.value));
   } catch (error) {
     console.error('Onboarding company save failed', error);
     return NextResponse.json({ error: 'Unable to save. Please try again.' }, { status: 500 });

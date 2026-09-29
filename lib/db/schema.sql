@@ -173,3 +173,96 @@ CREATE TABLE IF NOT EXISTS ensaar_eor_documents (
 );
 
 CREATE INDEX IF NOT EXISTS ensaar_eor_documents_client_idx ON ensaar_eor_documents (client_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- 2026-09-29 audit follow-up. Additive only.
+
+-- Contact, careers and advisor leads. Production had no Supabase, so every
+-- submission was refused; leads now live beside everything else in Basecamp.
+CREATE TABLE IF NOT EXISTS ensaar_leads (
+  id          TEXT PRIMARY KEY,
+  status      TEXT NOT NULL DEFAULT 'new',
+  payload     JSONB NOT NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_leads_created_idx ON ensaar_leads (created_at DESC);
+
+-- Every outgoing email, written in the same transaction as the change that
+-- caused it, then delivered. Nothing is sent "fire and forget": staff can see
+-- what went out, what failed and why, and retry it. dedupe_key makes enqueueing
+-- idempotent; the row id doubles as Resend's Idempotency-Key so a retry never
+-- sends twice.
+CREATE TABLE IF NOT EXISTS ensaar_outbox (
+  id               TEXT PRIMARY KEY,
+  kind             TEXT NOT NULL,
+  dedupe_key       TEXT UNIQUE,
+  related_id       TEXT,
+  to_addresses     TEXT[] NOT NULL,
+  subject          TEXT NOT NULL,
+  text_body        TEXT NOT NULL,
+  html_body        TEXT NOT NULL,
+  attachments      JSONB,
+  -- pending | sent | failed | skipped (email not configured)
+  status           TEXT NOT NULL DEFAULT 'pending',
+  attempts         INTEGER NOT NULL DEFAULT 0,
+  last_error       TEXT,
+  next_attempt_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at          TIMESTAMPTZ,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_outbox_due_idx ON ensaar_outbox (status, next_attempt_at);
+CREATE INDEX IF NOT EXISTS ensaar_outbox_related_idx ON ensaar_outbox (related_id, created_at DESC);
+
+-- Per-document staff review. Approval needs every required kind accepted.
+ALTER TABLE ensaar_eor_documents ADD COLUMN IF NOT EXISTS review_status TEXT NOT NULL DEFAULT 'pending';
+ALTER TABLE ensaar_eor_documents ADD COLUMN IF NOT EXISTS review_note TEXT;
+ALTER TABLE ensaar_eor_documents ADD COLUMN IF NOT EXISTS reviewed_by TEXT;
+ALTER TABLE ensaar_eor_documents ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
+
+-- Corrections, signatory verification, idempotent invites, employee handoff.
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS changes_note TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS changes_requested_at TIMESTAMPTZ;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS signatory_verified_email TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS signatory_verified_at TIMESTAMPTZ;
+-- email_code | staff_attested
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS signatory_verified_by TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS verify_code_hash TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS verify_code_expires_at TIMESTAMPTZ;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS verify_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS signed_email TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS signed_verification TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS idempotency_key TEXT;
+ALTER TABLE ensaar_eor_clients ADD COLUMN IF NOT EXISTS employee_case JSONB;
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_clients_idempotency_idx
+  ON ensaar_eor_clients (idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE INDEX IF NOT EXISTS ensaar_eor_clients_status_idx ON ensaar_eor_clients (status, created_at DESC);
+
+-- A signature that was voided because the terms changed. Kept, never
+-- overwritten: the customer signed it, so it stays on record.
+CREATE TABLE IF NOT EXISTS ensaar_eor_signature_history (
+  id                 TEXT PRIMARY KEY,
+  client_id          TEXT NOT NULL REFERENCES ensaar_eor_clients (id) ON DELETE CASCADE,
+  agreement_version  TEXT,
+  agreement_text     TEXT,
+  agreement_hash     TEXT,
+  signed_name        TEXT,
+  signed_title       TEXT,
+  signed_email       TEXT,
+  signed_at          TIMESTAMPTZ,
+  signed_ip          TEXT,
+  voided_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  voided_by          TEXT,
+  void_reason        TEXT
+);
+CREATE INDEX IF NOT EXISTS ensaar_eor_signature_history_client_idx ON ensaar_eor_signature_history (client_id, voided_at DESC);
+
+-- Legal sign-off per agreement version. Customers cannot sign a version that
+-- has no row here.
+CREATE TABLE IF NOT EXISTS ensaar_eor_template_approvals (
+  version        TEXT PRIMARY KEY,
+  reviewer       TEXT NOT NULL,
+  note           TEXT,
+  recorded_by    TEXT NOT NULL,
+  recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
