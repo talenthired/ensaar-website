@@ -33,7 +33,7 @@ export function BasecampLogin() {
   }
 
   return (
-    <section className="min-h-[82vh] px-5 pt-36 pb-20 flex items-center justify-center">
+    <section className="min-h-[calc(100vh-4.25rem)] px-5 py-16 flex items-center justify-center">
       <div className="w-full max-w-md rounded-2xl border border-line-subtle bg-bg-primary p-8 shadow-card">
         <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-xl bg-accent-primary/10 text-accent-primary">
           <LockKeyhole className="h-6 w-6" aria-hidden />

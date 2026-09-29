@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BasecampBar } from '@/components/basecamp/BasecampNav';
 import { InviteAccept } from '@/components/basecamp/InviteAccept';
 
 export const metadata: Metadata = {
@@ -18,8 +19,9 @@ export default async function BasecampInvitePage({
 }) {
   const { token } = await params;
   return (
-    <div className="min-h-screen bg-bg-secondary pt-24 pb-16">
-      <div className="container-page mx-auto max-w-lg">
+    <div className="min-h-screen bg-bg-secondary pb-16">
+      <BasecampBar />
+      <div className="container-page mx-auto max-w-lg pt-12">
         <InviteAccept token={token} />
       </div>
     </div>

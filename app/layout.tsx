@@ -165,7 +165,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const nonce = requestHeaders.get('x-nonce') ?? undefined;
   // Customer onboarding and Basecamp show salaries, EINs and signed agreements.
   // No analytics, attribution capture or chat widget runs on them.
-  const privatePage = /^\/(onboard|basecamp)(\/|$)/.test(requestHeaders.get('x-ensaar-path') ?? '');
+  const path = requestHeaders.get('x-ensaar-path') ?? '';
+  const privatePage = /^\/(onboard|basecamp)(\/|$)/.test(path);
+  // Basecamp has its own admin bar; the website's navigation and footer have no place there.
+  const adminPage = /^\/basecamp(\/|$)/.test(path);
   return (
     <html
       lang="en-IN"
@@ -187,9 +190,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider>
           {!privatePage && <Analytics nonce={nonce} />}
           {!privatePage && <AttributionCapture />}
-          <Header />
+          {!adminPage && <Header />}
           <main id="main">{children}</main>
-          <Footer />
+          {!adminPage && <Footer />}
           {!privatePage && (
             <OpportunityAdvisor liveSupportEnabled={Boolean(process.env.SUPPORT_BRIDGE_SECRET?.trim())} />
           )}

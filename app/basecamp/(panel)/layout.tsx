@@ -12,11 +12,9 @@ export default async function BasecampPanelLayout({ children }: { children: Reac
   if (!(await verifyBasecampToken(cookieStore.get(BASECAMP_COOKIE)?.value))) redirect('/basecamp/login');
 
   return (
-    <div className="min-h-screen bg-bg-secondary pt-24 pb-16">
-      <div className="container-page">
-        <BasecampNav />
-        {children}
-      </div>
+    <div className="min-h-screen bg-bg-secondary">
+      <BasecampNav />
+      <div className="container-page pt-8 pb-16">{children}</div>
     </div>
   );
 }
