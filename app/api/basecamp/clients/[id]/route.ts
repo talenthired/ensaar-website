@@ -1,149 +1,129 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
+import { actorName, requireNamed } from '@/lib/basecamp/actor';
 import { deliverSoon, emailConfigured, listMessages } from '@/lib/notify/outbox';
-import { onboardingLink } from '@/lib/eor/email';
-import { validateHire } from '@/lib/eor/onboarding';
-import { portalView } from '@/lib/eor/portal';
+import { agreementToText } from '@/lib/eor/agreement';
 import {
-  approveClient,
-  attestSignatory,
-  cancelClient,
-  getClient,
-  listDocuments,
-  listSignatureHistory,
-  reissueToken,
-  requestChanges,
-  reviewDocument,
-  updateEmployeeCase,
-  updateHire,
-  type Outcome,
-} from '@/lib/eor/store';
+  addContact,
+  approveCompany,
+  cancelCompany,
+  employeeCounts,
+  getCompany,
+  getSignedMasterText,
+  getTemplateApproval,
+  listCompanyDocuments,
+  listVoidedSignatures,
+  masterDraft,
+  requestCompanyChanges,
+  reviewCompanyDocument,
+  updateCompanyInvite,
+} from '@/lib/eor/companies';
+import { validateCompanyInvite } from '@/lib/eor/onboarding';
+import type { Outcome } from '@/lib/eor/outcome';
+import { deactivatePortalUser, listPortalUsers, reinvitePortalUser } from '@/lib/eor/portal-auth';
 
 export const runtime = 'nodejs';
 
 type Context = { params: Promise<{ id: string }> };
 
-/** One onboarding: the full record, documents with review state, emails and voided signatures. */
+/** One client company: details, headcount, documents, contacts, agreement, emails. */
 export async function GET(request: NextRequest, context: Context) {
   const gate = await requireBasecamp(request, 'clients:read');
   if (!gate.ok) return gate.response;
   const { id } = await context.params;
-  const client = await getClient(id).catch(() => null);
-  if (!client) return NextResponse.json({ error: 'No such client.' }, { status: 404 });
-  const [view, documents, messages, history] = await Promise.all([
-    portalView(client),
-    listDocuments(id),
+  const company = await getCompany(id).catch(() => null);
+  if (!company) return NextResponse.json({ error: 'No such client.' }, { status: 404 });
+  const [counts, documents, contacts, voided, messages, approval, signedText] = await Promise.all([
+    employeeCounts(id),
+    listCompanyDocuments(id),
+    listPortalUsers(id),
+    listVoidedSignatures(id),
     listMessages(id),
-    listSignatureHistory(id),
+    getTemplateApproval(),
+    company.signedAt ? getSignedMasterText(id) : Promise.resolve(null),
   ]);
+  const draft = masterDraft(company);
   return NextResponse.json({
-    client,
-    view,
+    company,
+    counts,
     documents,
+    contacts,
+    voided,
     messages,
-    history,
+    readyToSign: Boolean(approval),
+    master: { draft, text: signedText ?? agreementToText(draft) },
     emailConfigured: emailConfigured(),
-    viewer: { email: gate.session.email, bootstrap: gate.session.bootstrap },
+    viewer: { email: gate.session.email, bootstrap: gate.session.bootstrap, role: gate.session.role },
   });
 }
 
-const text = (value: unknown, max = 1000) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+const str = (value: unknown, max = 1000) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
 
-/**
- * Staff actions after inviting:
- *   resend            fresh link (the old one stops working), emailed
- *   update_hire       correct the offer; a signed agreement is voided and re-signed
- *   review_document   accept or reject one document, with a reason
- *   request_changes   send it back to the customer with a note
- *   attest_signatory  Ensaar vouches for the signatory when email verification is not possible
- *   approve           countersign (named staff only); opens the employee checklist
- *   employee_step / employee_owner   work the employee checklist
- *   cancel            stop it; the link stops working
- */
+/** Company-level staff actions. Employee actions live under /employees. */
 export async function POST(request: NextRequest, context: Context) {
   const gate = await requireBasecamp(request, 'clients:write');
   if (!gate.ok) return gate.response;
   const { id } = await context.params;
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const action = body.action;
-
-  // Everything that binds Ensaar or decides for the customer must be attributable to a person.
-  const named = !gate.session.bootstrap && gate.session.email;
-  const actor = gate.session.name ? `${gate.session.name} (${gate.session.email})` : gate.session.email ?? 'shared login';
-  const needsNamed = ['approve', 'attest_signatory', 'update_hire', 'request_changes', 'review_document'];
-  if (typeof action === 'string' && needsNamed.includes(action) && !named) {
-    return NextResponse.json(
-      { error: 'Sign in with your own Basecamp account for this. The shared login cannot.' },
-      { status: 403 },
-    );
+  const action = String(body.action ?? '');
+  const actor = actorName(gate.session);
+  if (['approve', 'request_changes', 'review_document', 'update_invite'].includes(action)) {
+    const refused = requireNamed(gate.session);
+    if (refused) return refused;
   }
 
-  const audit = (name: string, metadata?: Record<string, unknown>) =>
-    writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: name, target: id, metadata });
-  const respond = async (outcome: Outcome<unknown>, auditName: string, metadata?: Record<string, unknown>) => {
+  const done = async (outcome: Outcome<unknown>, auditAction: string, metadata?: Record<string, unknown>) => {
     if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: outcome.status });
-    await audit(auditName, metadata);
+    await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: auditAction, target: id, metadata });
     await deliverSoon();
     return NextResponse.json({ ok: true });
   };
 
   try {
     switch (action) {
-      case 'resend': {
-        const token = await reissueToken(id, 'Ensaar sent you a fresh link to your onboarding.');
-        if (!token) return NextResponse.json({ error: 'This onboarding was cancelled.' }, { status: 409 });
-        await audit('eor.resend');
-        await deliverSoon();
-        return NextResponse.json({ link: onboardingLink(token), emailConfigured: emailConfigured() });
+      case 'update_invite': {
+        const invite = validateCompanyInvite(body.invite);
+        if (!invite.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: invite.errors }, { status: 400 });
+        return done(await updateCompanyInvite(id, invite.value), 'eor.company.update');
       }
-      case 'update_hire': {
-        const current = await getClient(id);
-        if (!current) return NextResponse.json({ error: 'No such client.' }, { status: 404 });
-        const hire = validateHire({ ...current, ...(body.hire as Record<string, unknown>) });
-        if (!hire.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: hire.errors }, { status: 400 });
-        return respond(await updateHire(id, hire.value, actor), 'eor.hire.update', { status: current.status });
+      case 'add_contact': {
+        const email = str(body.email, 254).toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+        return done(await addContact(id, email, str(body.name, 120) || null), 'eor.contact.add', { email });
+      }
+      case 'reinvite_contact': {
+        const link = await reinvitePortalUser(id, str(body.userId, 64));
+        if (!link) return NextResponse.json({ error: 'That contact is not active.' }, { status: 409 });
+        await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.contact.reinvite', target: id });
+        await deliverSoon();
+        // Returned so staff can pass it on directly if email is not working.
+        return NextResponse.json({ link, emailConfigured: emailConfigured() });
+      }
+      case 'remove_contact': {
+        if (!(await deactivatePortalUser(id, str(body.userId, 64)))) return NextResponse.json({ error: 'No such contact.' }, { status: 404 });
+        await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.contact.remove', target: id });
+        return NextResponse.json({ ok: true });
       }
       case 'review_document': {
         const decision = body.decision;
         if (decision !== 'accepted' && decision !== 'rejected' && decision !== 'pending') {
           return NextResponse.json({ error: 'Choose accept or reject.' }, { status: 400 });
         }
-        return respond(
-          await reviewDocument(id, text(body.documentId, 64), decision, text(body.note, 500) || null, actor),
-          'eor.document.review',
-          { documentId: body.documentId, decision },
-        );
+        return done(await reviewCompanyDocument(id, str(body.documentId, 64), decision, str(body.note, 500) || null, actor), 'eor.document.review', {
+          documentId: body.documentId,
+          decision,
+        });
       }
       case 'request_changes': {
-        const note = text(body.note, 2000);
+        const note = str(body.note, 2000);
         if (note.length < 5) return NextResponse.json({ error: 'Tell the customer what needs to change.' }, { status: 400 });
-        return respond(await requestChanges(id, note, actor), 'eor.changes');
-      }
-      case 'attest_signatory': {
-        const note = text(body.note, 300);
-        if (note.length < 5) return NextResponse.json({ error: 'Say how you verified the signatory, for example a video call.' }, { status: 400 });
-        return respond(await attestSignatory(id, actor, note), 'eor.signatory.attest', { note });
+        return done(await requestCompanyChanges(id, note, actor), 'eor.company.changes');
       }
       case 'approve':
-        return respond(await approveClient(id, actor, { confirmPastStart: body.confirmPastStart === true }), 'eor.approve', {
-          confirmPastStart: body.confirmPastStart === true,
-        });
-      case 'employee_step':
-        return respond(
-          await updateEmployeeCase(id, { step: text(body.step, 40), done: body.done === true }, actor),
-          'eor.employee.step',
-          { step: body.step, done: body.done === true },
-        );
-      case 'employee_owner':
-        return respond(await updateEmployeeCase(id, { owner: text(body.owner, 200) }, actor), 'eor.employee.owner');
-      case 'cancel': {
-        if (!(await cancelClient(id))) {
-          return NextResponse.json({ error: 'That onboarding cannot be cancelled.' }, { status: 409 });
-        }
-        await audit('eor.cancel');
-        return NextResponse.json({ ok: true });
-      }
+        return done(await approveCompany(id, actor), 'eor.company.approve');
+      case 'cancel':
+        return done(await cancelCompany(id), 'eor.company.cancel');
       default:
         return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
     }

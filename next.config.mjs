@@ -34,6 +34,9 @@ const nextConfig = {
       { source: '/certificate-verification', destination: '/verify', permanent: true },
       // The lead workspace became the Submissions section of Basecamp.
       { source: '/workspace', destination: '/basecamp/leads', permanent: true },
+      // The single-hire onboarding links became the client portal.
+      { source: '/onboard', destination: '/portal', permanent: false },
+      { source: '/onboard/:path*', destination: '/portal', permanent: false },
       { source: '/workspace/login', destination: '/basecamp/login', permanent: true },
       { source: '/services/corporate-training/soft-skills', destination: '/services/corporate-training/business-communication', permanent: true },
       { source: '/services/corporate-training/train-the-trainer', destination: '/services/corporate-training/facilitator', permanent: true },
@@ -62,7 +65,7 @@ const nextConfig = {
       { source: '/:path*', headers: securityHeaders },
       // The customer onboarding page shows EINs, salaries and signed agreements.
       {
-        source: '/onboard',
+        source: '/portal',
         headers: [
           { key: 'Cache-Control', value: 'no-store, max-age=0' },
           { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
@@ -70,14 +73,14 @@ const nextConfig = {
         ],
       },
       {
-        source: '/onboard/:path*',
+        source: '/portal/:path*',
         headers: [
           { key: 'Cache-Control', value: 'no-store, max-age=0' },
           { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
           { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
       },
-      { source: '/api/onboard/:path*', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
+      { source: '/api/portal/:path*', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
       // Basecamp holds lead PII: never cache it, never let it be indexed.
       {
         source: '/basecamp/:path*',

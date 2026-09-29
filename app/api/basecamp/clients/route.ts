@@ -3,30 +3,35 @@ import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
 import { deliverSoon, emailConfigured, listUndelivered } from '@/lib/notify/outbox';
 import { AGREEMENT_VERSION } from '@/lib/eor/agreement';
-import { onboardingLink } from '@/lib/eor/email';
-import { CLIENT_STATUSES, validateHire, type ClientStatus } from '@/lib/eor/onboarding';
-import { createClient, findByIdempotencyKey, findOpenDuplicate, getTemplateApproval, listClients } from '@/lib/eor/store';
+import {
+  createCompany,
+  findCompanyByIdempotencyKey,
+  findOpenCompanyFor,
+  getTemplateApproval,
+  listCompanies,
+  type CompanyFilter,
+} from '@/lib/eor/companies';
+import { validateCompanyInvite } from '@/lib/eor/onboarding';
 
 export const runtime = 'nodejs';
 
+const FILTERS: CompanyFilter[] = ['all', 'needs_action', 'setting_up', 'active', 'cancelled'];
+
 /**
- * A page of onboardings with search and filters, plus the state of the things
- * that block everyone: the agreement's legal sign-off and undelivered email.
+ * Client companies a page at a time, with headcount, plus the state of the
+ * things that block everyone: the agreement's legal sign-off and undelivered email.
  */
 export async function GET(request: NextRequest) {
   const gate = await requireBasecamp(request, 'clients:read');
   if (!gate.ok) return gate.response;
   const params = request.nextUrl.searchParams;
-  const status = params.get('status');
-  const filterStatus =
-    status === 'needs_action' || status === 'all' || (CLIENT_STATUSES as readonly string[]).includes(status ?? '')
-      ? (status as ClientStatus | 'needs_action' | 'all')
-      : 'all';
+  const raw = params.get('filter') as CompanyFilter | null;
+  const filter = raw && FILTERS.includes(raw) ? raw : 'all';
   try {
-    // Opportunistic: retries anything due whenever staff look at the queue.
+    // Opportunistic: retries anything due whenever staff look at the list.
     await deliverSoon();
     const [page, approval, undelivered] = await Promise.all([
-      listClients({ q: params.get('q') ?? undefined, status: filterStatus, cursor: params.get('cursor') }),
+      listCompanies({ q: params.get('q'), filter, page: params.get('page'), pageSize: params.get('pageSize') }),
       getTemplateApproval(),
       listUndelivered(),
     ]);
@@ -42,62 +47,41 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Start an onboarding and send the customer their link. */
+/** Create a client company and invite its contact to the portal. */
 export async function POST(request: NextRequest) {
   const gate = await requireBasecamp(request, 'clients:write');
   if (!gate.ok) return gate.response;
-
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const result = validateHire(body);
-  if (!result.ok) {
-    return NextResponse.json({ error: 'Please check the highlighted fields.', errors: result.errors }, { status: 400 });
-  }
-  const idempotencyKey =
-    typeof body.idempotencyKey === 'string' && /^[0-9a-f-]{36}$/i.test(body.idempotencyKey) ? body.idempotencyKey : null;
+  const result = validateCompanyInvite(body);
+  if (!result.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: result.errors }, { status: 400 });
+  const idempotencyKey = typeof body.idempotencyKey === 'string' && /^[0-9a-f-]{36}$/i.test(body.idempotencyKey) ? body.idempotencyKey : null;
 
   try {
-    // The same submission arriving twice (double click, retry after a timeout)
-    // returns what the first one created, and sends nothing again.
-    const previous = idempotencyKey ? await findByIdempotencyKey(idempotencyKey) : null;
-    if (previous) return NextResponse.json({ client: previous, link: null, replayed: true }, { status: 200 });
+    // The same submission arriving twice returns what the first one created, and sends nothing again.
+    const previous = idempotencyKey ? await findCompanyByIdempotencyKey(idempotencyKey) : null;
+    if (previous) return NextResponse.json({ company: previous, replayed: true });
 
-    // A second onboarding for the same person is sometimes right (a new
-    // engagement) and usually a mistake, so it needs an explicit confirmation.
     if (body.confirmDuplicate !== true) {
-      const duplicate = await findOpenDuplicate(result.value);
+      const duplicate = await findOpenCompanyFor(result.value.contactEmail, result.value.companyName);
       if (duplicate) {
         return NextResponse.json(
-          {
-            error: `${duplicate.employeeName} already has an open onboarding with ${duplicate.contactEmail}.`,
-            duplicate: { id: duplicate.id, status: duplicate.status, createdAt: duplicate.createdAt },
-          },
+          { error: `${duplicate.companyName} is already a client (contact ${duplicate.contactEmail}). Add employees to it instead.`, duplicate: { id: duplicate.id } },
           { status: 409 },
         );
       }
     }
-
-    const { client, token, replayed } = await createClient(result.value, gate.session.userId, idempotencyKey);
-    if (replayed) {
-      // The same submission arrived twice. Do not create or email anything again.
-      return NextResponse.json({ client, link: null, replayed: true }, { status: 200 });
-    }
+    const company = await createCompany(result.value, gate.session.userId, idempotencyKey);
     await deliverSoon();
     await writeAudit({
       actorId: gate.session.userId,
       actorEmail: gate.session.email,
-      action: 'eor.invite',
-      target: client.id,
-      metadata: { company: client.companyName, contact: client.contactEmail },
+      action: 'eor.company.create',
+      target: company.id,
+      metadata: { company: company.companyName, contact: company.contactEmail },
     });
-    // Returned once so it can be copied when email is not working; only its hash is stored.
-    return NextResponse.json({ client, link: onboardingLink(token!), emailConfigured: emailConfigured() }, { status: 201 });
+    return NextResponse.json({ company, emailConfigured: emailConfigured() }, { status: 201 });
   } catch (error) {
-    console.error('Client invite failed', error);
-    const message =
-      error instanceof Error && /DATABASE_URL/.test(error.message)
-        ? 'Basecamp needs a database before clients can be onboarded.'
-        : 'Unable to start that onboarding.';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('Client create failed', error);
+    return NextResponse.json({ error: 'Unable to create that client.' }, { status: 500 });
   }
 }
-

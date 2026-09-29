@@ -60,19 +60,22 @@ export function AgreementView({
               ))}
             </section>
           ))}
-          <section className="mt-8">
-            <h3 className="font-semibold">Schedule A: Employee</h3>
-            <table className="mt-3 w-full border-collapse text-left">
-              <tbody>
-                {agreement.schedule.map((row) => (
-                  <tr key={row.label} className="border-b border-line-subtle">
-                    <th className="w-44 py-2 pr-4 font-medium text-ink-secondary">{row.label}</th>
-                    <td className="py-2">{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
+          {/* The master agreement has no rows; each Schedule A names one employee. */}
+          {agreement.schedule.length > 0 && (
+            <section className="mt-8">
+              <h3 className="font-semibold">Employee</h3>
+              <table className="mt-3 w-full border-collapse text-left">
+                <tbody>
+                  {agreement.schedule.map((row) => (
+                    <tr key={row.label} className="border-b border-line-subtle">
+                      <th className="w-44 py-2 pr-4 font-medium text-ink-secondary">{row.label}</th>
+                      <td className="py-2">{row.value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
         </>
       )}
 

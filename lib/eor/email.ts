@@ -2,138 +2,193 @@ import 'server-only';
 
 import { renderEmail, supportAddress } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
-import { formatDay, ONBOARDING_TTL_DAYS, VERIFY_CODE_TTL_MINUTES } from './onboarding';
-
-/**
- * The customer's link. The token goes in the fragment: never sent to a server,
- * a log or a Referer.
- */
-export function onboardingLink(token: string): string {
-  return `${siteUrl()}/onboard#${token}`;
-}
-
-export function recoveryUrl(): string {
-  return `${siteUrl()}/onboard/recover`;
-}
+import { formatDay, INVITE_LINK_TTL_DAYS, LOGIN_LINK_TTL_MINUTES } from './onboarding';
 
 function siteUrl() {
   return siteConfig.url.replace(/\/+$/, '');
 }
 
-const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;
+/**
+ * A one-time sign-in link. The token goes in the fragment: never sent to a
+ * server, a log or a Referer.
+ */
+export function portalAuthLink(token: string): string {
+  return `${siteUrl()}/portal/auth#${token}`;
+}
 
-export function inviteEmail(input: { contactName: string; employeeName: string; link: string }) {
+export function portalUrl(path = ''): string {
+  return `${siteUrl()}/portal${path}`;
+}
+
+const firstName = (name: string | null | undefined) => (name ?? '').trim().split(/\s+/)[0] || 'there';
+
+type Mail = { subject: string; text: string; html: string };
+
+export function portalInviteEmail(input: { name: string | null; companyName: string; link: string; signatory: boolean }): Mail {
   return {
-    subject: `Ensaar onboarding for ${input.employeeName}`,
+    subject: input.signatory
+      ? `You are the signatory for ${input.companyName} on Ensaar`
+      : `Set up ${input.companyName} on Ensaar`,
     ...renderEmail({
-      eyebrow: 'Ensaar onboarding',
-      heading: `Hi ${firstName(input.contactName)}, three short steps are left`,
-      paragraphs: [
-        `Thank you for choosing Ensaar to employ ${input.employeeName} in India.`,
-        '1. Your company details\n2. Two documents: your certificate of incorporation and your EIN confirmation\n3. Verify the signatory by email, then review and sign the agreement',
-        `It takes about ten minutes. The link is private to you and works for ${ONBOARDING_TTL_DAYS} days.`,
-      ],
-      action: { label: 'Start onboarding', href: input.link },
+      eyebrow: 'Ensaar client portal',
+      heading: `Hi ${firstName(input.name)}, welcome to Ensaar`,
+      paragraphs: input.signatory
+        ? [
+            `${input.companyName} named you as the person who signs its Employer of Record agreement and each employee's Schedule A.`,
+            'Sign in to review and sign. The portal is also where you see every employee Ensaar employs for you, and their onboarding.',
+          ]
+        : [
+            `Ensaar is ready to employ people in India for ${input.companyName}.`,
+            'Sign in to add your company details and two documents, name who signs for the company, and follow each employee from offer to first day.',
+          ],
+      action: { label: 'Sign in to the portal', href: input.link },
+      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${portalUrl()} with this email address. Questions? Write to ${supportAddress()}.`,
     }),
   };
 }
 
-export function linkEmail(input: { contactName: string; employeeName: string; link: string; reason: string }) {
+export function loginEmail(input: { name: string | null; companyName: string; link: string }): Mail {
   return {
-    subject: `Your Ensaar onboarding link for ${input.employeeName}`,
+    subject: `Your Ensaar sign-in link for ${input.companyName}`,
     ...renderEmail({
-      eyebrow: 'Ensaar onboarding',
-      heading: `Hi ${firstName(input.contactName)}, here is your link`,
-      paragraphs: [
-        input.reason,
-        `It works for ${ONBOARDING_TTL_DAYS} days. Any earlier link for this onboarding no longer works.`,
-      ],
-      action: { label: 'Open onboarding', href: input.link },
-      footer: `If you did not ask for this, you can ignore it. Questions? Write to ${supportAddress()}.`,
+      eyebrow: 'Ensaar client portal',
+      heading: `Hi ${firstName(input.name)}, here is your sign-in link`,
+      paragraphs: [`Use this link to sign in to ${input.companyName}'s portal. It works once and expires in ${LOGIN_LINK_TTL_MINUTES} minutes.`],
+      action: { label: 'Sign in', href: input.link },
+      footer: `If you did not ask to sign in, you can ignore this email. Questions? Write to ${supportAddress()}.`,
     }),
   };
 }
 
-export function verifyCodeEmail(input: { signatoryName: string; companyName: string; code: string }) {
+export function schedulesReadyEmail(input: {
+  name: string | null;
+  companyName: string;
+  employees: Array<{ employeeName: string; jobTitle: string; startDate: string }>;
+  reason?: string;
+}): Mail {
+  const n = input.employees.length;
+  const listed = input.employees.slice(0, 20).map((e) => `- ${e.employeeName}, ${e.jobTitle}, starting ${formatDay(e.startDate)}`);
+  if (n > 20) listed.push(`- and ${n - 20} more`);
   return {
-    subject: `${input.code} is your Ensaar signing code`,
+    subject: `${n === 1 ? `${input.employees[0]!.employeeName} is` : `${n} employees are`} ready for your signature`,
     ...renderEmail({
-      eyebrow: 'Signatory verification',
-      heading: `Your code is ${input.code}`,
+      eyebrow: 'Ensaar client portal',
+      heading: `Hi ${firstName(input.name)}, ${n === 1 ? 'a Schedule A needs' : `${n} Schedule As need`} your signature`,
       paragraphs: [
-        `Hi ${firstName(input.signatoryName)}, you were named as the person signing the Employer of Record agreement for ${input.companyName}.`,
-        `Enter this code on the onboarding page to confirm it is you. It expires in ${VERIFY_CODE_TTL_MINUTES} minutes.`,
+        input.reason ?? `Ensaar has prepared the Schedule A for ${n === 1 ? 'this employee' : 'these employees'} of ${input.companyName}:`,
+        listed.join('\n'),
+        'Each schedule is one page and adds that person to your agreement. You can review and sign them all at once.',
       ],
-      footer: `If you are not the signatory for ${input.companyName}, do not share this code and tell us at ${supportAddress()}.`,
+      action: { label: 'Review and sign', href: portalUrl('?tab=employees&filter=awaiting_signature') },
     }),
   };
 }
 
-export function signatureReceivedEmail(input: { companyName: string; employeeName: string; signer: string; clientId: string }) {
+export function masterSignedStaffEmail(input: { companyName: string; signer: string; companyId: string }): Mail {
   return {
-    subject: `Signed: ${input.companyName} for ${input.employeeName}. Review needed`,
+    subject: `Signed: ${input.companyName} master agreement. Review needed`,
     ...renderEmail({
       eyebrow: 'Basecamp: EOR review',
-      heading: `${input.companyName} signed the EOR agreement`,
+      heading: `${input.companyName} signed the master agreement`,
       paragraphs: [
-        `${input.signer} signed for ${input.employeeName}. Review the documents, accept or reject each one, then approve and countersign.`,
-        'The customer was told to expect a review within one working day.',
+        `${input.signer} signed. Review the company documents, accept or reject each one, then countersign. The customer was told to expect a review within one working day.`,
       ],
-      action: { label: 'Review in Basecamp', href: `${siteUrl()}/basecamp/clients/${input.clientId}` },
+      action: { label: 'Review in Basecamp', href: `${siteUrl()}/basecamp/clients/${input.companyId}` },
     }),
   };
 }
 
-export function signedConfirmationEmail(input: { name: string; companyName: string; employeeName: string }) {
+export function masterSignedCustomerEmail(input: { name: string; companyName: string }): Mail {
   return {
-    subject: `We received your signed agreement for ${input.employeeName}`,
+    subject: `We received ${input.companyName}'s signed agreement`,
     ...renderEmail({
-      eyebrow: 'Ensaar onboarding',
+      eyebrow: 'Ensaar client portal',
       heading: `Thank you, ${firstName(input.name)}`,
       paragraphs: [
-        `We have your signed Employer of Record agreement for ${input.companyName}. A copy of exactly what you signed is attached.`,
-        'Ensaar will review your documents and countersign, usually within one working day. We will email you the countersigned copy.',
+        `We have ${input.companyName}'s signed Employer of Record agreement. A copy of exactly what you signed is attached.`,
+        'Ensaar will review your documents and countersign, usually within one working day.',
       ],
+      action: { label: 'Open the portal', href: portalUrl() },
     }),
   };
 }
 
-export function changesRequestedEmail(input: {
-  contactName: string;
-  employeeName: string;
+export function companyChangesEmail(input: {
+  companyName: string;
   note: string;
   rejected: Array<{ label: string; filename: string; reason: string }>;
   resigned: boolean;
-}) {
+}): Mail {
   return {
-    subject: `Action needed: your Ensaar onboarding for ${input.employeeName}`,
+    subject: `Action needed: ${input.companyName} on Ensaar`,
     ...renderEmail({
-      eyebrow: 'Ensaar onboarding',
-      heading: `Hi ${firstName(input.contactName)}, a few things need your attention`,
+      eyebrow: 'Ensaar client portal',
+      heading: 'A few things need your attention',
       paragraphs: [
         input.note,
-        ...(input.rejected.length
-          ? [`Please replace:\n${input.rejected.map((d) => `- ${d.label} (${d.filename}): ${d.reason}`).join('\n')}`]
-          : []),
-        ...(input.resigned ? ['Because the agreement has changed, it needs to be reviewed and signed again.'] : []),
-        `Open your onboarding link to make the changes. If it has expired, you can get a new one at ${recoveryUrl()}.`,
+        ...(input.rejected.length ? [`Please replace:\n${input.rejected.map((d) => `- ${d.label} (${d.filename}): ${d.reason}`).join('\n')}`] : []),
+        ...(input.resigned ? ['Because the agreement rests on these details, it will need to be signed again once they are fixed.'] : []),
       ],
-      action: { label: 'Get my onboarding link', href: recoveryUrl() },
+      action: { label: 'Open the portal', href: portalUrl() },
     }),
   };
 }
 
-export function approvedEmail(input: { name: string; companyName: string; employeeName: string; startDate: string }) {
+export function companyApprovedEmail(input: { companyName: string }): Mail {
   return {
-    subject: `Countersigned: your Ensaar agreement for ${input.employeeName}`,
+    subject: `Countersigned: ${input.companyName}'s Ensaar agreement`,
     ...renderEmail({
-      eyebrow: 'Ensaar onboarding',
+      eyebrow: 'Ensaar client portal',
       heading: 'Your agreement is countersigned',
       paragraphs: [
-        `Hi ${firstName(input.name)}, Ensaar has countersigned the Employer of Record agreement with ${input.companyName}. The executed copy is attached; please keep it with your records.`,
-        `Next, we issue ${input.employeeName}'s employment contract and complete their onboarding for a start on ${formatDay(input.startDate)}. You can follow each step on your onboarding page.`,
+        `Ensaar has countersigned the Employer of Record agreement with ${input.companyName}. The executed copy is attached; please keep it with your records.`,
+        'Each employee is added with their own one-page Schedule A, which you sign in the portal.',
       ],
-      action: { label: 'Get my onboarding link', href: recoveryUrl() },
+      action: { label: 'Open the portal', href: portalUrl() },
+    }),
+  };
+}
+
+export function schedulesSignedStaffEmail(input: { companyName: string; signer: string; count: number; companyId: string }): Mail {
+  return {
+    subject: `Signed: ${input.count} Schedule A${input.count === 1 ? '' : 's'} for ${input.companyName}. Countersign needed`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: EOR review',
+      heading: `${input.companyName} signed ${input.count} schedule${input.count === 1 ? '' : 's'}`,
+      paragraphs: [`${input.signer} signed. Countersign them to start each employee's onboarding.`],
+      action: { label: 'Review in Basecamp', href: `${siteUrl()}/basecamp/clients/${input.companyId}?tab=employees&status=signed` },
+    }),
+  };
+}
+
+export function schedulesSignedCustomerEmail(input: { name: string; companyName: string; employees: string[] }): Mail {
+  const n = input.employees.length;
+  return {
+    subject: `We received ${n === 1 ? `${input.employees[0]}'s signed schedule` : `${n} signed schedules`}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `Thank you, ${firstName(input.name)}`,
+      paragraphs: [
+        `You signed the Schedule A for: ${input.employees.slice(0, 20).join(', ')}${n > 20 ? ` and ${n - 20} more` : ''}. A copy of what you signed is attached.`,
+        'Ensaar countersigns and starts each onboarding, usually within one working day.',
+      ],
+      action: { label: 'Open the portal', href: portalUrl('?tab=employees') },
+    }),
+  };
+}
+
+export function schedulesCountersignedEmail(input: { companyName: string; employees: Array<{ employeeName: string; startDate: string }> }): Mail {
+  const n = input.employees.length;
+  return {
+    subject: `Countersigned: ${n === 1 ? input.employees[0]!.employeeName : `${n} employees`} for ${input.companyName}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `${n === 1 ? 'Onboarding has started' : `Onboarding has started for ${n} employees`}`,
+      paragraphs: [
+        input.employees.slice(0, 20).map((e) => `- ${e.employeeName}, starting ${formatDay(e.startDate)}`).join('\n'),
+        'The executed schedules are attached. You can follow each onboarding step in the portal.',
+      ],
+      action: { label: 'Open the portal', href: portalUrl('?tab=employees') },
     }),
   };
 }

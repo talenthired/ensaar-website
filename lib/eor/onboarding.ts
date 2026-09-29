@@ -16,24 +16,68 @@
  *   - the offer itself, which Ensaar enters and the customer confirms.
  */
 
-export const ONBOARDING_TTL_DAYS = 30;
+/*
+ * A client is a company. It is verified once (details, documents, signatory)
+ * and signs one master agreement. Each employee hired for it then has their
+ * own Schedule A, signed by the customer's signatory and countersigned by
+ * Ensaar, and their own onboarding checklist.
+ */
 
-export const CLIENT_STATUSES = ['invited', 'in_progress', 'changes_requested', 'signed', 'approved', 'cancelled'] as const;
-export type ClientStatus = (typeof CLIENT_STATUSES)[number];
+export const COMPANY_STATUSES = ['invited', 'onboarding', 'changes_requested', 'signed', 'active', 'cancelled'] as const;
+export type CompanyStatus = (typeof COMPANY_STATUSES)[number];
 
-export const STATUS_LABELS: Record<ClientStatus, string> = {
+export const COMPANY_STATUS_LABELS: Record<CompanyStatus, string> = {
   invited: 'Invited',
-  in_progress: 'In progress',
+  onboarding: 'Setting up',
   changes_requested: 'Changes requested',
-  signed: 'Signed, awaiting review',
-  approved: 'Approved',
+  signed: 'Agreement signed, awaiting review',
+  active: 'Active',
   cancelled: 'Cancelled',
 };
 
-/** The customer can still change answers and documents only before signing. */
-export function isEditable(status: ClientStatus): boolean {
-  return status === 'invited' || status === 'in_progress' || status === 'changes_requested';
+/** The customer can change company details and documents only before the master agreement is signed. */
+export function isCompanyEditable(status: CompanyStatus): boolean {
+  return status === 'invited' || status === 'onboarding' || status === 'changes_requested';
 }
+
+/** The master agreement is signed (and possibly countersigned), so schedules can be signed. */
+export function masterSigned(status: CompanyStatus): boolean {
+  return status === 'signed' || status === 'active';
+}
+
+export const EMPLOYEE_STATUSES = ['draft', 'awaiting_signature', 'signed', 'onboarding', 'active', 'exited', 'cancelled'] as const;
+export type EmployeeStatus = (typeof EMPLOYEE_STATUSES)[number];
+
+/** As Ensaar staff see it. */
+export const EMPLOYEE_STATUS_LABELS: Record<EmployeeStatus, string> = {
+  draft: 'Draft',
+  awaiting_signature: 'Awaiting customer signature',
+  signed: 'Signed, to countersign',
+  onboarding: 'Onboarding',
+  active: 'Active',
+  exited: 'Exited',
+  cancelled: 'Cancelled',
+};
+
+/** As the customer sees it. Drafts are never shown to them. */
+export const EMPLOYEE_STATUS_LABELS_CUSTOMER: Record<EmployeeStatus, string> = {
+  draft: 'Being prepared',
+  awaiting_signature: 'Awaiting your signature',
+  signed: 'Signed, Ensaar reviewing',
+  onboarding: 'Onboarding',
+  active: 'Active',
+  exited: 'Left',
+  cancelled: 'Cancelled',
+};
+
+export function isEmployeeStatus(value: unknown): value is EmployeeStatus {
+  return typeof value === 'string' && (EMPLOYEE_STATUSES as readonly string[]).includes(value);
+}
+
+/** Portal sign-in: a one-time link for signing in, a longer one for a first invitation. */
+export const LOGIN_LINK_TTL_MINUTES = 30;
+export const INVITE_LINK_TTL_DAYS = 14;
+export const PORTAL_SESSION_DAYS = 14;
 
 export const US_STATES: ReadonlyArray<readonly [code: string, name: string]> = [
   ['AL', 'Alabama'], ['AK', 'Alaska'], ['AZ', 'Arizona'], ['AR', 'Arkansas'], ['CA', 'California'],
@@ -104,12 +148,6 @@ export const DOCUMENT_KINDS: DocumentKind[] = [
     required: true,
   },
   {
-    kind: 'job_description',
-    label: 'Job description',
-    hint: 'Optional. Helps us write the employment contract to match the role.',
-    required: false,
-  },
-  {
     kind: 'other',
     label: 'Anything else',
     hint: 'Optional. A certificate of good standing, or anything you want us to have.',
@@ -175,13 +213,6 @@ export function isEmployeeStep(value: unknown): value is EmployeeStepKey {
 export function todayInIndia(now = new Date()): string {
   return new Date(now.getTime() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
-
-/** Onboarding link lifetime after the customer signs, so they can collect the countersigned copy. */
-export const POST_SIGN_ACCESS_DAYS = 30;
-
-/** Signatory email verification. */
-export const VERIFY_CODE_TTL_MINUTES = 15;
-export const VERIFY_MAX_ATTEMPTS = 5;
 
 export const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 export const MAX_DOCUMENTS = 12;
@@ -265,10 +296,46 @@ function isEmail(value: string): boolean {
   return EMAIL.test(value) && value.length <= 254;
 }
 
-export type HireInput = {
+/** Salary floor and ceiling are sanity bounds against a slipped digit, not policy. */
+export const MIN_SALARY_INR = 100_000;
+export const MAX_SALARY_INR = 100_000_000;
+
+function isoDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function fee(body: Record<string, unknown>, key: string, errors: Errors): number {
+  const value = Number(String(body[key] ?? '').replace(/[$,\s]/g, ''));
+  if (!Number.isInteger(value) || value < 1 || value > 10_000) errors[key] = 'Enter the monthly fee in whole US dollars.';
+  return value;
+}
+
+export type CompanyInvite = {
   companyName: string;
   contactName: string;
   contactEmail: string;
+  /** The fee each new employee starts with; a hire can override it. */
+  defaultFeeUsd: number;
+  notes: string | null;
+};
+
+/** What Ensaar enters to invite a new client company. */
+export function validateCompanyInvite(input: unknown): Result<CompanyInvite> {
+  const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+  const errors: Errors = {};
+  const companyName = text(body, 'companyName');
+  const contactName = text(body, 'contactName', 120);
+  const contactEmail = email(body, 'contactEmail');
+  const notes = text(body, 'notes', 1000);
+  if (companyName.length < 2) errors.companyName = 'Enter the customer company name.';
+  if (contactName.length < 2) errors.contactName = 'Enter the contact person’s name.';
+  if (!isEmail(contactEmail)) errors.contactEmail = 'Enter a valid email address.';
+  const defaultFeeUsd = fee(body, 'defaultFeeUsd', errors);
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, value: { companyName, contactName, contactEmail, defaultFeeUsd, notes: notes || null } };
+}
+
+export type EmployeeInput = {
   employeeName: string;
   employeeEmail: string | null;
   jobTitle: string;
@@ -281,74 +348,105 @@ export type HireInput = {
   notes: string | null;
 };
 
-/** Salary floor and ceiling are sanity bounds against a slipped digit, not policy. */
-export const MIN_SALARY_INR = 100_000;
-export const MAX_SALARY_INR = 100_000_000;
-
-function isoDay(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-/** What Ensaar enters to start an onboarding. */
-export function validateHire(input: unknown, now = new Date()): Result<HireInput> {
-  const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+/**
+ * One employee's offer. `defaultFeeUsd` fills an empty fee, so a bulk import
+ * of a hundred people does not need the fee on every row.
+ */
+export function validateEmployee(input: unknown, options: { now?: Date; defaultFeeUsd?: number } = {}): Result<EmployeeInput> {
+  const now = options.now ?? new Date();
+  const body = { ...((input && typeof input === 'object' ? input : {}) as Record<string, unknown>) };
+  if ((body.monthlyFeeUsd === undefined || body.monthlyFeeUsd === '') && options.defaultFeeUsd) body.monthlyFeeUsd = options.defaultFeeUsd;
   const errors: Errors = {};
 
-  const companyName = text(body, 'companyName');
-  const contactName = text(body, 'contactName', 120);
-  const contactEmail = email(body, 'contactEmail');
   const employeeName = text(body, 'employeeName', 120);
   const employeeEmail = email(body, 'employeeEmail');
   const jobTitle = text(body, 'jobTitle', 120);
   const startDate = text(body, 'startDate', 10);
-  const workState = text(body, 'workState', 60);
+  const workStateRaw = text(body, 'workState', 60);
+  // Accept any capitalisation from a spreadsheet, store the canonical name.
+  const workState = (INDIA_STATES as readonly string[]).find((s) => s.toLowerCase() === workStateRaw.toLowerCase()) ?? workStateRaw;
   const notes = text(body, 'notes', 1000);
 
-  if (companyName.length < 2) errors.companyName = 'Enter the customer company name.';
-  if (contactName.length < 2) errors.contactName = 'Enter the contact person’s name.';
-  if (!isEmail(contactEmail)) errors.contactEmail = 'Enter a valid email address.';
   if (employeeName.length < 2) errors.employeeName = 'Enter the employee’s full name.';
   if (employeeEmail && !isEmail(employeeEmail)) errors.employeeEmail = 'Enter a valid email address, or leave it blank.';
   if (jobTitle.length < 2) errors.jobTitle = 'Enter the job title.';
 
-  const salaryInr = Number(String(body.salaryInr ?? '').replace(/[,\s]/g, ''));
+  const salaryInr = Number(String(body.salaryInr ?? '').replace(/[₹,\s]/g, ''));
   if (!Number.isInteger(salaryInr) || salaryInr < MIN_SALARY_INR || salaryInr > MAX_SALARY_INR) {
     errors.salaryInr = 'Enter the annual gross salary in rupees, in whole numbers (for example 1800000).';
   }
-
-  const monthlyFeeUsd = Number(body.monthlyFeeUsd);
-  if (!Number.isInteger(monthlyFeeUsd) || monthlyFeeUsd < 1 || monthlyFeeUsd > 10_000) {
-    errors.monthlyFeeUsd = 'Enter the monthly fee in whole US dollars.';
-  }
+  const monthlyFeeUsd = fee(body, 'monthlyFeeUsd', errors);
 
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? new Date(`${startDate}T00:00:00Z`) : null;
   if (!parsed || Number.isNaN(parsed.getTime()) || isoDay(parsed) !== startDate) {
-    errors.startDate = 'Choose a start date.';
+    errors.startDate = 'Enter the start date as YYYY-MM-DD.';
   } else {
     const latest = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-    if (startDate < isoDay(now)) errors.startDate = 'The start date cannot be in the past.';
+    if (startDate < todayInIndia(now)) errors.startDate = 'The start date cannot be in the past.';
     else if (parsed > latest) errors.startDate = 'The start date must be within the next year.';
   }
 
-  if (!(INDIA_STATES as readonly string[]).includes(workState)) errors.workState = 'Choose the state the employee will work from.';
+  if (!(INDIA_STATES as readonly string[]).includes(workState)) errors.workState = 'Choose the state or union territory the employee will work from.';
 
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
-    value: {
-      companyName,
-      contactName,
-      contactEmail,
-      employeeName,
-      employeeEmail: employeeEmail || null,
-      jobTitle,
-      salaryInr,
-      startDate,
-      workState,
-      monthlyFeeUsd,
-      notes: notes || null,
-    },
+    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, monthlyFeeUsd, notes: notes || null },
   };
+}
+
+/** Column names a spreadsheet might use, mapped to employee fields. */
+const CSV_COLUMNS: Record<string, keyof EmployeeInput> = {
+  name: 'employeeName', 'employee name': 'employeeName', 'full name': 'employeeName', employee: 'employeeName',
+  email: 'employeeEmail', 'employee email': 'employeeEmail',
+  title: 'jobTitle', 'job title': 'jobTitle', role: 'jobTitle', designation: 'jobTitle',
+  salary: 'salaryInr', 'salary inr': 'salaryInr', 'annual salary': 'salaryInr', 'annual salary inr': 'salaryInr',
+  'annual gross salary': 'salaryInr', 'annual gross salary inr': 'salaryInr', ctc: 'salaryInr', 'ctc inr': 'salaryInr',
+  'start date': 'startDate', start: 'startDate', 'joining date': 'startDate', doj: 'startDate',
+  state: 'workState', 'work state': 'workState', location: 'workState', 'works from': 'workState',
+  fee: 'monthlyFeeUsd', 'monthly fee': 'monthlyFeeUsd', 'fee usd': 'monthlyFeeUsd', 'monthly fee usd': 'monthlyFeeUsd',
+  notes: 'notes',
+};
+
+export const CSV_TEMPLATE = 'Name,Email,Job title,Annual salary INR,Start date,Work state,Monthly fee USD\nAnita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,199\n';
+
+/** Split one CSV line, honouring double quotes (a comma inside "Rao, Anita" stays in the field). */
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let field = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      if (c === '"' && line[i + 1] === '"') { field += '"'; i++; }
+      else if (c === '"') quoted = false;
+      else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { out.push(field); field = ''; }
+    else field += c;
+  }
+  out.push(field);
+  return out.map((f) => f.trim());
+}
+
+/**
+ * Parse an employee spreadsheet exported as CSV. Returns raw rows keyed by
+ * employee field (validate each with validateEmployee) and the headers that
+ * were not recognised, so the admin sees what was ignored.
+ */
+export function parseEmployeesCsv(csv: string): { rows: Array<Partial<Record<keyof EmployeeInput, string>>>; unknownHeaders: string[]; error?: string } {
+  const lines = csv.replace(/^\uFEFF/, '').split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return { rows: [], unknownHeaders: [], error: 'The file needs a header row and at least one employee.' };
+  const headers = splitCsvLine(lines[0]!).map((h) => h.toLowerCase().replace(/[()]/g, '').replace(/\s+/g, ' ').trim());
+  const mapped = headers.map((h) => CSV_COLUMNS[h] ?? null);
+  if (!mapped.includes('employeeName')) return { rows: [], unknownHeaders: [], error: 'No "Name" column found. Download the template to see the expected columns.' };
+  const rows = lines.slice(1).map((line) => {
+    const cells = splitCsvLine(line);
+    const row: Partial<Record<keyof EmployeeInput, string>> = {};
+    mapped.forEach((key, i) => { if (key && cells[i] !== undefined && cells[i] !== '') row[key] = cells[i]; });
+    return row;
+  });
+  return { rows, unknownHeaders: headers.filter((_, i) => !mapped[i]) };
 }
 
 export type CompanyDetails = {
@@ -367,11 +465,9 @@ export type CompanyDetails = {
   signatoryTitle: string;
   signatoryEmail: string;
   billingEmail: string;
-  /** The offer Ensaar entered is right. */
-  confirmsHire: true;
   /** Not sanctioned, not owned or controlled by anyone who is. */
   confirmsSanctions: true;
-  /** The employee will not habitually conclude contracts in the customer's name. */
+  /** Employees hired through Ensaar will not habitually conclude contracts in the customer's name. */
   confirmsNoContracting: true;
 };
 
@@ -423,7 +519,6 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
   if (signatoryTitle.length < 2) errors.signatoryTitle = 'Enter their title, for example CEO.';
   if (!isEmail(signatoryEmail)) errors.signatoryEmail = 'Enter a valid email address.';
   if (!isEmail(billingEmail)) errors.billingEmail = 'Enter a valid email address for invoices.';
-  if (body.confirmsHire !== true) errors.confirmsHire = 'Confirm the hire details, or tell us what is wrong.';
   if (body.confirmsSanctions !== true) errors.confirmsSanctions = 'This confirmation is required.';
   if (body.confirmsNoContracting !== true) errors.confirmsNoContracting = 'This confirmation is required.';
 
@@ -445,7 +540,6 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
       signatoryTitle,
       signatoryEmail,
       billingEmail,
-      confirmsHire: true,
       confirmsSanctions: true,
       confirmsNoContracting: true,
     },

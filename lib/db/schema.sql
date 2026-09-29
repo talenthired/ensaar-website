@@ -266,3 +266,185 @@ CREATE TABLE IF NOT EXISTS ensaar_eor_template_approvals (
   recorded_by    TEXT NOT NULL,
   recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- ---------------------------------------------------------------------------
+-- 2026-09-29 client model: a client is a company with many employees.
+-- Additive only. The single-hire tables above (ensaar_eor_clients and friends)
+-- are kept, and any rows in them are copied into this model below.
+
+-- The client company. Verified once, signs one master agreement.
+CREATE TABLE IF NOT EXISTS ensaar_eor_companies (
+  id                 TEXT PRIMARY KEY,
+  -- invited | onboarding | changes_requested | signed | active | cancelled
+  status             TEXT NOT NULL DEFAULT 'invited',
+  company_name       TEXT NOT NULL,
+  contact_name       TEXT NOT NULL,
+  contact_email      TEXT NOT NULL,
+  default_fee_usd    INTEGER NOT NULL,
+  notes              TEXT,
+  company            JSONB,
+  agreement_version  TEXT,
+  agreement_text     TEXT,
+  agreement_hash     TEXT,
+  signed_name        TEXT,
+  signed_title       TEXT,
+  signed_email       TEXT,
+  signed_at          TIMESTAMPTZ,
+  signed_ip          TEXT,
+  signed_user_agent  TEXT,
+  countersigned_by   TEXT,
+  countersigned_at   TIMESTAMPTZ,
+  changes_note       TEXT,
+  changes_requested_at TIMESTAMPTZ,
+  idempotency_key    TEXT,
+  invited_by         TEXT REFERENCES ensaar_users (id) ON DELETE SET NULL,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_eor_companies_status_idx ON ensaar_eor_companies (status, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_companies_idempotency_idx
+  ON ensaar_eor_companies (idempotency_key) WHERE idempotency_key IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS ensaar_eor_company_documents (
+  id            TEXT PRIMARY KEY,
+  company_id    TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  kind          TEXT NOT NULL,
+  filename      TEXT NOT NULL,
+  content_type  TEXT NOT NULL,
+  size_bytes    INTEGER NOT NULL,
+  sha256        TEXT NOT NULL,
+  data          BYTEA NOT NULL,
+  review_status TEXT NOT NULL DEFAULT 'pending',
+  review_note   TEXT,
+  reviewed_by   TEXT,
+  reviewed_at   TIMESTAMPTZ,
+  uploaded_by   TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_eor_company_documents_idx ON ensaar_eor_company_documents (company_id, created_at);
+
+-- One row per person employed for a client. Hundreds per company.
+CREATE TABLE IF NOT EXISTS ensaar_eor_employees (
+  id                 TEXT PRIMARY KEY,
+  company_id         TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  -- draft | awaiting_signature | signed | onboarding | active | exited | cancelled
+  status             TEXT NOT NULL DEFAULT 'draft',
+  employee_name      TEXT NOT NULL,
+  employee_email     TEXT,
+  job_title          TEXT NOT NULL,
+  salary_inr         BIGINT NOT NULL,
+  start_date         TEXT NOT NULL,
+  work_state         TEXT NOT NULL,
+  monthly_fee_usd    INTEGER NOT NULL,
+  notes              TEXT,
+  -- Assigned when first sent to the customer, so drafts leave no gaps.
+  schedule_number    INTEGER,
+  schedule_version   TEXT,
+  schedule_text      TEXT,
+  schedule_hash      TEXT,
+  signed_name        TEXT,
+  signed_email       TEXT,
+  signed_at          TIMESTAMPTZ,
+  signed_ip          TEXT,
+  signed_user_agent  TEXT,
+  countersigned_by   TEXT,
+  countersigned_at   TIMESTAMPTZ,
+  employee_case      JSONB,
+  exit_date          TEXT,
+  exit_reason        TEXT,
+  created_by         TEXT,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_eor_employees_company_idx ON ensaar_eor_employees (company_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS ensaar_eor_employees_status_idx ON ensaar_eor_employees (status, start_date);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_employees_schedule_idx
+  ON ensaar_eor_employees (company_id, schedule_number) WHERE schedule_number IS NOT NULL;
+
+-- People at the customer who can sign in to the portal.
+CREATE TABLE IF NOT EXISTS ensaar_portal_users (
+  id            TEXT PRIMARY KEY,
+  company_id    TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  email         TEXT NOT NULL,
+  name          TEXT,
+  -- contact | signatory
+  role          TEXT NOT NULL DEFAULT 'contact',
+  active        BOOLEAN NOT NULL DEFAULT TRUE,
+  last_login_at TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_portal_users_company_email_idx ON ensaar_portal_users (company_id, lower(email));
+CREATE INDEX IF NOT EXISTS ensaar_portal_users_email_idx ON ensaar_portal_users (lower(email));
+
+-- One-time sign-in links. Only the hash is stored.
+CREATE TABLE IF NOT EXISTS ensaar_portal_login_tokens (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES ensaar_portal_users (id) ON DELETE CASCADE,
+  token_hash  TEXT NOT NULL UNIQUE,
+  purpose     TEXT NOT NULL DEFAULT 'login',
+  expires_at  TIMESTAMPTZ NOT NULL,
+  used_at     TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ensaar_portal_sessions (
+  id           TEXT PRIMARY KEY,
+  user_id      TEXT NOT NULL REFERENCES ensaar_portal_users (id) ON DELETE CASCADE,
+  token_hash   TEXT NOT NULL UNIQUE,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_portal_sessions_user_idx ON ensaar_portal_sessions (user_id);
+
+-- Signatures voided because what they rested on changed. Kept, never overwritten.
+CREATE TABLE IF NOT EXISTS ensaar_eor_voided_signatures (
+  id                 TEXT PRIMARY KEY,
+  company_id         TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  employee_id        TEXT REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  -- master | schedule
+  kind               TEXT NOT NULL,
+  agreement_version  TEXT,
+  agreement_text     TEXT,
+  agreement_hash     TEXT,
+  signed_name        TEXT,
+  signed_email       TEXT,
+  signed_at          TIMESTAMPTZ,
+  signed_ip          TEXT,
+  voided_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  voided_by          TEXT,
+  void_reason        TEXT
+);
+CREATE INDEX IF NOT EXISTS ensaar_eor_voided_signatures_idx ON ensaar_eor_voided_signatures (company_id, voided_at DESC);
+
+-- Carry over anything created with the single-hire model: the company (with
+-- its details and documents) and its one employee, as a draft to be re-sent
+-- under the new agreement. Idempotent: rows already copied are skipped.
+INSERT INTO ensaar_eor_companies (id, status, company_name, contact_name, contact_email, default_fee_usd, notes,
+                                  company, invited_by, created_at, updated_at)
+SELECT c.id,
+       CASE WHEN c.status = 'cancelled' THEN 'cancelled' WHEN c.company IS NULL THEN 'invited' ELSE 'onboarding' END,
+       c.company_name, c.contact_name, c.contact_email, c.monthly_fee_usd, c.notes,
+       c.company - 'confirmsHire', c.invited_by, c.created_at, NOW()
+FROM ensaar_eor_clients c
+WHERE NOT EXISTS (SELECT 1 FROM ensaar_eor_companies x WHERE x.id = c.id);
+
+INSERT INTO ensaar_eor_company_documents (id, company_id, kind, filename, content_type, size_bytes, sha256, data,
+                                          review_status, review_note, reviewed_by, reviewed_at, created_at)
+SELECT d.id, d.client_id, CASE WHEN d.kind = 'job_description' THEN 'other' ELSE d.kind END, d.filename, d.content_type,
+       d.size_bytes, d.sha256, d.data, d.review_status, d.review_note, d.reviewed_by, d.reviewed_at, d.created_at
+FROM ensaar_eor_documents d
+WHERE NOT EXISTS (SELECT 1 FROM ensaar_eor_company_documents x WHERE x.id = d.id);
+
+INSERT INTO ensaar_eor_employees (id, company_id, status, employee_name, employee_email, job_title, salary_inr,
+                                  start_date, work_state, monthly_fee_usd, created_at, updated_at)
+SELECT c.id || '-e1', c.id, CASE WHEN c.status = 'cancelled' THEN 'cancelled' ELSE 'draft' END,
+       c.employee_name, c.employee_email, c.job_title, c.salary_inr, c.start_date, c.work_state, c.monthly_fee_usd,
+       c.created_at, NOW()
+FROM ensaar_eor_clients c
+WHERE NOT EXISTS (SELECT 1 FROM ensaar_eor_employees x WHERE x.id = c.id || '-e1');
+
+INSERT INTO ensaar_portal_users (id, company_id, email, name, role)
+SELECT c.id || '-u1', c.id, lower(c.contact_email), c.contact_name, 'contact'
+FROM ensaar_eor_clients c
+WHERE c.status <> 'cancelled'
+  AND NOT EXISTS (SELECT 1 FROM ensaar_portal_users x WHERE x.company_id = c.id AND lower(x.email) = lower(c.contact_email));

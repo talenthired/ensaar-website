@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
 import { AGREEMENT_VERSION } from '@/lib/eor/agreement';
-import { getTemplateApproval, recordTemplateApproval } from '@/lib/eor/store';
+import { getTemplateApproval, recordTemplateApproval } from '@/lib/eor/companies';
 
 export const runtime = 'nodejs';
 

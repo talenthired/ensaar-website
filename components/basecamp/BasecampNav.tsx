@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Briefcase, CalendarDays, ClipboardList, ExternalLink, LayoutDashboard, LogOut, UserCog, Users } from 'lucide-react';
+import { Briefcase, CalendarDays, ClipboardList, ContactRound, ExternalLink, LayoutDashboard, LogOut, UserCog, Users } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +11,7 @@ const SECTIONS = [
   { href: '/basecamp', label: 'Overview', icon: LayoutDashboard },
   { href: '/basecamp/leads', label: 'Submissions', icon: Users },
   { href: '/basecamp/clients', label: 'Clients', icon: Briefcase },
+  { href: '/basecamp/employees', label: 'Employees', icon: ContactRound },
   { href: '/basecamp/events', label: 'Events', icon: CalendarDays },
   { href: '/basecamp/registrations', label: 'Registrations', icon: ClipboardList },
   { href: '/basecamp/people', label: 'People', icon: UserCog },
@@ -35,8 +36,8 @@ function WebsiteLink() {
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-ink-secondary transition hover:bg-bg-tertiary hover:text-ink-primary sm:px-3"
     >
       <ExternalLink className="h-4 w-4" aria-hidden />
-      {/* Icon only on phones, where the bar has no room for the words. */}
-      <span className="sr-only sm:not-sr-only">Go to website</span>
+      {/* Icon only until the bar has room for the words beside seven sections. */}
+      <span className="sr-only 2xl:not-sr-only">Go to website</span>
     </a>
   );
 }
@@ -73,10 +74,10 @@ export function BasecampNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line-subtle border-t-[3px] border-t-accent-primary bg-bg-primary/95 backdrop-blur print:hidden">
-      <div className="container-page flex flex-col gap-2 py-2 lg:h-16 lg:flex-row lg:items-center lg:gap-6 lg:py-0">
-        <div className="flex items-center justify-between gap-4 lg:contents">
+      <div className="container-page flex flex-col gap-2 py-2 xl:h-16 xl:flex-row xl:items-center xl:gap-4 xl:py-0">
+        <div className="flex items-center justify-between gap-4 xl:contents">
           <Brand />
-          <div className="flex items-center gap-1 lg:order-last lg:ml-auto">
+          <div className="flex items-center gap-1 xl:order-last xl:ml-auto">
             <WebsiteLink />
             <ThemeToggle />
             <button
@@ -85,11 +86,11 @@ export function BasecampNav() {
               className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm text-ink-secondary transition hover:bg-bg-tertiary hover:text-ink-primary sm:px-3"
             >
               <LogOut className="h-4 w-4" aria-hidden />
-              <span className="sr-only sm:not-sr-only">Sign out</span>
+              <span className="sr-only 2xl:not-sr-only">Sign out</span>
             </button>
           </div>
         </div>
-        <nav aria-label="Basecamp sections" className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 lg:pb-0">
+        <nav aria-label="Basecamp sections" className="-mx-1 flex min-w-0 gap-0.5 overflow-x-auto px-1 pb-1 xl:flex-1 xl:pb-0">
           {SECTIONS.map((section) => {
             // Only /basecamp itself matches exactly; the rest match their subtree.
             const active = section.href === '/basecamp' ? pathname === section.href : pathname.startsWith(section.href);
@@ -99,7 +100,7 @@ export function BasecampNav() {
                 href={section.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium transition',
+                  'inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-2.5 py-2 text-sm font-medium transition',
                   active ? 'bg-ink-primary text-bg-primary' : 'text-ink-secondary hover:bg-bg-tertiary hover:text-ink-primary',
                 )}
               >

@@ -163,12 +163,12 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const requestHeaders = await headers();
   const nonce = requestHeaders.get('x-nonce') ?? undefined;
-  // Customer onboarding and Basecamp show salaries, EINs and signed agreements.
+  // The client portal and Basecamp show salaries, EINs and signed agreements.
   // No analytics, attribution capture or chat widget runs on them.
   const path = requestHeaders.get('x-ensaar-path') ?? '';
-  const privatePage = /^\/(onboard|basecamp)(\/|$)/.test(path);
-  // Basecamp has its own admin bar; the website's navigation and footer have no place there.
-  const adminPage = /^\/basecamp(\/|$)/.test(path);
+  const privatePage = /^\/(portal|basecamp)(\/|$)/.test(path);
+  // Basecamp and the client portal have their own bars; the website navigation and footer have no place there.
+  const adminPage = /^\/(basecamp|portal)(\/|$)/.test(path);
   return (
     <html
       lang="en-IN"

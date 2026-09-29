@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { requireBasecamp } from '@/lib/basecamp/guard';
+import { writeAudit } from '@/lib/basecamp/audit';
+import { actorName, requireNamed } from '@/lib/basecamp/actor';
+import { deliverSoon, listMessages } from '@/lib/notify/outbox';
+import { getCompany, listVoidedSignatures } from '@/lib/eor/companies';
+import {
+  changeEmployee,
+  countersignSchedules,
+  getEmployee,
+  getScheduleText,
+  sendForSignature,
+  updateEmployee,
+} from '@/lib/eor/employees';
+import { validateEmployee } from '@/lib/eor/onboarding';
+import type { Outcome } from '@/lib/eor/outcome';
+
+export const runtime = 'nodejs';
+
+type Context = { params: Promise<{ id: string }> };
+
+/** One employee with their company, schedule text, voided signatures and related emails. */
+export async function GET(request: NextRequest, context: Context) {
+  const gate = await requireBasecamp(request, 'clients:read');
+  if (!gate.ok) return gate.response;
+  const { id } = await context.params;
+  const employee = await getEmployee(id);
+  if (!employee) return NextResponse.json({ error: 'No such employee.' }, { status: 404 });
+  const [company, scheduleText, voided, messages] = await Promise.all([
+    getCompany(employee.companyId),
+    getScheduleText(id),
+    listVoidedSignatures(employee.companyId, id),
+    listMessages(employee.companyId),
+  ]);
+  return NextResponse.json({
+    employee,
+    company: company && { id: company.id, status: company.status, name: company.company?.legalName ?? company.companyName, defaultFeeUsd: company.defaultFeeUsd },
+    scheduleText,
+    voided,
+    messages: messages.filter((m) => m.kind.startsWith('eor.schedules')).slice(0, 10),
+    viewer: { email: gate.session.email, bootstrap: gate.session.bootstrap },
+  });
+}
+
+const str = (value: unknown, max = 500) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+
+export async function POST(request: NextRequest, context: Context) {
+  const gate = await requireBasecamp(request, 'clients:write');
+  if (!gate.ok) return gate.response;
+  const { id } = await context.params;
+  const employee = await getEmployee(id);
+  if (!employee) return NextResponse.json({ error: 'No such employee.' }, { status: 404 });
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const action = String(body.action ?? '');
+  const actor = actorName(gate.session);
+  if (['update', 'countersign', 'exit', 'cancel'].includes(action)) {
+    const refused = requireNamed(gate.session);
+    if (refused) return refused;
+  }
+
+  const done = async (outcome: Outcome<unknown>, auditAction: string, metadata?: Record<string, unknown>) => {
+    if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: outcome.status });
+    await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: auditAction, target: id, metadata });
+    await deliverSoon();
+    return NextResponse.json({ ok: true });
+  };
+
+  switch (action) {
+    case 'update': {
+      const company = await getCompany(employee.companyId);
+      const input = validateEmployee({ ...employee, ...(body.employee as Record<string, unknown>) }, { defaultFeeUsd: company?.defaultFeeUsd });
+      if (!input.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: input.errors }, { status: 400 });
+      return done(await updateEmployee(id, input.value, actor), 'eor.employee.update', { status: employee.status });
+    }
+    case 'send':
+      return done(await sendForSignature(employee.companyId, [id]), 'eor.schedules.send', { count: 1 });
+    case 'countersign':
+      return done(
+        await countersignSchedules(employee.companyId, [id], actor, { confirmPastStart: body.confirmPastStart === true }),
+        'eor.schedules.countersign',
+        { count: 1, confirmPastStart: body.confirmPastStart === true },
+      );
+    case 'step':
+      return done(await changeEmployee(id, { kind: 'step', step: str(body.step, 40), done: body.done === true }, actor), 'eor.employee.step', {
+        step: body.step,
+        done: body.done === true,
+      });
+    case 'owner':
+      return done(await changeEmployee(id, { kind: 'owner', owner: str(body.owner, 200) }, actor), 'eor.employee.owner');
+    case 'activate':
+      return done(await changeEmployee(id, { kind: 'activate' }, actor), 'eor.employee.activate');
+    case 'exit':
+      return done(await changeEmployee(id, { kind: 'exit', exitDate: str(body.exitDate, 10), reason: str(body.reason) }, actor), 'eor.employee.exit');
+    case 'cancel':
+      return done(await changeEmployee(id, { kind: 'cancel' }, actor), 'eor.employee.cancel');
+    default:
+      return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
+  }
+}
