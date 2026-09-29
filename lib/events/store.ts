@@ -3,6 +3,7 @@ import 'server-only';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { EVENT_SEED } from '@/lib/content/events';
+import { db, hasDatabase } from '@/lib/db/client';
 import type { EventRecord, EventUpdate, NewEvent } from './types';
 import { isUpcoming } from './types';
 
@@ -30,8 +31,8 @@ function supabaseEndpoint(query = '') {
 
 /** Writes must be durable. The local file is ephemeral on a serverless host. */
 function requireDurableStore() {
-  if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && !hasSupabase()) {
-    throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in production.');
+  if ((process.env.VERCEL || process.env.NODE_ENV === 'production') && !hasDatabase() && !hasSupabase()) {
+    throw new Error('DATABASE_URL (or Supabase) is required for event writes in production.');
   }
 }
 
@@ -68,6 +69,21 @@ async function seedIfEmpty(existing: EventRecord[]): Promise<EventRecord[]> {
     updatedAt: `${event.date}T00:00:00.000Z`,
   }));
 
+  if (hasDatabase()) {
+    // Idempotent: a re-seed collides on the primary key and does nothing, so the
+    // originally seeded rows keep any edits made in Basecamp.
+    for (const event of seeded) {
+      await db()`
+        INSERT INTO ensaar_events (id, date, title, type, location, summary, href, speakers, published, capacity, created_at, updated_at)
+        VALUES (${event.id}, ${event.date}, ${event.title}, ${event.type}, ${event.location},
+                ${event.summary}, ${event.href ?? null}, ${db().array(event.speakers ?? [])},
+                ${event.published}, ${(event as { capacity?: number | null }).capacity ?? null}, ${event.createdAt}, ${event.updatedAt})
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+    return sortByDate(seeded);
+  }
+
   if (!hasSupabase()) {
     // In production without Supabase the file is not writable in any durable sense, so
     // serve the seed in memory rather than failing the public page.
@@ -96,7 +112,30 @@ async function seedIfEmpty(existing: EventRecord[]): Promise<EventRecord[]> {
   return sortByDate(seeded);
 }
 
+type EventRow = {
+  id: string; date: string; title: string; type: string; location: string; summary: string;
+  href: string | null; speakers: string[]; published: boolean; capacity: number | null;
+  created_at: Date; updated_at: Date;
+};
+
+function toEvent(row: EventRow): EventRecord {
+  return {
+    id: row.id, date: row.date, title: row.title, type: row.type as EventRecord['type'],
+    location: row.location, summary: row.summary, href: row.href ?? undefined,
+    speakers: row.speakers ?? [], published: row.published, capacity: row.capacity,
+    createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString(),
+  };
+}
+
 export async function listEvents(): Promise<EventRecord[]> {
+  if (hasDatabase()) {
+    const rows = await db()<EventRow[]>`
+      SELECT id, date, title, type, location, summary, href, speakers, published, capacity,
+             created_at, updated_at
+      FROM ensaar_events ORDER BY date DESC
+    `;
+    return seedIfEmpty(rows.map(toEvent));
+  }
   if (!hasSupabase()) {
     return seedIfEmpty(sortByDate(await readLocal()));
   }
@@ -131,6 +170,18 @@ export async function createEvent(input: NewEvent): Promise<EventRecord> {
     updatedAt: now,
   };
 
+  if (hasDatabase()) {
+    const rows = await db()<EventRow[]>`
+      INSERT INTO ensaar_events (id, date, title, type, location, summary, href, speakers, published, capacity)
+      VALUES (${event.id}, ${event.date}, ${event.title}, ${event.type}, ${event.location},
+              ${event.summary}, ${event.href ?? null}, ${db().array(event.speakers ?? [])},
+              ${event.published}, ${event.capacity ?? null})
+      RETURNING id, date, title, type, location, summary, href, speakers, published, capacity,
+                created_at, updated_at
+    `;
+    return toEvent(rows[0]!);
+  }
+
   if (!hasSupabase()) {
     const events = await listEvents();
     await writeLocal([event, ...events]);
@@ -148,6 +199,34 @@ export async function createEvent(input: NewEvent): Promise<EventRecord> {
 
 export async function updateEvent(id: string, update: EventUpdate): Promise<EventRecord | null> {
   requireDurableStore();
+
+  if (hasDatabase()) {
+    /* Build the SET list from only the keys the caller supplied. A COALESCE-per
+       column cannot express this: href and capacity are legitimately nullable, so
+       "null" means "clear it", not "leave it alone", and the two cases have to be
+       distinguishable. postgres.js writes the column list for us and parameterises
+       every value. */
+    const patch: Record<string, unknown> = {};
+    if (update.date !== undefined) patch.date = update.date;
+    if (update.title !== undefined) patch.title = update.title;
+    if (update.type !== undefined) patch.type = update.type;
+    if (update.location !== undefined) patch.location = update.location;
+    if (update.summary !== undefined) patch.summary = update.summary;
+    if (update.href !== undefined) patch.href = update.href ?? null;
+    if (update.speakers !== undefined) patch.speakers = update.speakers ?? [];
+    if (update.published !== undefined) patch.published = update.published;
+    if (update.capacity !== undefined) patch.capacity = update.capacity ?? null;
+    patch.updated_at = new Date();
+
+    const sql = db();
+    const rows = await sql<EventRow[]>`
+      UPDATE ensaar_events SET ${sql(patch, ...Object.keys(patch))}
+      WHERE id = ${id}
+      RETURNING id, date, title, type, location, summary, href, speakers, published, capacity,
+                created_at, updated_at
+    `;
+    return rows[0] ? toEvent(rows[0]) : null;
+  }
 
   if (!hasSupabase()) {
     const events = await listEvents();
@@ -179,6 +258,11 @@ export async function updateEvent(id: string, update: EventUpdate): Promise<Even
 
 export async function deleteEvent(id: string): Promise<boolean> {
   requireDurableStore();
+
+  if (hasDatabase()) {
+    const rows = await db()<{ id: string }[]>`DELETE FROM ensaar_events WHERE id = ${id} RETURNING id`;
+    return rows.length > 0;
+  }
 
   if (!hasSupabase()) {
     const events = await listEvents();

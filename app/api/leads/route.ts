@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLead, listLeads } from '@/lib/leads/store';
-import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
+import { requireBasecamp } from '@/lib/basecamp/guard';
 import { clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 import type { NewLead } from '@/lib/leads/types';
 
@@ -66,9 +66,8 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!(await verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireBasecamp(request, 'leads:read');
+  if (!gate.ok) return gate.response;
   try {
     return NextResponse.json({ leads: await listLeads() });
   } catch (error) {

@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   BASECAMP_COOKIE,
+  BASECAMP_SESSION_MAX_AGE,
   basecampIsConfigured,
   createBasecampToken,
   revokeBasecampToken,
+  sharedLoginAllowed,
   verifyBasecampPassword,
 } from '@/lib/basecamp/auth';
+import { verifyUserPassword } from '@/lib/basecamp/users';
 import { clientKey, rateLimit, tooManyRequests } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
@@ -23,12 +26,39 @@ export async function POST(request: NextRequest) {
     return tooManyRequests(limit.retryAfter, 'Too many sign-in attempts. Try again shortly.');
   }
 
-  const body = (await request.json().catch(() => ({}))) as { password?: string };
+  const body = (await request.json().catch(() => ({}))) as { email?: string; password?: string };
+  const password = body.password || '';
+
+  /* Two ways in, in this order:
+     1. An invited user signs in with their own email and password.
+     2. The shared password, which predates user accounts. It stays because it is
+        how the first owner gets in to send the first invitation, and because
+        removing it would lock out an install that has not invited anyone yet.
+     An email that does not match any account falls through to the shared check,
+     so a wrong email and a wrong password are the same answer. */
+  const email = typeof body.email === 'string' ? body.email.trim() : '';
+  if (email) {
+    const user = await verifyUserPassword(email, password);
+    if (user) {
+      const response = NextResponse.json({ ok: true, user: { email: user.email, role: user.role } });
+      response.cookies.set(BASECAMP_COOKIE, await createBasecampToken(user.id), {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: BASECAMP_SESSION_MAX_AGE,
+      });
+      return response;
+    }
+  }
+
   if (!basecampIsConfigured()) {
     return NextResponse.json({ error: 'Basecamp access is not configured.' }, { status: 503 });
   }
-  if (!verifyBasecampPassword(body.password || '')) {
-    return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
+  // Same answer as a wrong password, so the response does not reveal whether the
+  // shared login is closed.
+  if (!verifyBasecampPassword(password) || !(await sharedLoginAllowed())) {
+    return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 });
   }
 
   const response = NextResponse.json({ ok: true });

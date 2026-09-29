@@ -1,4 +1,8 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { BASECAMP_COOKIE, resolveBasecampSession } from '@/lib/basecamp/auth';
+import { can } from '@/lib/basecamp/roles';
 import Link from 'next/link';
 import { ArrowRight, CalendarDays, CircleAlert, Inbox, TriangleAlert } from 'lucide-react';
 import { listLeads } from '@/lib/leads/store';
@@ -24,6 +28,11 @@ async function safely<T>(load: () => Promise<T>, fallback: T): Promise<[T, strin
 }
 
 export default async function BasecampOverviewPage() {
+  // Checked here as well as in the layout: this page loads lead data on the
+  // server, and a layout is not guaranteed to run for every render of its pages.
+  const session = await resolveBasecampSession((await cookies()).get(BASECAMP_COOKIE)?.value);
+  if (!session || !can(session.role, 'leads:read')) redirect('/basecamp/login');
+
   const [[leads, leadsError], [events, eventsError]] = await Promise.all([
     safely(listLeads, []),
     safely(listEvents, []),

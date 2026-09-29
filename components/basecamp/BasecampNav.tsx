@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { CalendarDays, LayoutDashboard, LogOut, Users } from 'lucide-react';
+import { Briefcase, CalendarDays, ClipboardList, LayoutDashboard, LogOut, UserCog, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SECTIONS = [
   { href: '/basecamp', label: 'Overview', icon: LayoutDashboard },
   { href: '/basecamp/leads', label: 'Submissions', icon: Users },
+  { href: '/basecamp/clients', label: 'Clients', icon: Briefcase },
   { href: '/basecamp/events', label: 'Events', icon: CalendarDays },
+  { href: '/basecamp/registrations', label: 'Registrations', icon: ClipboardList },
+  { href: '/basecamp/people', label: 'People', icon: UserCog },
 ] as const;
 
 export function BasecampNav() {

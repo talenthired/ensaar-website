@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
+import { requireBasecamp } from '@/lib/basecamp/guard';
 import { createEvent, listEvents } from '@/lib/events/store';
 import { parseEventInput } from '@/lib/events/validate';
 
 export const runtime = 'nodejs';
 
-async function authorized(request: NextRequest) {
-  return verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value);
-}
-
 export async function GET(request: NextRequest) {
-  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const gate = await requireBasecamp(request, 'events:read');
+  if (!gate.ok) return gate.response;
   try {
     return NextResponse.json({ events: await listEvents() });
   } catch (error) {
@@ -21,7 +18,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const gate = await requireBasecamp(request, 'events:write');
+  if (!gate.ok) return gate.response;
   try {
     const parsed = parseEventInput((await request.json()) as Record<string, unknown>);
     if (typeof parsed === 'string') return NextResponse.json({ error: parsed }, { status: 400 });

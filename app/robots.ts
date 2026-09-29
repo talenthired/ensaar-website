@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { siteConfig } from '@/lib/utils';
 
-const DISALLOW = ['/api/', '/basecamp/', '/basecamp'];
+const DISALLOW = ['/api/', '/basecamp/', '/basecamp', '/onboard'];
 
 /**
  * Crawlers we explicitly welcome, grouped by what they do. Naming them individually

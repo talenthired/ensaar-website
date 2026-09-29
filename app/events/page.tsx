@@ -8,6 +8,7 @@ import { breadcrumbSchema, webPageSchema } from '@/components/seo/schemas';
 import { pageMetadata } from '@/lib/metadata';
 import { siteConfig } from '@/lib/utils';
 import { listPublishedEvents } from '@/lib/events/store';
+import { EventRegisterForm } from '@/components/events/EventRegisterForm';
 import type { EventType } from '@/lib/events/types';
 import { Calendar, MapPin, Users, Mic } from 'lucide-react';
 import { BcepEventGallery } from '@/components/sections/BcepEventGallery';
@@ -20,7 +21,7 @@ export const revalidate = 900;
 export const metadata: Metadata = pageMetadata({
   title: 'Events - Workshops, Webinars, Meetups',
   description:
-    'Explore Ensaar BCEP AI readiness workshops, academic programs, industry meetups, startup Centre of Excellence initiatives, and certified courses.',
+    'Explore Ensaar sessions on hiring and operating teams in India, BCEP AI readiness workshops, academic programs, industry meetups, startup Centre of Excellence initiatives, and certified courses.',
   path: '/events',
   eyebrow: 'Events and programs',
 });
@@ -109,11 +110,11 @@ export default async function EventsPage() {
             <div className="text-xs uppercase tracking-[0.1em] text-cyan-200">Home / Events</div>
             <span className="mt-8 inline-block text-xs font-semibold uppercase tracking-[0.12em] text-[#f5a623]">Events and Programs</span>
             <h1 className="mt-6 text-[clamp(2.7rem,6vw,5.2rem)] leading-[0.99] text-balance">
-              Where enterprise AI and human capability meet.
+              Where building teams and building technology meet.
             </h1>
             <p className="mt-7 max-w-3xl text-lg leading-relaxed text-slate-200 md:text-xl">
-              Join practical sessions on AI adoption, software engineering, leadership, emotional
-              intelligence, industry readiness, and the changing nature of work.
+              Join practical sessions on hiring and running teams in India, AI adoption, software
+              engineering, leadership, industry readiness, and the changing nature of work.
             </p>
             <div className="mt-8">
               <Button href="/contact" withArrow className="bg-[#f5a623] text-[#0c2343] hover:bg-[#f7b83e]">Host or Attend</Button>
@@ -127,6 +128,13 @@ export default async function EventsPage() {
       <Section>
         <Container>
           <h2 className="text-2xl md:text-3xl mb-8">Upcoming</h2>
+          {/* Registration lives beside the list it refers to, so someone who has
+              just read what is coming up can sign up without hunting for a form. */}
+          <div className="mb-8">
+            <EventRegisterForm
+              events={upcoming.map((event) => ({ id: event.id, title: event.title, date: event.date }))}
+            />
+          </div>
           <div className="grid gap-5 md:grid-cols-2 mb-16">
             {upcoming.map((e) => {
               const meta = TYPE_META[e.type];

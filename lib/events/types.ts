@@ -15,17 +15,19 @@ export type EventRecord = {
   speakers?: string[];
   /** Drafts stay in Basecamp; only published events reach the public site. */
   published: boolean;
+  /** Null means unlimited. Registration closes once this many people register. */
+  capacity?: number | null;
   createdAt: string;
   updatedAt: string;
 };
 
 export type NewEvent = Pick<EventRecord, 'title' | 'date' | 'type' | 'location' | 'summary'> &
-  Partial<Pick<EventRecord, 'href' | 'speakers' | 'published'>>;
+  Partial<Pick<EventRecord, 'href' | 'speakers' | 'published' | 'capacity'>>;
 
 export type EventUpdate = Partial<
   Pick<
     EventRecord,
-    'title' | 'date' | 'type' | 'location' | 'summary' | 'href' | 'speakers' | 'published'
+    'title' | 'date' | 'type' | 'location' | 'summary' | 'href' | 'speakers' | 'published' | 'capacity'
   >
 >;
 

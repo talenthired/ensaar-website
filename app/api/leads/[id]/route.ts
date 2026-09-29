@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
+import { requireBasecamp } from '@/lib/basecamp/guard';
 import { LEAD_STATUSES, type LeadStatus, type LeadUpdate } from '@/lib/leads/types';
 import { updateLead } from '@/lib/leads/store';
 
@@ -9,9 +9,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!(await verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value))) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const gate = await requireBasecamp(request, 'leads:write');
+  if (!gate.ok) return gate.response;
 
   try {
     const { id } = await params;

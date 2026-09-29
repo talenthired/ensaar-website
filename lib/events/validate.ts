@@ -36,6 +36,23 @@ export function parseEventInput(body: Record<string, unknown>): NewEvent | strin
   if (!summary) return 'A summary is required.';
   if (href && !/^https?:\/\//.test(href)) return 'The link must start with http:// or https://.';
 
+  /* Capacity is optional and null means unlimited, so an absent field and a
+     cleared field are different things: undefined leaves it alone, null clears
+     it. A rejected value is reported rather than dropped, because a silently
+     ignored capacity reads as "the limit does not work". */
+  let capacity: number | null | undefined;
+  if (body.capacity !== undefined) {
+    if (body.capacity === null || body.capacity === '') {
+      capacity = null;
+    } else {
+      const parsed = Number(body.capacity);
+      if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100000) {
+        return 'Capacity must be a whole number of seats, or left empty for unlimited.';
+      }
+      capacity = parsed;
+    }
+  }
+
   const speakers = parseSpeakers(body.speakers);
   return {
     title,
@@ -45,6 +62,7 @@ export function parseEventInput(body: Record<string, unknown>): NewEvent | strin
     summary,
     ...(href ? { href } : {}),
     ...(speakers ? { speakers } : {}),
+    ...(capacity !== undefined ? { capacity } : {}),
     published: body.published === true,
   };
 }

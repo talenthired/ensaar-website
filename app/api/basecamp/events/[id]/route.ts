@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { BASECAMP_COOKIE, verifyBasecampToken } from '@/lib/basecamp/auth';
+import { requireBasecamp } from '@/lib/basecamp/guard';
 import { deleteEvent, updateEvent } from '@/lib/events/store';
 import { parseEventInput } from '@/lib/events/validate';
 
 export const runtime = 'nodejs';
 
-async function authorized(request: NextRequest) {
-  return verifyBasecampToken(request.cookies.get(BASECAMP_COOKIE)?.value);
-}
-
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const gate = await requireBasecamp(request, 'events:write');
+  if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -39,7 +36,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await authorized(request))) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const gate = await requireBasecamp(request, 'events:delete');
+  if (!gate.ok) return gate.response;
   try {
     const { id } = await params;
     if (!(await deleteEvent(id))) {

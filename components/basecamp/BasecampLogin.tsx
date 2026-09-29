@@ -6,6 +6,7 @@ import { ArrowRight, LockKeyhole } from 'lucide-react';
 
 export function BasecampLogin() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,7 @@ export function BasecampLogin() {
       const response = await fetch('/api/basecamp/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(result.error || 'Unable to sign in.');
@@ -45,8 +46,23 @@ export function BasecampLogin() {
         </p>
 
         <form onSubmit={submit} className="mt-8">
+          <label htmlFor="basecamp-email" className="block text-sm font-semibold text-ink-primary mb-2">
+            Email
+          </label>
+          <input
+            id="basecamp-email"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="you@ensaar.com"
+            className="w-full rounded-lg border border-line-subtle bg-bg-primary px-3 py-2 text-ink-primary mb-4"
+          />
+          <p className="mb-4 text-xs text-ink-secondary">
+            Leave the email blank if you are using the shared Basecamp password.
+          </p>
           <label htmlFor="basecamp-password" className="block text-sm font-semibold text-ink-primary mb-2">
-            Basecamp password
+            Password
           </label>
           <input
             id="basecamp-password"

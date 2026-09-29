@@ -161,7 +161,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const requestHeaders = await headers();
+  const nonce = requestHeaders.get('x-nonce') ?? undefined;
+  // Customer onboarding and Basecamp show salaries, EINs and signed agreements.
+  // No analytics, attribution capture or chat widget runs on them.
+  const privatePage = /^\/(onboard|basecamp)(\/|$)/.test(requestHeaders.get('x-ensaar-path') ?? '');
   return (
     <html
       lang="en-IN"
@@ -181,12 +185,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
         <JsonLd nonce={nonce} data={[organizationSchema(), websiteSchema()]} />
         <ThemeProvider>
-          <Analytics nonce={nonce} />
-          <AttributionCapture />
+          {!privatePage && <Analytics nonce={nonce} />}
+          {!privatePage && <AttributionCapture />}
           <Header />
           <main id="main">{children}</main>
           <Footer />
-          <OpportunityAdvisor liveSupportEnabled={Boolean(process.env.SUPPORT_BRIDGE_SECRET?.trim())} />
+          {!privatePage && (
+            <OpportunityAdvisor liveSupportEnabled={Boolean(process.env.SUPPORT_BRIDGE_SECRET?.trim())} />
+          )}
         </ThemeProvider>
       </body>
     </html>
