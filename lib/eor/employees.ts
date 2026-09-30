@@ -76,7 +76,9 @@ type Row = {
   salary_inr: string | number;
   start_date: string;
   work_state: string;
-  monthly_fee_usd: number;
+  pricing: string;
+  monthly_fee_usd: number | null;
+  loaded_cost_usd: number | null;
   notes: string | null;
   schedule_number: number | null;
   schedule_version: string | null;
@@ -97,7 +99,7 @@ type Row = {
 
 const COLUMNS = [
   'id', 'company_id', 'status', 'employee_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
-  'monthly_fee_usd', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
+  'pricing', 'monthly_fee_usd', 'loaded_cost_usd', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
   'signed_at', 'signed_ip', 'countersigned_by', 'countersigned_at', 'employee_case', 'exit_date', 'exit_reason',
   'created_by', 'created_at', 'updated_at',
 ];
@@ -116,7 +118,9 @@ function toEmployee(r: Row): EorEmployee {
     salaryInr: Number(r.salary_inr),
     startDate: r.start_date,
     workState: r.work_state,
+    pricing: r.pricing === 'loaded' ? 'loaded' : 'fee',
     monthlyFeeUsd: r.monthly_fee_usd,
+    loadedCostUsd: r.loaded_cost_usd,
     notes: r.notes,
     scheduleNumber: r.schedule_number,
     scheduleVersion: r.schedule_version,
@@ -255,64 +259,6 @@ export async function rebuildPendingSchedules(tx: Tx, company: EorCompany): Prom
   }
 }
 
-/**
- * Set the fee agreed with a client. It is what each new employee starts with.
- * With `applyToPending`, employees whose Schedule A the customer has not signed
- * yet take the new fee too: drafts are updated, and schedules awaiting signature
- * are rebuilt and the signatory told. A signed Schedule A is a contract at its
- * own fee and is never changed here.
- */
-export async function setCompanyFee(
-  companyId: string,
-  feeUsd: number,
-  applyToPending: boolean,
-): Promise<Outcome<{ feeUsd: number; previousUsd: number; drafts: number; resent: number }>> {
-  return requireDatabase().begin(async (tx) => {
-    const company = await lockCompany(tx, companyId);
-    if (!company) return refuse(404, 'No such client.');
-    if (company.status === 'cancelled') return refuse(409, 'This client is cancelled.');
-    await tx`UPDATE ensaar_eor_companies SET default_fee_usd = ${feeUsd}, updated_at = NOW() WHERE id = ${companyId}`;
-    let drafts = 0;
-    const resent: EorEmployee[] = [];
-    if (applyToPending) {
-      const pending = await tx<Row[]>`
-        SELECT ${tx(COLUMNS)} FROM ensaar_eor_employees
-        WHERE company_id = ${companyId} AND status IN ('draft', 'awaiting_signature') AND monthly_fee_usd <> ${feeUsd} FOR UPDATE
-      `;
-      for (const employee of pending.map(toEmployee)) {
-        if (employee.status === 'draft') {
-          await tx`UPDATE ensaar_eor_employees SET monthly_fee_usd = ${feeUsd}, updated_at = NOW() WHERE id = ${employee.id}`;
-          drafts++;
-          continue;
-        }
-        const updated = { ...employee, monthlyFeeUsd: feeUsd };
-        const s = scheduleFor(company, updated, employee.scheduleNumber!);
-        await tx`
-          UPDATE ensaar_eor_employees SET monthly_fee_usd = ${feeUsd}, schedule_version = ${s.doc.version}, schedule_text = ${s.text},
-            schedule_hash = ${s.hash}, updated_at = NOW()
-          WHERE id = ${employee.id}
-        `;
-        resent.push(updated);
-      }
-      if (resent.length) {
-        const signatory = company.company?.signatoryEmail;
-        await enqueue(tx, {
-          kind: 'eor.schedules.ready',
-          to: signatory ? [signatory] : await companyRecipients(tx, company.id),
-          relatedId: company.id,
-          ...schedulesReadyEmail({
-            name: company.company?.signatoryName ?? company.contactName,
-            companyName: displayName(company),
-            employees: resent,
-            reason: `Ensaar updated the service fee on ${resent.length === 1 ? 'this schedule' : 'these schedules'} to US$${feeUsd} per employee per month. Please review and sign the updated version:`,
-          }),
-        });
-      }
-    }
-    return ok({ feeUsd, previousUsd: company.defaultFeeUsd, drafts, resent: resent.length });
-  });
-}
-
 // --- Staff: adding and sending ------------------------------------------------------------
 
 /**
@@ -335,9 +281,9 @@ export async function addEmployees(
     for (const e of inputs) {
       const rows = await tx<Row[]>`
         INSERT INTO ensaar_eor_employees (id, company_id, employee_name, employee_email, job_title, salary_inr, start_date,
-                                          work_state, monthly_fee_usd, notes, created_by)
+                                          work_state, pricing, monthly_fee_usd, loaded_cost_usd, notes, created_by)
         VALUES (${randomUUID()}, ${companyId}, ${e.employeeName}, ${e.employeeEmail}, ${e.jobTitle}, ${e.salaryInr},
-                ${e.startDate}, ${e.workState}, ${e.monthlyFeeUsd}, ${e.notes}, ${actor})
+                ${e.startDate}, ${e.workState}, ${e.pricing}, ${e.monthlyFeeUsd}, ${e.loadedCostUsd}, ${e.notes}, ${actor})
         RETURNING ${tx(COLUMNS)}
       `;
       out.push(toEmployee(rows[0]!));
@@ -549,7 +495,7 @@ export async function updateEmployee(id: string, input: EmployeeInput, actor: st
     const rows = await tx<Row[]>`
       UPDATE ensaar_eor_employees SET employee_name = ${input.employeeName}, employee_email = ${input.employeeEmail},
         job_title = ${input.jobTitle}, salary_inr = ${input.salaryInr}, start_date = ${input.startDate}, work_state = ${input.workState},
-        monthly_fee_usd = ${input.monthlyFeeUsd}, notes = ${input.notes},
+        pricing = ${input.pricing}, monthly_fee_usd = ${input.monthlyFeeUsd}, loaded_cost_usd = ${input.loadedCostUsd}, notes = ${input.notes},
         status = ${sent ? 'awaiting_signature' : 'draft'},
         schedule_version = ${s?.doc.version ?? null}, schedule_text = ${s?.text ?? null}, schedule_hash = ${s?.hash ?? null},
         signed_name = NULL, signed_email = NULL, signed_at = NULL, signed_ip = NULL, signed_user_agent = NULL, updated_at = NOW()

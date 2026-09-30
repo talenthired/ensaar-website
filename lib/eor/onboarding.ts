@@ -318,7 +318,7 @@ function isoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-/** A monthly fee per employee, in whole US dollars, or null if it is not one. The fee is agreed client by client. */
+/** Ensaar's monthly fee for one employee, in whole US dollars, or null if it is not one. The fee is agreed employee by employee. */
 export function parseFeeUsd(input: unknown): number | null {
   const value = Number(String(input ?? '').replace(/[$,\s]/g, ''));
   return Number.isInteger(value) && value >= 1 && value <= 10_000 ? value : null;
@@ -334,12 +334,10 @@ export type CompanyInvite = {
   companyName: string;
   contactName: string;
   contactEmail: string;
-  /** The fee agreed with this client, per employee per month. Each new employee starts with it; a hire can differ. */
-  defaultFeeUsd: number;
   notes: string | null;
 };
 
-/** What Ensaar enters to invite a new client company. */
+/** What Ensaar enters to invite a new client company. What the client pays is set employee by employee. */
 export function validateCompanyInvite(input: unknown): Result<CompanyInvite> {
   const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
   const errors: Errors = {};
@@ -350,33 +348,77 @@ export function validateCompanyInvite(input: unknown): Result<CompanyInvite> {
   if (companyName.length < 2) errors.companyName = 'Enter the customer company name.';
   if (contactName.length < 2) errors.contactName = 'Enter the contact person’s name.';
   if (!isEmail(contactEmail)) errors.contactEmail = 'Enter a valid email address.';
-  const defaultFeeUsd = fee(body, 'defaultFeeUsd', errors);
   if (Object.keys(errors).length) return { ok: false, errors };
-  return { ok: true, value: { companyName, contactName, contactEmail, defaultFeeUsd, notes: notes || null } };
+  return { ok: true, value: { companyName, contactName, contactEmail, notes: notes || null } };
+}
+
+/*
+ * How the customer is charged for one employee. It is chosen employee by
+ * employee, so one client can have people on either:
+ *
+ *   fee     the customer sees the salary and Ensaar's monthly fee separately,
+ *           and pays the fee plus salary and statutory costs at cost;
+ *   loaded  the customer sees and pays one fixed monthly US dollar amount that
+ *           covers salary, employer statutory contributions and Ensaar's fee.
+ *           The salary is still recorded, for payroll and the employment
+ *           contract, but is never shown to the customer.
+ */
+export const PRICING_MODES = [
+  ['fee', 'Salary + EOR fee'],
+  ['loaded', 'Unit loaded cost'],
+] as const;
+export type Pricing = (typeof PRICING_MODES)[number][0];
+
+export function pricingLabel(pricing: Pricing): string {
+  return PRICING_MODES.find(([key]) => key === pricing)?.[1] ?? pricing;
+}
+
+/** What a spreadsheet or a form might call each option. */
+const PRICING_WORDS: Record<string, Pricing> = {
+  fee: 'fee', 'salary + eor fee': 'fee', 'salary + fee': 'fee', 'salary+fee': 'fee', 'salary and fee': 'fee', separate: 'fee',
+  loaded: 'loaded', 'unit loaded cost': 'loaded', 'loaded cost': 'loaded', 'unit cost': 'loaded', 'all-in': 'loaded', 'all in': 'loaded',
+};
+
+/** Sanity bound on a monthly all-in cost, against a slipped digit. */
+export const MAX_LOADED_COST_USD = 100_000;
+
+export function parseLoadedCostUsd(input: unknown): number | null {
+  const value = Number(String(input ?? '').replace(/[$,\s]/g, ''));
+  return Number.isInteger(value) && value >= 1 && value <= MAX_LOADED_COST_USD ? value : null;
 }
 
 export type EmployeeInput = {
   employeeName: string;
   employeeEmail: string | null;
   jobTitle: string;
-  /** Annual gross, in whole rupees. */
+  /** Annual gross, in whole rupees. Always recorded; shown to the customer only under 'fee' pricing. */
   salaryInr: number;
   /** YYYY-MM-DD. */
   startDate: string;
   workState: string;
-  monthlyFeeUsd: number;
+  pricing: Pricing;
+  /** Ensaar's monthly fee, under 'fee' pricing; null under 'loaded'. */
+  monthlyFeeUsd: number | null;
+  /** The all-in monthly amount, under 'loaded' pricing; null under 'fee'. */
+  loadedCostUsd: number | null;
   notes: string | null;
 };
 
+/** What the customer pays for this employee each month, in a few words. */
+export function customerPrice(e: Pick<EmployeeInput, 'pricing' | 'monthlyFeeUsd' | 'loadedCostUsd'>): string {
+  return e.pricing === 'loaded' ? `${formatUsd(e.loadedCostUsd ?? 0)} all-in` : `${formatUsd(e.monthlyFeeUsd ?? 0)} fee + costs`;
+}
+
 /**
- * One employee's offer. `defaultFeeUsd` fills an empty fee, so a bulk import
- * of a hundred people does not need the fee on every row.
+ * One employee's offer. The pricing option decides which amount is required:
+ * the fee, or the loaded cost. A row that names no option is read as loaded
+ * when it carries only a loaded cost, and as salary plus fee otherwise.
  */
-export function validateEmployee(input: unknown, options: { now?: Date; defaultFeeUsd?: number } = {}): Result<EmployeeInput> {
+export function validateEmployee(input: unknown, options: { now?: Date } = {}): Result<EmployeeInput> {
   const now = options.now ?? new Date();
-  const body = { ...((input && typeof input === 'object' ? input : {}) as Record<string, unknown>) };
-  if ((body.monthlyFeeUsd === undefined || body.monthlyFeeUsd === '') && options.defaultFeeUsd) body.monthlyFeeUsd = options.defaultFeeUsd;
+  const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
   const errors: Errors = {};
+  const blank = (key: string) => body[key] === undefined || body[key] === null || body[key] === '';
 
   const employeeName = text(body, 'employeeName', 120);
   const employeeEmail = email(body, 'employeeEmail');
@@ -395,7 +437,19 @@ export function validateEmployee(input: unknown, options: { now?: Date; defaultF
   if (!Number.isInteger(salaryInr) || salaryInr < MIN_SALARY_INR || salaryInr > MAX_SALARY_INR) {
     errors.salaryInr = 'Enter the annual gross salary in rupees, in whole numbers (for example 1800000).';
   }
-  const monthlyFeeUsd = fee(body, 'monthlyFeeUsd', errors);
+
+  const pricingRaw = text(body, 'pricing', 40).toLowerCase();
+  const pricing: Pricing | undefined = pricingRaw ? PRICING_WORDS[pricingRaw] : blank('monthlyFeeUsd') && !blank('loadedCostUsd') ? 'loaded' : 'fee';
+  let monthlyFeeUsd: number | null = null;
+  let loadedCostUsd: number | null = null;
+  if (!pricing) {
+    errors.pricing = 'Choose how the customer is charged: salary + EOR fee, or unit loaded cost.';
+  } else if (pricing === 'loaded') {
+    loadedCostUsd = parseLoadedCostUsd(body.loadedCostUsd);
+    if (loadedCostUsd === null) errors.loadedCostUsd = 'Enter the all-in monthly cost in whole US dollars.';
+  } else {
+    monthlyFeeUsd = fee(body, 'monthlyFeeUsd', errors);
+  }
 
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(startDate) ? new Date(`${startDate}T00:00:00Z`) : null;
   if (!parsed || Number.isNaN(parsed.getTime()) || isoDay(parsed) !== startDate) {
@@ -408,10 +462,10 @@ export function validateEmployee(input: unknown, options: { now?: Date; defaultF
 
   if (!(INDIA_STATES as readonly string[]).includes(workState)) errors.workState = 'Choose the state or union territory the employee will work from.';
 
-  if (Object.keys(errors).length) return { ok: false, errors };
+  if (Object.keys(errors).length || !pricing) return { ok: false, errors };
   return {
     ok: true,
-    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, monthlyFeeUsd, notes: notes || null },
+    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, pricing, monthlyFeeUsd, loadedCostUsd, notes: notes || null },
   };
 }
 
@@ -424,11 +478,17 @@ const CSV_COLUMNS: Record<string, keyof EmployeeInput> = {
   'annual gross salary': 'salaryInr', 'annual gross salary inr': 'salaryInr', ctc: 'salaryInr', 'ctc inr': 'salaryInr',
   'start date': 'startDate', start: 'startDate', 'joining date': 'startDate', doj: 'startDate',
   state: 'workState', 'work state': 'workState', location: 'workState', 'works from': 'workState',
-  fee: 'monthlyFeeUsd', 'monthly fee': 'monthlyFeeUsd', 'fee usd': 'monthlyFeeUsd', 'monthly fee usd': 'monthlyFeeUsd',
+  pricing: 'pricing', 'pricing option': 'pricing', 'charged as': 'pricing',
+  fee: 'monthlyFeeUsd', 'monthly fee': 'monthlyFeeUsd', 'fee usd': 'monthlyFeeUsd', 'monthly fee usd': 'monthlyFeeUsd', 'eor fee': 'monthlyFeeUsd', 'eor fee usd': 'monthlyFeeUsd',
+  'loaded cost': 'loadedCostUsd', 'loaded cost usd': 'loadedCostUsd', 'unit loaded cost': 'loadedCostUsd', 'unit loaded cost usd': 'loadedCostUsd',
+  'monthly loaded cost usd': 'loadedCostUsd',
   notes: 'notes',
 };
 
-export const CSV_TEMPLATE = 'Name,Email,Job title,Annual salary INR,Start date,Work state,Monthly fee USD\nAnita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,199\n';
+export const CSV_TEMPLATE =
+  'Name,Email,Job title,Annual salary INR,Start date,Work state,Pricing,Monthly fee USD,Loaded cost USD\n' +
+  'Anita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,Salary + EOR fee,249,\n' +
+  'Ravi Kumar,ravi@example.com,QA Analyst,1500000,2026-11-09,Telangana,Unit loaded cost,,2400\n';
 
 /** Split one CSV line, honouring double quotes (a comma inside "Rao, Anita" stays in the field). */
 function splitCsvLine(line: string): string[] {

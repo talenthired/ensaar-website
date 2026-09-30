@@ -4,12 +4,14 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, BadgeCheck, Loader2, LogOut, Pencil, Send, UserCheck, XCircle } from 'lucide-react';
 import type { EorEmployee } from '@/lib/eor/employees';
+import { PricingFields } from './AddEmployees';
 import type { VoidedSignature } from '@/lib/eor/companies';
 import type { OutboxEntry } from '@/lib/notify/outbox';
 import {
   EMPLOYEE_STATUS_LABELS,
   EMPLOYEE_STEPS,
   INDIA_STATES,
+  pricingLabel,
   formatDay,
   formatInr,
   formatUsd,
@@ -23,7 +25,7 @@ import { EmailLog } from './ClientDetail';
 
 type Detail = {
   employee: EorEmployee;
-  company: { id: string; status: string; name: string; defaultFeeUsd: number } | null;
+  company: { id: string; status: string; name: string } | null;
   scheduleText: string | null;
   voided: VoidedSignature[];
   messages: OutboxEntry[];
@@ -167,7 +169,6 @@ export function EmployeeDetail({ id }: { id: string }) {
       {panel === 'edit' && (
         <EditOffer
           employee={e}
-          defaultFeeUsd={company?.defaultFeeUsd ?? e.monthlyFeeUsd}
           errors={errors}
           setErrors={setErrors}
           busy={busy === 'edit'}
@@ -186,8 +187,13 @@ export function EmployeeDetail({ id }: { id: string }) {
           <h2 className="text-sm font-semibold text-ink-primary">Offer</h2>
           <dl className="mt-3 grid gap-3 sm:grid-cols-2">
             <Row label="Email" value={e.employeeEmail} />
-            <Row label="Annual gross salary" value={formatInr(e.salaryInr)} />
-            <Row label="Ensaar fee" value={`${formatUsd(e.monthlyFeeUsd)} a month`} />
+            <Row label="Charged as" value={pricingLabel(e.pricing)} />
+            {e.pricing === 'loaded' ? (
+              <Row label="Unit loaded cost" value={`${formatUsd(e.loadedCostUsd ?? 0)} a month, all-in`} />
+            ) : (
+              <Row label="EOR fee" value={`${formatUsd(e.monthlyFeeUsd ?? 0)} a month`} />
+            )}
+            <Row label={e.pricing === 'loaded' ? 'Annual gross salary (not shown to the customer)' : 'Annual gross salary'} value={formatInr(e.salaryInr)} />
             <Row label="Start date" value={<span className={cn(e.startDate < todayInIndia() && ['draft', 'awaiting_signature', 'signed', 'onboarding'].includes(e.status) && 'font-medium text-orange-700')}>{formatDay(e.startDate)}</span>} />
             <Row label="Added" value={`${stamp(e.createdAt)} by ${e.createdBy ?? '—'}`} />
             {e.signedAt && <Row label="Customer signed" value={`${e.signedName} <${e.signedEmail}>, ${stamp(e.signedAt)}${e.signedIp ? ` from ${e.signedIp}` : ''}`} />}
@@ -268,7 +274,7 @@ export function EmployeeDetail({ id }: { id: string }) {
   );
 }
 
-function EditOffer({ employee, defaultFeeUsd, errors, setErrors, busy, onSubmit }: { employee: EorEmployee; defaultFeeUsd: number; errors: Errors; setErrors: (e: Errors) => void; busy: boolean; onSubmit: (patch: Record<string, string>) => void }) {
+function EditOffer({ employee, errors, setErrors, busy, onSubmit }: { employee: EorEmployee; errors: Errors; setErrors: (e: Errors) => void; busy: boolean; onSubmit: (patch: Record<string, string>) => void }) {
   const [form, setForm] = useState({
     employeeName: employee.employeeName,
     employeeEmail: employee.employeeEmail ?? '',
@@ -276,7 +282,9 @@ function EditOffer({ employee, defaultFeeUsd, errors, setErrors, busy, onSubmit 
     salaryInr: String(employee.salaryInr),
     startDate: employee.startDate,
     workState: employee.workState,
-    monthlyFeeUsd: String(employee.monthlyFeeUsd),
+    pricing: employee.pricing as string,
+    monthlyFeeUsd: employee.monthlyFeeUsd === null ? '' : String(employee.monthlyFeeUsd),
+    loadedCostUsd: employee.loadedCostUsd === null ? '' : String(employee.loadedCostUsd),
     notes: employee.notes ?? '',
   });
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
@@ -286,13 +294,13 @@ function EditOffer({ employee, defaultFeeUsd, errors, setErrors, busy, onSubmit 
       className="space-y-3 rounded-xl border border-line-subtle bg-bg-primary p-4"
       onSubmit={(ev) => {
         ev.preventDefault();
-        const check = validateEmployee(form, { defaultFeeUsd });
+        const check = validateEmployee(form);
         if (!check.ok) return setErrors(check.errors);
         onSubmit(form);
       }}
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        {([['employeeName', 'Full name'], ['employeeEmail', 'Email'], ['jobTitle', 'Job title'], ['salaryInr', 'Annual salary (INR)'], ['startDate', 'Start date'], ['monthlyFeeUsd', 'Fee (USD/month)']] as const).map(([k, label]) => (
+        {([['employeeName', 'Full name'], ['employeeEmail', 'Email'], ['jobTitle', 'Job title'], ['salaryInr', 'Annual salary (INR)'], ['startDate', 'Start date']] as const).map(([k, label]) => (
           <label key={k} className="block text-sm">
             <span className="mb-1 block text-ink-secondary">{label}</span>
             <input className={inputClass} type={k === 'startDate' ? 'date' : 'text'} value={form[k]} aria-invalid={Boolean(errors[k])} onChange={(ev) => set(k, ev.target.value)} />
@@ -307,7 +315,8 @@ function EditOffer({ employee, defaultFeeUsd, errors, setErrors, busy, onSubmit 
             ))}
           </select>
         </label>
-        <label className="block text-sm sm:col-span-2">
+        <PricingFields form={form} errors={errors} set={set} />
+        <label className="block text-sm sm:col-span-3">
           <span className="mb-1 block text-ink-secondary">Internal notes</span>
           <input className={inputClass} value={form.notes} onChange={(ev) => set('notes', ev.target.value)} />
         </label>

@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, context: Context) {
   const valid: EmployeeInput[] = [];
   const rowErrors: Array<{ row: number; errors: Errors }> = [];
   rows.forEach((row, index) => {
-    const result = validateEmployee(row, { defaultFeeUsd: company.defaultFeeUsd });
+    const result = validateEmployee(row);
     if (result.ok) valid.push(result.value);
     else rowErrors.push({ row: index + 1, errors: result.errors });
   });

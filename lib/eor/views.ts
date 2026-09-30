@@ -80,9 +80,12 @@ export function employeeListItem(e: EorEmployee) {
     employeeName: e.employeeName,
     jobTitle: e.jobTitle,
     workState: e.workState,
-    salaryInr: e.salaryInr,
+    pricing: e.pricing,
+    // Under loaded pricing the customer is shown one amount. The salary and the fee inside it are Ensaar's.
+    salaryInr: e.pricing === 'loaded' ? null : e.salaryInr,
     startDate: e.startDate,
-    monthlyFeeUsd: e.monthlyFeeUsd,
+    monthlyFeeUsd: e.pricing === 'loaded' ? null : e.monthlyFeeUsd,
+    loadedCostUsd: e.pricing === 'loaded' ? e.loadedCostUsd : null,
     scheduleNumber: e.scheduleNumber,
     scheduleHash: e.status === 'awaiting_signature' ? e.scheduleHash : null,
     progress: e.employeeCase

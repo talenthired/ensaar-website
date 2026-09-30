@@ -364,6 +364,15 @@ CREATE INDEX IF NOT EXISTS ensaar_eor_employees_status_idx ON ensaar_eor_employe
 CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_employees_schedule_idx
   ON ensaar_eor_employees (company_id, schedule_number) WHERE schedule_number IS NOT NULL;
 
+-- How the customer is charged is chosen per employee: 'fee' (the salary and
+-- Ensaar's monthly fee, shown separately) or 'loaded' (one all-in monthly US
+-- dollar amount; the salary is recorded but not shown to the customer).
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS pricing TEXT NOT NULL DEFAULT 'fee';
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS loaded_cost_usd INTEGER;
+ALTER TABLE ensaar_eor_employees ALTER COLUMN monthly_fee_usd DROP NOT NULL;
+-- There is no client-level fee any more. The column stays for rows that have one.
+ALTER TABLE ensaar_eor_companies ALTER COLUMN default_fee_usd DROP NOT NULL;
+
 -- People at the customer who can sign in to the portal.
 CREATE TABLE IF NOT EXISTS ensaar_portal_users (
   id            TEXT PRIMARY KEY,

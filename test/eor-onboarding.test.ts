@@ -2,11 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { AGREEMENT_VERSION, agreementToText, buildMasterAgreement, buildSchedule } from '@/lib/eor/agreement';
 import {
   CSV_TEMPLATE,
+  customerPrice,
   INDIA_STATES,
   cleanFilename,
   missingRequiredDocuments,
   normalizeEin,
   parseFeeUsd,
+  parseLoadedCostUsd,
   parseEmployeesCsv,
   signatureBlockers,
   signatureMatches,
@@ -59,33 +61,85 @@ const company = {
 
 describe('validateCompanyInvite', () => {
   it('accepts a new client and normalises the email', () => {
-    const r = validateCompanyInvite({ companyName: 'Pristinno Tech', contactName: 'Jane Doe', contactEmail: 'Jane@Pristinnotech.com ', defaultFeeUsd: '$199' });
+    const r = validateCompanyInvite({ companyName: 'Pristinno Tech', contactName: 'Jane Doe', contactEmail: 'Jane@Pristinnotech.com ' });
     expect(r.ok).toBe(true);
-    if (r.ok) {
-      expect(r.value.contactEmail).toBe('jane@pristinnotech.com');
-      expect(r.value.defaultFeeUsd).toBe(199);
-    }
+    if (r.ok) expect(r.value.contactEmail).toBe('jane@pristinnotech.com');
   });
 
-  it('names every missing field', () => {
+  it('names every missing field, and asks for no fee: that is set per employee', () => {
     const r = validateCompanyInvite({});
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.errors).sort()).toEqual(['companyName', 'contactEmail', 'contactName', 'defaultFeeUsd']);
+    if (!r.ok) expect(Object.keys(r.errors).sort()).toEqual(['companyName', 'contactEmail', 'contactName']);
   });
 });
 
-describe('the fee is agreed client by client', () => {
-  it('accepts any whole-dollar fee, not only the published starting figure', () => {
-    expect(parseFeeUsd('249')).toBe(249);
-    expect(parseFeeUsd('$1,250')).toBe(1250);
-    expect(parseFeeUsd(199)).toBe(199);
+describe('pricing is chosen employee by employee', () => {
+  const loaded = { ...hire, pricing: 'loaded', monthlyFeeUsd: '', loadedCostUsd: '3,900' };
+
+  it('salary + EOR fee: needs the fee, carries no loaded cost', () => {
+    const r = validateEmployee({ ...hire, pricing: 'fee', monthlyFeeUsd: '249' }, { now: NOW });
+    expect(r.ok && r.value).toMatchObject({ pricing: 'fee', monthlyFeeUsd: 249, loadedCostUsd: null });
+    const missing = validateEmployee({ ...hire, pricing: 'fee', monthlyFeeUsd: '' }, { now: NOW });
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(Object.keys(missing.errors)).toEqual(['monthlyFeeUsd']);
   });
 
-  it('refuses a blank, fractional or absurd fee, so a client is never created on a guess', () => {
+  it('unit loaded cost: needs the all-in amount, carries no fee, still records the salary', () => {
+    const r = validateEmployee(loaded, { now: NOW });
+    expect(r.ok && r.value).toMatchObject({ pricing: 'loaded', loadedCostUsd: 3900, monthlyFeeUsd: null, salaryInr: 1_800_000 });
+    const missing = validateEmployee({ ...loaded, loadedCostUsd: '' }, { now: NOW });
+    expect(missing.ok).toBe(false);
+    if (!missing.ok) expect(Object.keys(missing.errors)).toEqual(['loadedCostUsd']);
+    // A fee typed by mistake is dropped rather than kept beside the loaded cost.
+    const both = validateEmployee({ ...loaded, monthlyFeeUsd: '199' }, { now: NOW });
+    expect(both.ok && both.value.monthlyFeeUsd).toBeNull();
+  });
+
+  it('reads the option as a spreadsheet would write it, and infers it when only one amount is given', () => {
+    expect((validateEmployee({ ...hire, pricing: 'Unit Loaded Cost', monthlyFeeUsd: '', loadedCostUsd: '2400' }, { now: NOW }) as { value: EmployeeInput }).value.pricing).toBe('loaded');
+    expect((validateEmployee({ ...hire, pricing: 'Salary + EOR fee' }, { now: NOW }) as { value: EmployeeInput }).value.pricing).toBe('fee');
+    expect((validateEmployee({ ...hire, pricing: undefined, monthlyFeeUsd: '', loadedCostUsd: '2400' }, { now: NOW }) as { value: EmployeeInput }).value.pricing).toBe('loaded');
+    expect((validateEmployee({ ...hire, pricing: undefined }, { now: NOW }) as { value: EmployeeInput }).value.pricing).toBe('fee');
+    const bad = validateEmployee({ ...hire, pricing: 'hourly' }, { now: NOW });
+    expect(bad.ok).toBe(false);
+    if (!bad.ok) expect(Object.keys(bad.errors)).toEqual(['pricing']);
+  });
+
+  it('accepts any whole-dollar fee or loaded cost, and refuses fractions and slipped digits', () => {
+    expect(parseFeeUsd('$1,250')).toBe(1250);
     for (const bad of ['', undefined, '199.50', '0', '-5', '20000', 'abc']) expect(parseFeeUsd(bad), String(bad)).toBeNull();
-    const r = validateCompanyInvite({ companyName: 'Pristinno Tech', contactName: 'Jane Doe', contactEmail: 'jane@pristinnotech.com', defaultFeeUsd: '' });
-    expect(r.ok).toBe(false);
-    if (!r.ok) expect(Object.keys(r.errors)).toEqual(['defaultFeeUsd']);
+    expect(parseLoadedCostUsd('4,200')).toBe(4200);
+    for (const bad of ['', '4200.5', '0', '250000']) expect(parseLoadedCostUsd(bad), bad).toBeNull();
+  });
+
+  it('says in a few words what the customer pays', () => {
+    expect(customerPrice({ pricing: 'fee', monthlyFeeUsd: 249, loadedCostUsd: null })).toBe('US$249 fee + costs');
+    expect(customerPrice({ pricing: 'loaded', monthlyFeeUsd: null, loadedCostUsd: 3900 })).toBe('US$3,900 all-in');
+  });
+
+  it('the spreadsheet template carries one employee on each option, and both rows are valid', () => {
+    const parsed = parseEmployeesCsv(CSV_TEMPLATE);
+    expect(parsed.unknownHeaders).toEqual([]);
+    const rows = parsed.rows.map((r) => validateEmployee(r, { now: new Date('2026-10-01T00:00:00Z') }));
+    expect(rows.map((r) => r.ok && [r.value.pricing, r.value.monthlyFeeUsd, r.value.loadedCostUsd])).toEqual([['fee', 249, null], ['loaded', null, 2400]]);
+  });
+
+  it('a loaded Schedule A states one amount, and never the salary or the fee', () => {
+    const details = (validateCompany(company) as { ok: true; value: CompanyDetails }).value;
+    const employee = (validateEmployee(loaded, { now: NOW }) as { ok: true; value: EmployeeInput }).value;
+    const text = agreementToText(buildSchedule({ number: 3, companyName: 'Pristinno Tech', company: details, masterHash: null, employee }));
+    expect(text).toContain("Loaded Cost: US$3,900 per month, covering salary, the employer's statutory contributions and Ensaar's fee");
+    expect(text).not.toContain('Annual gross salary');
+    expect(text).not.toContain('18,00,000');
+    expect(text).not.toContain('Service Fee');
+  });
+
+  it('the master agreement provides for both, and defines what a Loaded Cost covers', () => {
+    const text = agreementToText(buildMasterAgreement('Pristinno Tech', null));
+    expect(text).toContain('states how the Customer is charged for that Employee, in one of two ways');
+    expect(text).toContain('A Loaded Cost is a fixed amount in US dollars that covers the Employee\'s gross salary, the employer\'s statutory contributions and Ensaar\'s fee for the month');
+    expect(text).toContain('The Loaded Cost does not cover any bonus or allowance the Customer approves, expenses the Customer approves, Asset Costs and the Procurement Fee, or the costs of a lawful exit');
+    expect(text).toContain('"Monthly Charges" are the Service Fee and Employment Costs, or the Loaded Cost');
   });
 });
 
@@ -98,11 +152,6 @@ describe('validateEmployee', () => {
     expect(result.value.salaryInr).toBe(1_800_000);
     expect(result.value.employeeEmail).toBeNull();
     expect(result.value.monthlyFeeUsd).toBe(EOR_PRICE_USD);
-  });
-
-  it('fills an empty fee from the client default', () => {
-    const result = validateEmployee({ ...hire, monthlyFeeUsd: '' }, { now: NOW, defaultFeeUsd: 249 });
-    expect(result.ok && result.value.monthlyFeeUsd).toBe(249);
   });
 
   it('accepts a work state in any capitalisation and stores the canonical name', () => {
@@ -129,7 +178,7 @@ describe('parseEmployeesCsv', () => {
     expect(parsed.unknownHeaders).toEqual(['department']);
     expect(parsed.rows).toHaveLength(2);
     expect(parsed.rows[0]).toMatchObject({ employeeName: 'Rao, Anita', salaryInr: '24,00,000', workState: 'karnataka' });
-    const checked = parsed.rows.map((r) => validateEmployee(r, { now: NOW, defaultFeeUsd: 199 }));
+    const checked = parsed.rows.map((r) => validateEmployee({ ...r, monthlyFeeUsd: '199' }, { now: NOW }));
     expect(checked.every((c) => c.ok)).toBe(true);
   });
 
@@ -137,8 +186,8 @@ describe('parseEmployeesCsv', () => {
     const parsed = parseEmployeesCsv(CSV_TEMPLATE);
     expect(parsed.error).toBeUndefined();
     expect(parsed.unknownHeaders).toEqual([]);
-    expect(parsed.rows).toHaveLength(1);
-    expect(validateEmployee(parsed.rows[0], { now: NOW }).ok).toBe(true);
+    expect(parsed.rows).toHaveLength(2);
+    expect(parsed.rows.every((row) => validateEmployee(row, { now: NOW }).ok)).toBe(true);
   });
 
   it('refuses a file without a name column or without rows', () => {

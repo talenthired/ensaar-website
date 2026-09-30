@@ -21,8 +21,8 @@ import {
   sendForSignature,
   updateCompanyInvite,
 } from '@/lib/eor/companies';
-import { rebuildPendingSchedules, setCompanyFee } from '@/lib/eor/employees';
-import { parseFeeUsd, validateCompany, validateCompanyInvite } from '@/lib/eor/onboarding';
+import { rebuildPendingSchedules } from '@/lib/eor/employees';
+import { validateCompany, validateCompanyInvite } from '@/lib/eor/onboarding';
 import type { Outcome } from '@/lib/eor/outcome';
 import { deactivatePortalUser, listPortalUsers, reinvitePortalUser } from '@/lib/eor/portal-auth';
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['approve', 'request_changes', 'review_document', 'update_invite', 'save_details', 'send_for_signature', 'set_fee'].includes(action)) {
+  if (['approve', 'request_changes', 'review_document', 'update_invite', 'save_details', 'send_for_signature'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
@@ -103,16 +103,6 @@ export async function POST(request: NextRequest, context: Context) {
         await deliverSoon();
         // The link is returned so staff can pass it on directly if email is not working.
         return NextResponse.json({ ...sent.value, emailConfigured: emailConfigured() });
-      }
-      // The fee is agreed client by client; this is how staff record or change it.
-      case 'set_fee': {
-        const feeUsd = parseFeeUsd(body.feeUsd);
-        if (feeUsd === null) return NextResponse.json({ error: 'Enter the monthly fee in whole US dollars.' }, { status: 400 });
-        const changed = await setCompanyFee(id, feeUsd, body.applyToPending === true);
-        if (!changed.ok) return NextResponse.json({ error: changed.error }, { status: changed.status });
-        await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.company.fee', target: id, metadata: { ...changed.value } });
-        await deliverSoon();
-        return NextResponse.json(changed.value);
       }
       case 'add_contact': {
         const email = str(body.email, 254).toLowerCase();

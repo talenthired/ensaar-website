@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, context: Context) {
   ]);
   return NextResponse.json({
     employee,
-    company: company && { id: company.id, status: company.status, name: company.company?.legalName ?? company.companyName, defaultFeeUsd: company.defaultFeeUsd },
+    company: company && { id: company.id, status: company.status, name: company.company?.legalName ?? company.companyName },
     scheduleText,
     voided,
     messages: messages.filter((m) => m.kind.startsWith('eor.schedules')).slice(0, 10),
@@ -67,8 +67,7 @@ export async function POST(request: NextRequest, context: Context) {
 
   switch (action) {
     case 'update': {
-      const company = await getCompany(employee.companyId);
-      const input = validateEmployee({ ...employee, ...(body.employee as Record<string, unknown>) }, { defaultFeeUsd: company?.defaultFeeUsd });
+      const input = validateEmployee({ ...employee, ...(body.employee as Record<string, unknown>) });
       if (!input.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: input.errors }, { status: 400 });
       return done(await updateEmployee(id, input.value, actor), 'eor.employee.update', { status: employee.status });
     }

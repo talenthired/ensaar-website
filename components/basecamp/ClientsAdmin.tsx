@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Building2, ChevronRight, Loader2, MailWarning, Plus, RotateCw, Scale } from 'lucide-react';
-import { EOR_PRICE_USD } from '@/lib/content/india';
-import { COMPANY_STATUS_LABELS, formatUsd, validateCompanyInvite, type CompanyStatus, type Errors } from '@/lib/eor/onboarding';
+import { COMPANY_STATUS_LABELS, validateCompanyInvite, type CompanyStatus, type Errors } from '@/lib/eor/onboarding';
 import { cn } from '@/lib/utils';
 import {
   Badge,
@@ -27,7 +26,6 @@ type Company = {
   companyName: string;
   contactName: string;
   contactEmail: string;
-  defaultFeeUsd: number;
   company: { legalName: string } | null;
   createdAt: string;
   counts: Counts;
@@ -185,7 +183,7 @@ export function ClientsAdmin() {
                           {c.company?.legalName ?? c.companyName}
                         </Link>
                         <span className="block text-xs text-ink-secondary">
-                          {c.contactName} · {c.contactEmail} · {formatUsd(c.defaultFeeUsd)}/mo
+                          {c.contactName} · {c.contactEmail}
                         </span>
                       </td>
                       <td className="block px-4 py-1 md:table-cell md:py-3">
@@ -233,7 +231,7 @@ export function ClientsAdmin() {
 }
 
 function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assisted: boolean) => void; onClose: () => void }) {
-  const [form, setForm] = useState({ companyName: '', contactName: '', contactEmail: '', defaultFeeUsd: '', notes: '' });
+  const [form, setForm] = useState({ companyName: '', contactName: '', contactEmail: '', notes: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<{ message: string; id: string } | null>(null);
@@ -285,7 +283,8 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assiste
       <p className="mt-1 text-xs text-ink-secondary">
         {assisted
           ? 'Nobody is emailed yet. You enter the company details and documents on the client\'s page, then send the agreement to their signatory to sign.'
-          : 'The contact gets a portal invitation to add company details and documents. You add employees on the client\'s page.'}
+          : 'The contact gets a portal invitation to add company details and documents. You add employees on the client\'s page.'}{' '}
+        What the client pays is set employee by employee, as salary plus EOR fee or as a unit loaded cost.
       </p>
       <form
         noValidate
@@ -299,8 +298,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assiste
           {field('companyName', 'Company name', { placeholder: 'Pristinno Tech' })}
           {field('contactName', 'Contact name')}
           {field('contactEmail', 'Contact email', { type: 'email' }, assisted ? 'Gets portal access, but no email yet.' : 'Receives the portal invitation.')}
-          {field('defaultFeeUsd', 'Fee agreed with this client (USD per employee per month)', { inputMode: 'numeric', placeholder: 'For example 249' }, `What you agreed with them. Fees start from $${EOR_PRICE_USD}; you can change it later.`)}
-          <label className="block text-sm sm:col-span-2">
+          <label className="block text-sm sm:col-span-3">
             <span className="mb-1 block text-ink-secondary">Internal notes</span>
             <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Not shown to the customer" />
           </label>

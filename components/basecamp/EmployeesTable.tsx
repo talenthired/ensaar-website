@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BadgeCheck, Loader2, Send, XCircle } from 'lucide-react';
-import { EMPLOYEE_STATUS_LABELS, formatDay, formatInr, todayInIndia, type EmployeeStatus } from '@/lib/eor/onboarding';
+import { EMPLOYEE_STATUS_LABELS, customerPrice, formatDay, formatInr, todayInIndia, type EmployeeStatus, type Pricing } from '@/lib/eor/onboarding';
 import { cn } from '@/lib/utils';
 import { Badge, EmptyState, FilterChips, Notice, Pagination, STATUS_TONE, SearchBox, buttonClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 
@@ -17,7 +17,9 @@ type Employee = {
   workState: string;
   salaryInr: number;
   startDate: string;
-  monthlyFeeUsd: number;
+  pricing: Pricing;
+  monthlyFeeUsd: number | null;
+  loadedCostUsd: number | null;
   scheduleNumber: number | null;
   employeeCase: { steps: Record<string, unknown> } | null;
 };
@@ -179,6 +181,7 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
                 <th className="px-3 py-2.5 font-medium">Start</th>
                 <th className="px-3 py-2.5 font-medium">Works from</th>
                 <th className="px-3 py-2.5 text-right font-medium">Salary</th>
+                <th className="px-3 py-2.5 text-right font-medium">Customer pays / month</th>
                 <th className="px-3 py-2.5 font-medium">Schedule</th>
               </tr>
             </thead>
@@ -228,6 +231,7 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
                     </td>
                     <td className="px-3 py-2.5">{e.workState}</td>
                     <td className="px-3 py-2.5 text-right whitespace-nowrap">{formatInr(e.salaryInr)}</td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">{customerPrice(e)}</td>
                     <td className="px-3 py-2.5 text-ink-secondary">{e.scheduleNumber ? `A-${e.scheduleNumber}` : '—'}</td>
                   </tr>
                 );

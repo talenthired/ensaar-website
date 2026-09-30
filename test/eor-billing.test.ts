@@ -50,14 +50,14 @@ describe('deposit, notice, dismissal and revisions in the agreement', () => {
   const text = agreementToText(buildMasterAgreement('Pristinno Tech', null));
 
   it('takes a refundable deposit of one month\'s total cost before each employee starts', () => {
-    expect(text).toContain('a deposit equal to one month\'s estimated Employment Costs and Service Fee for that Employee');
+    expect(text).toContain('a deposit equal to one month\'s estimated Monthly Charges for that Employee');
     expect(text).toContain('Ensaar refunds the Deposit, less anything the Customer owes');
     expect(text).not.toMatch(/no deposit/i);
   });
 
   it('gives 30 days\' notice on either side, or payment in lieu from the customer', () => {
     expect(text).toContain('Either party may end this agreement, or the arrangement for any one Employee, on 30 days\' written notice');
-    expect(text).toContain('it pays in lieu of notice the Service Fee and Employment Costs for the rest of the 30 days');
+    expect(text).toContain('it pays in lieu of notice the Monthly Charges for the rest of the 30 days');
   });
 
   it('has the customer notify Ensaar instead of dismissing anyone itself', () => {

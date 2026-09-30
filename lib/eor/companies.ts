@@ -44,7 +44,6 @@ export type EorCompany = {
   companyName: string;
   contactName: string;
   contactEmail: string;
-  defaultFeeUsd: number;
   notes: string | null;
   company: CompanyDetails | null;
   /** The Ensaar person who entered the details for the customer; null when the customer did. */
@@ -83,7 +82,6 @@ type Row = {
   company_name: string;
   contact_name: string;
   contact_email: string;
-  default_fee_usd: number;
   notes: string | null;
   company: CompanyDetails | null;
   details_entered_by: string | null;
@@ -103,7 +101,7 @@ type Row = {
 };
 
 export const COMPANY_COLUMNS = [
-  'id', 'status', 'company_name', 'contact_name', 'contact_email', 'default_fee_usd', 'notes', 'company', 'details_entered_by',
+  'id', 'status', 'company_name', 'contact_name', 'contact_email', 'notes', 'company', 'details_entered_by',
   'agreement_version', 'agreement_hash', 'signed_name', 'signed_title', 'signed_email', 'signed_at', 'signed_ip',
   'countersigned_by', 'countersigned_at', 'changes_note', 'changes_requested_at', 'created_at', 'updated_at',
 ];
@@ -117,7 +115,6 @@ export function toCompany(row: Row): EorCompany {
     companyName: row.company_name,
     contactName: row.contact_name,
     contactEmail: row.contact_email,
-    defaultFeeUsd: row.default_fee_usd,
     notes: row.notes,
     company: row.company,
     detailsEnteredBy: row.details_entered_by,
@@ -299,9 +296,9 @@ export async function createCompany(
 ): Promise<EorCompany> {
   return requireDatabase().begin(async (tx) => {
     const rows = await tx<Row[]>`
-      INSERT INTO ensaar_eor_companies (id, company_name, contact_name, contact_email, default_fee_usd, notes, invited_by, idempotency_key)
+      INSERT INTO ensaar_eor_companies (id, company_name, contact_name, contact_email, notes, invited_by, idempotency_key)
       VALUES (${randomUUID()}, ${invite.companyName}, ${invite.contactName}, ${invite.contactEmail.toLowerCase()},
-              ${invite.defaultFeeUsd}, ${invite.notes}, ${invitedBy}, ${idempotencyKey})
+              ${invite.notes}, ${invitedBy}, ${idempotencyKey})
       RETURNING ${tx(COMPANY_COLUMNS)}
     `;
     const company = toCompany(rows[0]!);
@@ -325,7 +322,7 @@ export async function updateCompanyInvite(id: string, invite: CompanyInvite): Pr
     if (company.status === 'cancelled') return refuse(409, 'This client is cancelled.');
     const rows = await tx<Row[]>`
       UPDATE ensaar_eor_companies SET company_name = ${invite.companyName}, contact_name = ${invite.contactName},
-        contact_email = ${invite.contactEmail.toLowerCase()}, default_fee_usd = ${invite.defaultFeeUsd}, notes = ${invite.notes},
+        contact_email = ${invite.contactEmail.toLowerCase()}, notes = ${invite.notes},
         updated_at = NOW()
       WHERE id = ${id} RETURNING ${tx(COMPANY_COLUMNS)}
     `;

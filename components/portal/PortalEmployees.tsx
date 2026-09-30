@@ -182,8 +182,12 @@ function EmployeePanel({ id, say }: { id: string; say: Say }) {
         {[
           ['Status', EMPLOYEE_STATUS_LABELS_CUSTOMER[detail.status]],
           ['Start date', formatDay(detail.startDate)],
-          ['Annual gross salary', formatInr(detail.salaryInr)],
-          ['Ensaar fee', `${formatUsd(detail.monthlyFeeUsd)} a month`],
+          ...(detail.pricing === 'loaded'
+            ? [['Monthly cost', `${formatUsd(detail.loadedCostUsd ?? 0)}, all-in`]]
+            : [
+                ['Annual gross salary', formatInr(detail.salaryInr ?? 0)],
+                ['Ensaar fee', `${formatUsd(detail.monthlyFeeUsd ?? 0)} a month`],
+              ]),
           ['Works from', `${detail.workState}, India`],
           ['Schedule', detail.scheduleNumber ? `A-${detail.scheduleNumber}` : '—'],
           ...(detail.signature ? [['Signed', `${detail.signature.name}, ${new Date(detail.signature.at!).toLocaleDateString()}`]] : []),
@@ -277,7 +281,7 @@ function SignSchedules({ view, schedules, onCancel, onDone, say }: { view: Compa
               <th className="px-3 py-2">Employee</th>
               <th className="px-3 py-2">Start</th>
               <th className="px-3 py-2 text-right">Salary</th>
-              <th className="px-3 py-2 text-right">Fee</th>
+              <th className="px-3 py-2 text-right">Monthly charge</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line-subtle">
@@ -293,8 +297,8 @@ function SignSchedules({ view, schedules, onCancel, onDone, say }: { view: Compa
                   </details>
                 </td>
                 <td className="px-3 py-2 whitespace-nowrap">{formatDay(s.startDate)}</td>
-                <td className="px-3 py-2 text-right whitespace-nowrap">{formatInr(s.salaryInr)}</td>
-                <td className="px-3 py-2 text-right whitespace-nowrap">{formatUsd(s.monthlyFeeUsd)}</td>
+                <td className="px-3 py-2 text-right whitespace-nowrap">{s.pricing === 'loaded' ? 'Included' : formatInr(s.salaryInr ?? 0)}</td>
+                <td className="px-3 py-2 text-right whitespace-nowrap">{s.pricing === 'loaded' ? `${formatUsd(s.loadedCostUsd ?? 0)} all-in` : `${formatUsd(s.monthlyFeeUsd ?? 0)} fee`}</td>
               </tr>
             ))}
           </tbody>
