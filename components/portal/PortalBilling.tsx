@@ -26,13 +26,13 @@ export function PortalBilling({ say }: { say: Say }) {
   return (
     <section className="space-y-4">
       <p className="text-sm text-ink-secondary">
-        Ensaar invoices on the {INVOICE_DAY}th of each month, payable by bank transfer within {PAYMENT_DAYS} days. Your employees are paid from that
-        payment, so paying on time keeps their salaries on schedule. Overdue amounts carry {LATE_INTEREST_PERCENT_PER_MONTH}% interest a month.
+        Ensaar invoices on the {INVOICE_DAY}th of each month, payable by bank transfer within {PAYMENT_DAYS} days. That payment funds your
+        employees&apos; salaries and statutory dues. Overdue amounts carry {LATE_INTEREST_PERCENT_PER_MONTH}% interest a month.
       </p>
       {overdue.length > 0 && (
         <Notice kind="error">
-          {overdue.length === 1 ? `Invoice ${overdue[0]!.number} is overdue.` : `${overdue.length} invoices are overdue.`} Your employees&apos; salaries for
-          the month cannot be paid until {overdue.length === 1 ? 'it is' : 'they are'} settled.
+          {overdue.length === 1 ? `Invoice ${overdue[0]!.number} is overdue.` : `${overdue.length} invoices are overdue.`} Interest is accruing at{' '}
+          {LATE_INTEREST_PERCENT_PER_MONTH}% a month. Please pay now to keep your service with Ensaar in good standing.
         </Notice>
       )}
       {invoices.length === 0 ? (

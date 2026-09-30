@@ -9,7 +9,7 @@ import {
   reminderStage,
   validateInvoice,
 } from '@/lib/eor/billing';
-import { invoiceIssuedEmail, invoicePaidEmail, invoiceReminderEmail } from '@/lib/eor/email';
+import { invoiceIssuedEmail, invoiceOverdueStaffEmail, invoicePaidEmail, invoiceReminderEmail } from '@/lib/eor/email';
 import { renderEmail } from '@/lib/notify/outbox';
 
 const invoice = {
@@ -22,6 +22,9 @@ const invoice = {
   status: 'open' as const,
 };
 
+// Ensaar is the employer: wages are due on time whatever the customer does. Nothing we send may say otherwise.
+const WITHHOLDING = [/cannot be paid/i, /remain unpaid/i, /not advance/i, /delays? (its|their|your) employees/i, /salaries? .*(on hold|wait|withh)/i, /(salar|wage)[^.]*until (it|the invoice|this invoice) is (paid|received|settled)/i];
+
 describe('payment terms in the agreement', () => {
   const text = agreementToText(buildMasterAgreement('Pristinno Tech', null));
 
@@ -31,10 +34,15 @@ describe('payment terms in the agreement', () => {
     expect(text).not.toContain('20th');
   });
 
-  it('tells the customer that late payment delays their employees\' pay, and costs interest', () => {
-    expect(text).toContain('is not obliged to advance or fund any Employment Cost');
-    expect(text).toContain('until an invoice is paid in full the Employees\' salaries for that month cannot be paid');
+  it('makes late payment the customer\'s cost: interest, no new hires, termination, indemnity', () => {
+    expect(text).toContain('Ensaar is not obliged to extend credit to the Customer');
     expect(text).toContain('carries interest at 1.5% per month, calculated daily from the due date');
+    expect(text).toContain('may decline to take on new Employees, and may end this agreement');
+    expect(text).toContain('any amount Ensaar pays to meet its obligations as the Employees\' employer');
+  });
+
+  it('never says an employee\'s pay waits for the customer', () => {
+    for (const phrase of WITHHOLDING) expect(text).not.toMatch(phrase);
   });
 });
 
@@ -110,7 +118,8 @@ describe('billing emails', () => {
   it('an overdue notice says how late, that salaries wait, and the interest so far', () => {
     const mail = invoiceReminderEmail({ companyName: 'Pristinno Tech Inc.', invoice, stage: { kind: 'overdue', daysLate: 7 }, today: '2026-10-29' });
     expect(mail.subject).toBe('Overdue: invoice ENS-2026-101 for Pristinno Tech Inc. is 7 days late');
-    expect(mail.text).toContain('salaries for October 2026 cannot be paid until it is received');
+    expect(mail.text).toContain('Interest is accruing, and continued non-payment puts your service with Ensaar at risk');
+    expect(mail.text).toContain('may decline to take on new employees and may end the arrangement');
     expect(mail.text).toContain('interest at 1.5% per month');
     expect(mail.text).toContain('Interest accrued so far: US$14.88');
     expect(mail.text).toContain('Amount: US$4,250.50');
@@ -120,8 +129,18 @@ describe('billing emails', () => {
     const mail = invoiceReminderEmail({ companyName: 'Pristinno Tech Inc.', invoice, stage: { kind: 'upcoming', daysLate: 0 }, today: '2026-10-19' });
     expect(mail.subject).toBe('Reminder: invoice ENS-2026-101 for Pristinno Tech Inc. is due October 22, 2026');
     expect(mail.text).toContain('Invoice ENS-2026-101 is due in 3 days');
-    expect(mail.text).toContain('Your employees in India are paid from this payment');
+    expect(mail.text).toContain('Your payment funds the salaries and statutory dues of your employees in India');
     expect(invoiceReminderEmail({ companyName: 'X', invoice, stage: { kind: 'due', daysLate: 0 }, today: '2026-10-22' }).subject).toContain('is due today');
+  });
+
+  it('no billing email says an employee\'s pay waits for the customer', () => {
+    const all = [
+      invoiceIssuedEmail({ companyName: 'X', invoice }),
+      invoicePaidEmail({ companyName: 'X', invoice, paidOn: '2026-10-20' }),
+      invoiceOverdueStaffEmail({ companyName: 'X', companyId: 'c', invoice }),
+      ...(['upcoming', 'due', 'overdue'] as const).map((kind) => invoiceReminderEmail({ companyName: 'X', invoice, stage: { kind, daysLate: kind === 'overdue' ? 7 : 0 }, today: '2026-10-19' })),
+    ];
+    for (const mail of all) for (const phrase of WITHHOLDING) expect(mail.text, mail.subject).not.toMatch(phrase);
   });
 
   it('issued and paid emails carry the invoice facts', () => {
