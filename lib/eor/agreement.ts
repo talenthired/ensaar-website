@@ -1,3 +1,4 @@
+import { INVOICE_DAY, LATE_INTEREST_PERCENT_PER_MONTH, PAYMENT_DAYS } from './billing';
 import {
   entityTypeLabel,
   formatDay,
@@ -21,10 +22,14 @@ import {
  *
  * The commercial terms mirror what ensaar.com publishes (flat monthly fee, no
  * setup fee, no deposit, no minimum term, statutory costs passed through at cost).
+ * Assets are the one thing not at cost: the Customer pays for them, and when
+ * Ensaar buys, handles or ships one it recovers every cost plus PROCUREMENT_FEE_PERCENT.
+ * The invoice date, payment term and late interest come from lib/eor/billing.ts,
+ * which the reminder emails also read, so the two cannot drift apart.
  * Bump AGREEMENT_VERSION whenever the wording of either part changes: customers
  * cannot sign a version until an owner records its legal review in Basecamp.
  */
-export const AGREEMENT_VERSION = '2026-09-29.2';
+export const AGREEMENT_VERSION = '2026-09-30.1';
 
 export const ENSAAR_PARTY = {
   legalName: 'Ensaar Global Pvt. Ltd.',
@@ -33,6 +38,8 @@ export const ENSAAR_PARTY = {
 
 export const PROBATION_MONTHS = 3;
 export const NOTICE_DAYS = 30;
+/** Charged on the Asset Costs Ensaar incurs (a purchase price it paid, shipping, handling), on top of those costs. */
+export const PROCUREMENT_FEE_PERCENT = 5;
 
 export type AgreementSection = { heading: string; paragraphs: string[] };
 export type AgreementDocument = {
@@ -84,7 +91,9 @@ export function buildMasterAgreement(companyName: string, company: CompanyDetail
         paragraphs: [
           'For each Employee the Customer pays Ensaar the monthly service fee stated in that Employee\'s Schedule A (the "Service Fee"). There is no setup fee, no deposit and no minimum term. The Service Fee for a part month is pro-rated by calendar days.',
           'The Customer also pays the Employment Costs of each Employee: gross salary and any bonus or allowance the Customer approves, the employer\'s statutory contributions (including provident fund, employees\' state insurance where it applies and gratuity accrual), and expenses the Customer approves. Employment Costs are passed through at cost, with no margin.',
-          'Ensaar will invoice in US dollars by the 20th of each month for that month\'s Service Fees and Employment Costs, converting rupee amounts at the rate on the invoice date. Invoices are payable within 7 days, and in any case before the payroll date, by bank transfer. Each party bears its own bank charges. The services are an export of services from India and are invoiced without Indian GST where the law allows.',
+          `The Customer pays for every asset an Employee needs for the work, whether digital or physical, such as a laptop (each an "Asset"). If the Customer asks Ensaar to arrange the purchase of an Asset, the Customer reimburses Ensaar the full purchase price. Whether the Customer or Ensaar buys an Asset, the Customer also reimburses every cost Ensaar incurs in procuring, handling or shipping it, including shipping costs and any other administrative or miscellaneous cost. The purchase price Ensaar pays and those other costs are together the "Asset Costs". Asset Costs are not Employment Costs: in addition to reimbursing them, the Customer pays Ensaar a procurement fee of ${PROCUREMENT_FEE_PERCENT}% of the Asset Costs (the "Procurement Fee").`,
+          `Ensaar will invoice in US dollars on the ${INVOICE_DAY}th of each month for that month's Service Fees and Employment Costs, and for any Asset Costs and Procurement Fee incurred since the last invoice, converting rupee amounts at the rate on the invoice date. Each invoice is payable within ${PAYMENT_DAYS} days of its date, by bank transfer. Each party bears its own bank charges. The services are an export of services from India and are invoiced without Indian GST where the law allows.`,
+          `Ensaar pays each month's salaries and statutory dues out of the Customer's payment, and is not obliged to advance or fund any Employment Cost. The Customer acknowledges that until an invoice is paid in full the Employees' salaries for that month cannot be paid, so a late payment by the Customer delays its Employees' pay. Any amount not paid by its due date carries interest at ${LATE_INTEREST_PERCENT_PER_MONTH}% per month, calculated daily from the due date until it is paid, which Ensaar adds to the next invoice. The Customer indemnifies Ensaar against any interest, penalty, damages or claim that arises because salary or statutory dues were paid late as a result of the Customer's late payment.`,
         ],
       },
       {

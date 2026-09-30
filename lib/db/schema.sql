@@ -419,6 +419,30 @@ CREATE TABLE IF NOT EXISTS ensaar_eor_voided_signatures (
 );
 CREATE INDEX IF NOT EXISTS ensaar_eor_voided_signatures_idx ON ensaar_eor_voided_signatures (company_id, voided_at DESC);
 
+-- Invoices Ensaar has raised for a client. The invoice itself is produced in
+-- accounting; it is recorded here so the customer is reminded before it is due
+-- and chased when it is late. Reminder emails are de-duplicated in ensaar_outbox.
+CREATE TABLE IF NOT EXISTS ensaar_eor_invoices (
+  id          TEXT PRIMARY KEY,
+  company_id  TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  number      TEXT NOT NULL,
+  -- The month covered, YYYY-MM.
+  period      TEXT NOT NULL,
+  amount_usd  NUMERIC(12, 2) NOT NULL,
+  issued_on   DATE NOT NULL,
+  due_on      DATE NOT NULL,
+  -- open | paid | void
+  status      TEXT NOT NULL DEFAULT 'open',
+  paid_on     DATE,
+  summary     TEXT,
+  created_by  TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_invoices_number_idx ON ensaar_eor_invoices (lower(number));
+CREATE INDEX IF NOT EXISTS ensaar_eor_invoices_company_idx ON ensaar_eor_invoices (company_id, issued_on DESC);
+CREATE INDEX IF NOT EXISTS ensaar_eor_invoices_open_idx ON ensaar_eor_invoices (due_on) WHERE status = 'open';
+
 -- Carry over anything created with the single-hire model: the company (with
 -- its details and documents) and its one employee, as a draft to be re-sent
 -- under the new agreement. Idempotent: rows already copied are skipped.

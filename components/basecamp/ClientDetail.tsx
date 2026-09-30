@@ -24,6 +24,7 @@ import { CompanyForm, companyFormInitial, type CompanyFormValues } from '@/compo
 import { Badge, Notice, STATUS_TONE, Tabs, UploadButton, buttonClass, inputClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
 import { AddEmployees } from './AddEmployees';
+import { ClientInvoices } from './ClientInvoices';
 import { EmployeesTable } from './EmployeesTable';
 
 type Detail = {
@@ -80,6 +81,13 @@ export function ClientDetail({ id }: { id: string }) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Stable, because the invoices tab reloads whenever this changes.
+  const onInvoiceMessage = useCallback((kind: 'ok' | 'error', text: string) => {
+    setError(kind === 'error' ? text : null);
+    setOk(kind === 'ok' ? text : null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   async function act(payload: Record<string, unknown>, label: string, success?: string): Promise<Record<string, unknown> | null> {
     setBusy(label);
@@ -292,6 +300,7 @@ export function ClientDetail({ id }: { id: string }) {
           { key: 'company', label: 'Company' },
           { key: 'documents', label: 'Documents', count: docsToReview },
           { key: 'agreement', label: 'Agreement' },
+          { key: 'invoices', label: 'Invoices' },
           { key: 'emails', label: 'Emails' },
         ]}
       />
@@ -471,6 +480,8 @@ export function ClientDetail({ id }: { id: string }) {
           )}
         </section>
       )}
+
+      {tab === 'invoices' && <ClientInvoices companyId={id} active={company.status === 'active'} named={named} onMessage={onInvoiceMessage} />}
 
       {tab === 'emails' && <EmailLog messages={detail.messages} emailConfigured={detail.emailConfigured} onRetried={() => void load()} onError={setError} />}
     </div>

@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { renderEmail } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
 
 /**
@@ -20,34 +21,17 @@ export async function sendInvitationEmail(input: {
   const from = process.env.EMAIL_FROM || `Ensaar <hello@${new URL(siteConfig.url).hostname}>`;
   if (!key) return false;
 
-  const escape = (value: string) =>
-    value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
-  const inviter = input.invitedBy ? ` by ${input.invitedBy}` : '';
-  const inviterHtml = input.invitedBy ? ` by ${escape(input.invitedBy)}` : '';
-  const text = [
-    'You have been invited to Ensaar Basecamp',
-    '',
-    `You were invited${inviter} as ${input.role}.`,
-    'Use this link to set a password and sign in. It expires in seven days.',
-    input.link,
-    '',
-    'If you were not expecting this, ignore this email.',
-  ].join('\n');
-
-  const html = `<!doctype html>
-<html><body style="margin:0;background:#0c2343;color:#e8eef7;font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:32px">
-  <div style="max-width:520px;margin:0 auto">
-    <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#9db2cd;margin:0 0 8px">Ensaar Basecamp</p>
-    <h1 style="font-size:22px;font-weight:700;margin:0 0 16px;color:#ffffff">You have been invited</h1>
-    <p style="font-size:14px;line-height:1.6;color:#c7d6e8;margin:0 0 20px">
-      You were invited${inviterHtml} as <strong style="color:#ffffff">${escape(input.role)}</strong>. Set a password to sign in. The link expires in seven days.
-    </p>
-    <p style="margin:0 0 24px">
-      <a href="${escape(input.link)}" style="display:inline-block;background:#f5a623;color:#0c2343;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:6px">Accept the invitation</a>
-    </p>
-    <p style="font-size:12px;line-height:1.6;color:#9db2cd;margin:0">If you were not expecting this, ignore this email.</p>
-  </div>
-</body></html>`;
+  // The same branded layout as every other Ensaar email.
+  const { text, html } = renderEmail({
+    eyebrow: 'Basecamp',
+    heading: 'You have been invited to Ensaar Basecamp',
+    paragraphs: [
+      `You were invited${input.invitedBy ? ` by ${input.invitedBy}` : ''} as ${input.role}.`,
+      'Set a password to sign in. The link expires in seven days.',
+    ],
+    action: { label: 'Accept the invitation', href: input.link },
+    footer: 'If you were not expecting this, ignore this email.',
+  });
 
   try {
     const response = await fetch('https://api.resend.com/emails', {

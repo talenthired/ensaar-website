@@ -8,6 +8,7 @@ import { Notice, Tabs, useQueryState } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
 import { CompanyDetailsForm, CompanyDocuments, MasterAgreement, type Say } from './CompanySetup';
 import { PortalBar, SignIn } from './PortalChrome';
+import { PortalBilling } from './PortalBilling';
 import { PortalEmployees } from './PortalEmployees';
 
 function Step({ n, title, done, children, subtitle }: { n: number; title: string; done: boolean; subtitle: string; children: React.ReactNode }) {
@@ -109,6 +110,7 @@ export function PortalApp() {
             { key: 'employees', label: 'Employees', count: awaiting },
             { key: 'agreement', label: 'Agreement' },
             { key: 'documents', label: 'Documents' },
+            { key: 'billing', label: 'Billing' },
           ]}
         />
 
@@ -173,6 +175,8 @@ export function PortalApp() {
             <MasterAgreement view={view} blocked={signBlocked} onSigned={setView} say={say} />
           </section>
         )}
+
+        {tab === 'billing' && <PortalBilling say={say} />}
 
         {tab === 'documents' && (
           <section className="space-y-3">

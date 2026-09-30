@@ -2,6 +2,16 @@ import 'server-only';
 
 import { renderEmail, supportAddress } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
+import {
+  LATE_INTEREST_PERCENT_PER_MONTH,
+  PAYMENT_DAYS,
+  daysBetween,
+  formatPeriod,
+  formatUsdExact,
+  lateInterestUsd,
+  type Invoice,
+  type ReminderStage,
+} from './billing';
 import { formatDay, INVITE_LINK_TTL_DAYS, LOGIN_LINK_TTL_MINUTES } from './onboarding';
 
 function siteUrl() {
@@ -212,6 +222,121 @@ export function schedulesCountersignedEmail(input: { companyName: string; employ
         'The executed schedules are attached. You can follow each onboarding step in the portal.',
       ],
       action: { label: 'Open the portal', href: portalUrl('?tab=employees') },
+    }),
+  };
+}
+
+// --- Invoices: issued, reminders before and after the due date, paid ------------------------
+
+type InvoiceMail = Pick<Invoice, 'number' | 'period' | 'amountUsd' | 'issuedOn' | 'dueOn' | 'summary'>;
+
+const invoiceFacts = (invoice: InvoiceMail, extra: Array<{ label: string; value: string }> = []) => [
+  { label: 'Invoice', value: invoice.number },
+  { label: 'For', value: invoice.summary ? `${formatPeriod(invoice.period)}: ${invoice.summary}` : formatPeriod(invoice.period) },
+  { label: 'Amount', value: formatUsdExact(invoice.amountUsd) },
+  { label: 'Due', value: formatDay(invoice.dueOn) },
+  ...extra,
+];
+
+const billingAction = { label: 'View your invoices', href: portalUrl('?tab=billing') };
+const payrollLine = 'Your employees in India are paid from this payment. Ensaar does not advance salaries, so their pay for the month can only be released once the invoice is paid in full.';
+const billingFooter = () => `Already paid? Thank you: reply with the transfer reference and we will match it. Questions about this invoice? Write to ${supportAddress()}.`;
+
+export function invoiceIssuedEmail(input: { companyName: string; invoice: InvoiceMail }): Mail {
+  const { invoice } = input;
+  return {
+    subject: `Invoice ${invoice.number} for ${input.companyName}: ${formatUsdExact(invoice.amountUsd)} due ${formatDay(invoice.dueOn)}`,
+    ...renderEmail({
+      eyebrow: 'Billing',
+      heading: `Your ${formatPeriod(invoice.period)} invoice`,
+      paragraphs: [
+        `Ensaar has issued invoice ${invoice.number} to ${input.companyName}, dated ${formatDay(invoice.issuedOn)}. It is payable by bank transfer within ${PAYMENT_DAYS} days, to the account shown on the invoice.`,
+        payrollLine,
+      ],
+      facts: invoiceFacts(invoice),
+      action: billingAction,
+      footer: billingFooter(),
+    }),
+  };
+}
+
+/** A reminder before the due date, on it, or after it. Overdue notices state the interest that has accrued. */
+export function invoiceReminderEmail(input: { companyName: string; invoice: InvoiceMail; stage: Pick<ReminderStage, 'kind' | 'daysLate'>; today: string }): Mail {
+  const { invoice, stage } = input;
+  const amount = formatUsdExact(invoice.amountUsd);
+  if (stage.kind === 'overdue') {
+    const days = `${stage.daysLate} day${stage.daysLate === 1 ? '' : 's'}`;
+    const interest = lateInterestUsd(invoice.amountUsd, stage.daysLate);
+    return {
+      subject: `Overdue: invoice ${invoice.number} for ${input.companyName} is ${days} late`,
+      ...renderEmail({
+        eyebrow: 'Billing',
+        heading: `Invoice ${invoice.number} is overdue`,
+        notice: { tone: 'danger', text: `${amount} was due on ${formatDay(invoice.dueOn)} and is now ${days} late. Your employees' salaries for ${formatPeriod(invoice.period)} cannot be paid until it is received.` },
+        paragraphs: [
+          `We have not received ${input.companyName}'s payment of invoice ${invoice.number}. Please arrange the bank transfer today, to the account shown on the invoice.`,
+          `Under the agreement, an overdue amount carries interest at ${LATE_INTEREST_PERCENT_PER_MONTH}% per month, calculated daily, which is added to your next invoice. Ensaar does not advance salaries, so your employees in India remain unpaid for the month until this invoice is settled.`,
+        ],
+        facts: invoiceFacts(invoice, [
+          { label: 'Days overdue', value: String(stage.daysLate) },
+          { label: 'Interest accrued so far', value: formatUsdExact(interest) },
+        ]),
+        action: billingAction,
+        footer: billingFooter(),
+      }),
+    };
+  }
+  const daysLeft = daysBetween(input.today, invoice.dueOn);
+  const when = stage.kind === 'due' ? 'today' : `in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`;
+  return {
+    subject: `Reminder: invoice ${invoice.number} for ${input.companyName} is due ${stage.kind === 'due' ? 'today' : formatDay(invoice.dueOn)}`,
+    ...renderEmail({
+      eyebrow: 'Billing',
+      heading: `Invoice ${invoice.number} is due ${when}`,
+      notice: { tone: stage.kind === 'due' ? 'warning' : 'info', text: `${amount} is due ${stage.kind === 'due' ? 'today' : `on ${formatDay(invoice.dueOn)}`}. Paying on time keeps your employees' ${formatPeriod(invoice.period)} salaries on schedule.` },
+      paragraphs: [
+        `A reminder that ${input.companyName}'s invoice ${invoice.number} is payable by bank transfer, to the account shown on the invoice.`,
+        `${payrollLine} An amount paid late also carries interest at ${LATE_INTEREST_PERCENT_PER_MONTH}% per month.`,
+      ],
+      facts: invoiceFacts(invoice),
+      action: billingAction,
+      footer: billingFooter(),
+    }),
+  };
+}
+
+export function invoicePaidEmail(input: { companyName: string; invoice: InvoiceMail; paidOn: string }): Mail {
+  const { invoice } = input;
+  return {
+    subject: `Payment received: invoice ${invoice.number} for ${input.companyName}`,
+    ...renderEmail({
+      eyebrow: 'Billing',
+      heading: 'Payment received, thank you',
+      paragraphs: [`Ensaar has received ${input.companyName}'s payment of invoice ${invoice.number}. Payroll for ${formatPeriod(invoice.period)} goes ahead as planned.`],
+      facts: [
+        { label: 'Invoice', value: invoice.number },
+        { label: 'Amount', value: formatUsdExact(invoice.amountUsd) },
+        { label: 'Received', value: formatDay(input.paidOn) },
+      ],
+      action: billingAction,
+    }),
+  };
+}
+
+/** Tells Ensaar staff once, when an invoice first goes overdue, because payroll now depends on chasing it. */
+export function invoiceOverdueStaffEmail(input: { companyName: string; companyId: string; invoice: InvoiceMail }): Mail {
+  const { invoice } = input;
+  return {
+    subject: `Overdue: ${input.companyName} has not paid invoice ${invoice.number}`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: billing',
+      heading: `${input.companyName} is late paying invoice ${invoice.number}`,
+      paragraphs: [
+        `${formatUsdExact(invoice.amountUsd)} was due on ${formatDay(invoice.dueOn)}. The customer has been sent an overdue notice and will get more until the invoice is marked paid in Basecamp.`,
+        'Payroll for their employees depends on this payment. Call the customer, and mark the invoice paid as soon as the money arrives so the reminders stop.',
+      ],
+      facts: invoiceFacts(invoice),
+      action: { label: 'Open in Basecamp', href: `${siteUrl()}/basecamp/clients/${input.companyId}?tab=invoices` },
     }),
   };
 }

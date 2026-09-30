@@ -257,40 +257,95 @@ export async function staffRecipients(sql: Executor = db()): Promise<string[]> {
 export const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
-/**
- * One layout for every email. `paragraphs` are plain text (escaped here), so no
- * caller can inject markup by accident.
- */
-export function renderEmail(input: {
+export type EmailContent = {
+  /** Small label beside the logo: which part of Ensaar is writing. */
   eyebrow: string;
   heading: string;
   paragraphs: string[];
+  /** A highlighted line above the body: a due date approaching, a payment overdue. */
+  notice?: { tone: 'info' | 'warning' | 'danger'; text: string };
+  /** Label and value rows, for things read at a glance (an invoice number, an amount, a date). */
+  facts?: Array<{ label: string; value: string }>;
   action?: { label: string; href: string };
   footer?: string;
-}): { text: string; html: string } {
+};
+
+const BRAND = { navy: '#0c2343', blue: '#008ecf', teal: '#13a694', ink: '#33445c', muted: '#6b7a90', line: '#e3e8ef', page: '#eef2f6' };
+const FONT = "'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif";
+const NOTICE = {
+  info: { bg: '#eff8fd', bar: BRAND.blue, ink: '#0b4a6b' },
+  warning: { bg: '#fff8eb', bar: '#d97706', ink: '#7a4100' },
+  danger: { bg: '#fef2f2', bar: '#b91c1c', ink: '#7f1d1d' },
+};
+
+/**
+ * One layout for every email Ensaar sends: logo header, brand rule, body, and a
+ * footer naming the company. Tables and inline styles only, because that is what
+ * Outlook and Gmail render reliably. `paragraphs`, facts and notices are plain
+ * text (escaped here), so no caller can inject markup by accident.
+ */
+export function renderEmail(input: EmailContent): { text: string; html: string } {
+  const site = siteConfig.url.replace(/\/+$/, '');
+  const footer = input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`;
   const text = [
     input.heading,
     '',
+    ...(input.notice ? [input.notice.text, ''] : []),
     ...input.paragraphs.flatMap((p) => [p, '']),
+    ...(input.facts?.length ? [...input.facts.map((f) => `${f.label}: ${f.value}`), ''] : []),
     ...(input.action ? [`${input.action.label}: ${input.action.href}`, ''] : []),
-    input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`,
+    footer,
     '',
-    'Ensaar Global',
+    `${siteConfig.legalName}, ${siteConfig.locality}, ${siteConfig.region}, ${siteConfig.country}`,
   ].join('\n');
 
+  const notice = input.notice && NOTICE[input.notice.tone];
   const html = `<!doctype html>
-<html><body style="margin:0;background:#f5f7fa;color:#0c2343;font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;padding:32px">
-  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:10px;padding:28px">
-    <p style="font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5b6b82;margin:0 0 8px">${escapeHtml(input.eyebrow)}</p>
-    <h1 style="font-size:20px;font-weight:700;margin:0 0 16px">${escapeHtml(input.heading)}</h1>
-    ${input.paragraphs.map((p) => `<p style="font-size:14px;line-height:1.6;margin:0 0 12px;white-space:pre-line">${escapeHtml(p)}</p>`).join('\n    ')}
-    ${
-      input.action
-        ? `<p style="margin:20px 0"><a href="${escapeHtml(input.action.href)}" style="display:inline-block;background:#0c2343;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:6px">${escapeHtml(input.action.label)}</a></p>`
-        : ''
-    }
-    <p style="font-size:12px;line-height:1.6;color:#5b6b82;margin:16px 0 0">${escapeHtml(input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`)}</p>
-  </div>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${escapeHtml(input.heading)}</title></head>
+<body style="margin:0;padding:0;background:${BRAND.page};-webkit-text-size-adjust:100%">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${BRAND.page}">${escapeHtml((input.notice?.text ?? input.paragraphs[0] ?? '').slice(0, 140))}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${BRAND.page}"><tr><td align="center" style="padding:32px 12px">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid ${BRAND.line};border-radius:8px;overflow:hidden;font-family:${FONT}">
+      <tr><td style="padding:22px 36px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td align="left" valign="middle"><a href="${site}" style="text-decoration:none"><img src="${site}/ensaar-logo.png" width="130" height="36" alt="${escapeHtml(siteConfig.name)}" style="display:block;border:0;outline:none;height:36px;width:130px;color:${BRAND.blue};font:700 20px ${FONT}"></a></td>
+          <td align="right" valign="middle" style="font:600 11px ${FONT};letter-spacing:0.09em;text-transform:uppercase;color:${BRAND.muted}">${escapeHtml(input.eyebrow)}</td>
+        </tr></table>
+      </td></tr>
+      <tr><td height="4" style="height:4px;line-height:4px;font-size:0;background:${BRAND.blue};background-image:linear-gradient(90deg,${BRAND.blue},${BRAND.teal})">&nbsp;</td></tr>
+      <tr><td style="padding:34px 36px 8px">
+        <h1 style="margin:0 0 18px;font:700 22px/1.3 ${FONT};color:${BRAND.navy}">${escapeHtml(input.heading)}</h1>
+        ${
+          notice
+            ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px"><tr><td style="background:${notice.bg};border-left:4px solid ${notice.bar};border-radius:4px;padding:12px 16px;font:600 14px/1.5 ${FONT};color:${notice.ink}">${escapeHtml(input.notice!.text)}</td></tr></table>`
+            : ''
+        }
+        ${input.paragraphs.map((p) => `<p style="margin:0 0 14px;font:400 15px/1.65 ${FONT};color:${BRAND.ink};white-space:pre-line">${escapeHtml(p)}</p>`).join('\n        ')}
+        ${
+          input.facts?.length
+            ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 18px;border:1px solid ${BRAND.line};border-radius:6px">${input.facts
+                .map(
+                  (f, i) =>
+                    `<tr><td style="padding:11px 16px;font:400 13px ${FONT};color:${BRAND.muted};${i ? `border-top:1px solid ${BRAND.line};` : ''}width:42%">${escapeHtml(f.label)}</td><td align="right" style="padding:11px 16px;font:600 14px ${FONT};color:${BRAND.navy};${i ? `border-top:1px solid ${BRAND.line};` : ''}">${escapeHtml(f.value)}</td></tr>`,
+                )
+                .join('')}</table>`
+            : ''
+        }
+        ${
+          input.action
+            ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:10px 0 22px"><tr><td style="background:${BRAND.navy};border-radius:6px"><a href="${escapeHtml(input.action.href)}" style="display:inline-block;padding:13px 26px;font:600 15px ${FONT};color:#ffffff;text-decoration:none">${escapeHtml(input.action.label)}</a></td></tr></table>`
+            : ''
+        }
+      </td></tr>
+      <tr><td style="padding:0 36px 30px">
+        <p style="margin:0;padding-top:18px;border-top:1px solid ${BRAND.line};font:400 13px/1.6 ${FONT};color:${BRAND.muted}">${escapeHtml(footer)}</p>
+      </td></tr>
+      <tr><td style="background:${BRAND.navy};padding:22px 36px">
+        <p style="margin:0 0 4px;font:600 13px ${FONT};color:#ffffff">${escapeHtml(siteConfig.legalName)}</p>
+        <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(`${siteConfig.locality}, ${siteConfig.region}, ${siteConfig.country}`)} &nbsp;&middot;&nbsp; <a href="mailto:${escapeHtml(supportAddress())}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(supportAddress())}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
+      </td></tr>
+    </table>
+  </td></tr></table>
 </body></html>`;
   return { text, html };
 }

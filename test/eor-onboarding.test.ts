@@ -217,6 +217,19 @@ describe('the agreement: master and Schedule A', () => {
     expect(text).toContain(`Version ${AGREEMENT_VERSION}`);
   });
 
+  it('makes the Customer pay for assets, and Ensaar\'s costs of handling them plus 5%', () => {
+    const doc = buildMasterAgreement('Pristinno Tech', details);
+    const fees = doc.sections.find((s) => s.heading === '4. Fees and payment')!.paragraphs.join('\n');
+    expect(fees).toContain('whether digital or physical, such as a laptop');
+    expect(fees).toContain('reimburses Ensaar the full purchase price');
+    expect(fees).toContain('procuring, handling or shipping it');
+    expect(fees).toContain('a procurement fee of 5% of the Asset Costs');
+    // Salary and statutory costs stay at cost; only assets carry the fee.
+    expect(fees).toContain('Employment Costs are passed through at cost, with no margin.');
+    expect(fees).toContain('Asset Costs are not Employment Costs');
+    expect(fees).toContain('any Asset Costs and Procurement Fee incurred since the last invoice');
+  });
+
   it('a schedule names one employee, their terms, and the master it belongs to', () => {
     const text = agreementToText(buildSchedule({ number: 7, companyName: 'Pristinno Tech', company: details, masterHash: 'a'.repeat(64), employee }));
     expect(text).toContain('SCHEDULE A-7 TO THE EMPLOYER OF RECORD SERVICES AGREEMENT');
