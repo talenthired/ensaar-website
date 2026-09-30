@@ -8,7 +8,7 @@ import { EOR_PRICE_USD } from '@/lib/content/india';
 
 const PROOF = [
   ['Since 2014', 'Technology and capability delivery'],
-  [`From $${EOR_PRICE_USD}`, 'Per employee, per month'],
+  [`Starts from $${EOR_PRICE_USD}`, 'Per employee, per month'],
   ['5 to 10 days', 'Typical time to a first working day'],
   ['DailyByte™', 'AI Learn and AI Jobs paths'],
 ] as const;
@@ -87,7 +87,7 @@ export function Hero() {
             </div>
             <div className="border border-white/15 bg-black/25 p-7 shadow-[0_35px_90px_rgba(0,0,0,0.38)] backdrop-blur-sm md:p-9">
               <div className="flex items-baseline gap-2">
-                <span className="text-sm text-emerald-100/75">from</span>
+                <span className="text-sm text-emerald-100/75">starts from</span>
                 <span className="font-display text-[3rem] leading-none text-white">${EOR_PRICE_USD}</span>
                 <span className="text-sm text-emerald-100/75">per employee, per month</span>
               </div>

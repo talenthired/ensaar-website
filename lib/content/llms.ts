@@ -41,7 +41,7 @@ The company supports model-flexible and deployment-flexible AI adoption. Client 
 
 ### Employer of Record in India
 
-For companies that want to hire in India without setting up a company there. Ensaar is the legal employer: Indian employment contract with client IP assignment, payroll in rupees, and provident fund, state insurance, professional tax, and TDS filings. From $${EOR_PRICE_USD} per employee per month, no setup fee, no minimum term, a refundable deposit of one month's total cost per employee, with salary and statutory employer contributions passed through at cost. Onboarding typically takes five to ten working days.
+For companies that want to hire in India without setting up a company there. Ensaar is the legal employer: Indian employment contract with client IP assignment, payroll in rupees, and provident fund, state insurance, professional tax, and TDS filings. The fee starts from $${EOR_PRICE_USD} per employee per month and is agreed with each client, no setup fee, no minimum term, a refundable deposit of one month's total cost per employee, with salary and statutory employer contributions passed through at cost. Onboarding typically takes five to ten working days.
 
 Page: ${url}/services/employer-of-record
 
@@ -168,7 +168,7 @@ ${SERVICES.map((service) => `- ${service.name}: ${url}/services/${service.slug}`
 - Primary category: Employer of Record and India capability centre services for companies headquartered outside India
 - Secondary category: Enterprise AI implementation, software engineering, and BCEP certification
 - Product: DailyByte AI Learn, AI Jobs, and Daily Code for individuals, teams, enterprises, and campuses
-- Published EOR price: from $${EOR_PRICE_USD} per employee per month, no setup fee, no minimum term, one month refundable deposit per employee
+- Published EOR price: starts from $${EOR_PRICE_USD} per employee per month (agreed with each client), no setup fee, no minimum term, one month refundable deposit per employee
 - Client names: confidential unless written permission is provided
 
 ## Attribution

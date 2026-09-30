@@ -108,7 +108,7 @@ function OneEmployee({ companyId, defaultFeeUsd, onAdded }: { companyId: string;
           </select>
           {errors.workState && <span className="mt-1 block text-xs text-red-600">{errors.workState}</span>}
         </label>
-        {field('monthlyFeeUsd', 'Fee (USD per month)', { inputMode: 'numeric' }, `Client default is ${formatUsd(defaultFeeUsd)}.`)}
+        {field('monthlyFeeUsd', 'Fee (USD per month)', { inputMode: 'numeric' }, `This client's agreed fee is ${formatUsd(defaultFeeUsd)}.`)}
         <label className="block text-sm sm:col-span-2">
           <span className="mb-1 block text-ink-secondary">Internal notes</span>
           <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Not shown to the customer" />
@@ -171,7 +171,7 @@ function CsvImport({ companyId, defaultFeeUsd, onAdded }: { companyId: string; d
     <div className="space-y-3 rounded-xl border border-line-subtle bg-bg-primary p-4">
       <p className="text-sm text-ink-secondary">
         One row per employee. Columns: Name, Email, Job title, Annual salary INR, Start date (YYYY-MM-DD), Work state, and
-        optionally Monthly fee USD (defaults to {formatUsd(defaultFeeUsd)}). Nothing is added until every row is valid.
+        optionally Monthly fee USD (this client&apos;s agreed fee, {formatUsd(defaultFeeUsd)}, is used when blank). Nothing is added until every row is valid.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <input ref={input} type="file" accept=".csv,text/csv" className="hidden" aria-label="Choose a CSV file" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void read(f); }} />

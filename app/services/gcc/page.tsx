@@ -155,7 +155,7 @@ export default function GccPage() {
             </div>
             <div className="border-b border-r border-line-subtle p-6 md:p-8">
               <div className="font-mono text-xs text-accent-secondary">Per person, per month</div>
-              <div className="mt-6 font-display text-3xl text-ink-primary">From ${EOR_PRICE_USD}</div>
+              <div className="mt-6 font-display text-3xl text-ink-primary">Starts from ${EOR_PRICE_USD}</div>
               <p className="mt-3 text-sm leading-relaxed text-ink-secondary">
                 Employment, payroll, and compliance through our Employer of Record. Salary and
                 statutory contributions are passed through at cost.

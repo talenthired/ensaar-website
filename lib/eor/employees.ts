@@ -255,6 +255,64 @@ export async function rebuildPendingSchedules(tx: Tx, company: EorCompany): Prom
   }
 }
 
+/**
+ * Set the fee agreed with a client. It is what each new employee starts with.
+ * With `applyToPending`, employees whose Schedule A the customer has not signed
+ * yet take the new fee too: drafts are updated, and schedules awaiting signature
+ * are rebuilt and the signatory told. A signed Schedule A is a contract at its
+ * own fee and is never changed here.
+ */
+export async function setCompanyFee(
+  companyId: string,
+  feeUsd: number,
+  applyToPending: boolean,
+): Promise<Outcome<{ feeUsd: number; previousUsd: number; drafts: number; resent: number }>> {
+  return requireDatabase().begin(async (tx) => {
+    const company = await lockCompany(tx, companyId);
+    if (!company) return refuse(404, 'No such client.');
+    if (company.status === 'cancelled') return refuse(409, 'This client is cancelled.');
+    await tx`UPDATE ensaar_eor_companies SET default_fee_usd = ${feeUsd}, updated_at = NOW() WHERE id = ${companyId}`;
+    let drafts = 0;
+    const resent: EorEmployee[] = [];
+    if (applyToPending) {
+      const pending = await tx<Row[]>`
+        SELECT ${tx(COLUMNS)} FROM ensaar_eor_employees
+        WHERE company_id = ${companyId} AND status IN ('draft', 'awaiting_signature') AND monthly_fee_usd <> ${feeUsd} FOR UPDATE
+      `;
+      for (const employee of pending.map(toEmployee)) {
+        if (employee.status === 'draft') {
+          await tx`UPDATE ensaar_eor_employees SET monthly_fee_usd = ${feeUsd}, updated_at = NOW() WHERE id = ${employee.id}`;
+          drafts++;
+          continue;
+        }
+        const updated = { ...employee, monthlyFeeUsd: feeUsd };
+        const s = scheduleFor(company, updated, employee.scheduleNumber!);
+        await tx`
+          UPDATE ensaar_eor_employees SET monthly_fee_usd = ${feeUsd}, schedule_version = ${s.doc.version}, schedule_text = ${s.text},
+            schedule_hash = ${s.hash}, updated_at = NOW()
+          WHERE id = ${employee.id}
+        `;
+        resent.push(updated);
+      }
+      if (resent.length) {
+        const signatory = company.company?.signatoryEmail;
+        await enqueue(tx, {
+          kind: 'eor.schedules.ready',
+          to: signatory ? [signatory] : await companyRecipients(tx, company.id),
+          relatedId: company.id,
+          ...schedulesReadyEmail({
+            name: company.company?.signatoryName ?? company.contactName,
+            companyName: displayName(company),
+            employees: resent,
+            reason: `Ensaar updated the service fee on ${resent.length === 1 ? 'this schedule' : 'these schedules'} to US$${feeUsd} per employee per month. Please review and sign the updated version:`,
+          }),
+        });
+      }
+    }
+    return ok({ feeUsd, previousUsd: company.defaultFeeUsd, drafts, resent: resent.length });
+  });
+}
+
 // --- Staff: adding and sending ------------------------------------------------------------
 
 /**

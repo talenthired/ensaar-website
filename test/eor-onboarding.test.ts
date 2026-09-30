@@ -6,6 +6,7 @@ import {
   cleanFilename,
   missingRequiredDocuments,
   normalizeEin,
+  parseFeeUsd,
   parseEmployeesCsv,
   signatureBlockers,
   signatureMatches,
@@ -70,6 +71,21 @@ describe('validateCompanyInvite', () => {
     const r = validateCompanyInvite({});
     expect(r.ok).toBe(false);
     if (!r.ok) expect(Object.keys(r.errors).sort()).toEqual(['companyName', 'contactEmail', 'contactName', 'defaultFeeUsd']);
+  });
+});
+
+describe('the fee is agreed client by client', () => {
+  it('accepts any whole-dollar fee, not only the published starting figure', () => {
+    expect(parseFeeUsd('249')).toBe(249);
+    expect(parseFeeUsd('$1,250')).toBe(1250);
+    expect(parseFeeUsd(199)).toBe(199);
+  });
+
+  it('refuses a blank, fractional or absurd fee, so a client is never created on a guess', () => {
+    for (const bad of ['', undefined, '199.50', '0', '-5', '20000', 'abc']) expect(parseFeeUsd(bad), String(bad)).toBeNull();
+    const r = validateCompanyInvite({ companyName: 'Pristinno Tech', contactName: 'Jane Doe', contactEmail: 'jane@pristinnotech.com', defaultFeeUsd: '' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(Object.keys(r.errors)).toEqual(['defaultFeeUsd']);
   });
 });
 

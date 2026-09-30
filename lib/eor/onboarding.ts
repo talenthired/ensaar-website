@@ -318,17 +318,23 @@ function isoDay(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+/** A monthly fee per employee, in whole US dollars, or null if it is not one. The fee is agreed client by client. */
+export function parseFeeUsd(input: unknown): number | null {
+  const value = Number(String(input ?? '').replace(/[$,\s]/g, ''));
+  return Number.isInteger(value) && value >= 1 && value <= 10_000 ? value : null;
+}
+
 function fee(body: Record<string, unknown>, key: string, errors: Errors): number {
-  const value = Number(String(body[key] ?? '').replace(/[$,\s]/g, ''));
-  if (!Number.isInteger(value) || value < 1 || value > 10_000) errors[key] = 'Enter the monthly fee in whole US dollars.';
-  return value;
+  const value = parseFeeUsd(body[key]);
+  if (value === null) errors[key] = 'Enter the monthly fee in whole US dollars.';
+  return value ?? Number.NaN;
 }
 
 export type CompanyInvite = {
   companyName: string;
   contactName: string;
   contactEmail: string;
-  /** The fee each new employee starts with; a hire can override it. */
+  /** The fee agreed with this client, per employee per month. Each new employee starts with it; a hire can differ. */
   defaultFeeUsd: number;
   notes: string | null;
 };

@@ -233,7 +233,7 @@ export function ClientsAdmin() {
 }
 
 function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assisted: boolean) => void; onClose: () => void }) {
-  const [form, setForm] = useState({ companyName: '', contactName: '', contactEmail: '', defaultFeeUsd: String(EOR_PRICE_USD), notes: '' });
+  const [form, setForm] = useState({ companyName: '', contactName: '', contactEmail: '', defaultFeeUsd: '', notes: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<{ message: string; id: string } | null>(null);
@@ -299,7 +299,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assiste
           {field('companyName', 'Company name', { placeholder: 'Pristinno Tech' })}
           {field('contactName', 'Contact name')}
           {field('contactEmail', 'Contact email', { type: 'email' }, assisted ? 'Gets portal access, but no email yet.' : 'Receives the portal invitation.')}
-          {field('defaultFeeUsd', 'Default fee (USD per employee per month)', { inputMode: 'numeric' }, `The published fee starts at $${EOR_PRICE_USD}. Each hire can differ.`)}
+          {field('defaultFeeUsd', 'Fee agreed with this client (USD per employee per month)', { inputMode: 'numeric', placeholder: 'For example 249' }, `What you agreed with them. Fees start from $${EOR_PRICE_USD}; you can change it later.`)}
           <label className="block text-sm sm:col-span-2">
             <span className="mb-1 block text-ink-secondary">Internal notes</span>
             <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Not shown to the customer" />

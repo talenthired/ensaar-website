@@ -90,7 +90,7 @@ export default function EmployerOfRecordPage() {
                 Our price
               </div>
               <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-sm text-ink-secondary">from</span>
+                <span className="text-sm text-ink-secondary">starts from</span>
                 <span className="font-display text-[3.25rem] leading-none text-ink-primary">${EOR_PRICE_USD}</span>
                 <span className="text-sm text-ink-secondary">per employee, per month</span>
               </div>
@@ -148,7 +148,7 @@ export default function EmployerOfRecordPage() {
           </h2>
           <p className="mt-5 max-w-2xl leading-relaxed text-ink-secondary">
             Your monthly invoice is the salary, the statutory employer contributions at cost, and our
-            fee, which starts at ${EOR_PRICE_USD} per employee. Recruitment is separate and only applies if we find the person:{' '}
+            fee, which starts from ${EOR_PRICE_USD} per employee and is agreed with each client. Recruitment is separate and only applies if we find the person:{' '}
             {RECRUITMENT_FEE_PERCENT}% of annual salary, one month, charged when they join, with a{' '}
             {REPLACEMENT_GUARANTEE_DAYS}-day replacement if it does not work out.
           </p>

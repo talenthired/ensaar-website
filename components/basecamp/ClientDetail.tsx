@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, BadgeCheck, Check, Copy, Download, Loader2, MessageSquareWarning, Pencil, Printer, RotateCw, Send, Trash2, UserPlus, X, XCircle } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Check, Copy, Download, Loader2, MessageSquareWarning, Pencil, Printer, CircleDollarSign, RotateCw, Send, Trash2, UserPlus, X, XCircle } from 'lucide-react';
 import type { CompanyDocument, EmployeeCounts, EorCompany, VoidedSignature } from '@/lib/eor/companies';
 import type { PortalUser } from '@/lib/eor/portal-auth';
 import type { OutboxEntry } from '@/lib/notify/outbox';
@@ -14,6 +14,7 @@ import {
   entityTypeLabel,
   formatUsd,
   isCompanyEditable,
+  parseFeeUsd,
   signatureBlockers,
   usStateName,
   validateCompanyInvite,
@@ -67,7 +68,7 @@ export function ClientDetail({ id }: { id: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [tabState, setTab] = useQueryState({ tab: 'employees' });
   const [reloadKey, setReloadKey] = useState(0);
-  const [panel, setPanel] = useState<'changes' | 'edit' | 'contact' | 'details' | null>(null);
+  const [panel, setPanel] = useState<'changes' | 'edit' | 'contact' | 'details' | 'fee' | null>(null);
   // The signatory's sign-in link from the last "Send for signature", to pass on directly if wanted.
   const [signLink, setSignLink] = useState<{ link: string; email: string; emailed: boolean; copied: boolean } | null>(null);
 
@@ -215,7 +216,7 @@ export function ClientDetail({ id }: { id: string }) {
             </div>
             <p className="mt-1 text-sm text-ink-secondary">
               {counts.active} active · {counts.onboarding} onboarding · {counts.awaitingSignature} awaiting signature · {counts.toCountersign} to countersign ·{' '}
-              {formatUsd(company.defaultFeeUsd)} default fee
+              {formatUsd(company.defaultFeeUsd)} agreed fee per employee
             </p>
             {next && <p className="mt-2 text-sm font-medium text-ink-primary">Next: {next}</p>}
           </div>
@@ -238,6 +239,11 @@ export function ClientDetail({ id }: { id: string }) {
             {open && (
               <button type="button" disabled={busy !== null || !named} onClick={() => setPanel(panel === 'changes' ? null : 'changes')} className={buttonClass}>
                 <MessageSquareWarning className="h-4 w-4" aria-hidden /> Request changes
+              </button>
+            )}
+            {company.status !== 'cancelled' && (
+              <button type="button" disabled={busy !== null || !named} onClick={() => setPanel(panel === 'fee' ? null : 'fee')} className={buttonClass}>
+                <CircleDollarSign className="h-4 w-4" aria-hidden /> Change fee
               </button>
             )}
             {company.status !== 'cancelled' && (
@@ -288,6 +294,24 @@ export function ClientDetail({ id }: { id: string }) {
           submit="Send to customer"
           busy={busy === 'changes'}
           onSubmit={async (note) => (await act({ action: 'request_changes', note }, 'changes', 'Sent to the customer.')) && setPanel(null)}
+        />
+      )}
+      {panel === 'fee' && (
+        <ChangeFee
+          current={company.defaultFeeUsd}
+          counts={counts}
+          busy={busy === 'fee'}
+          onSubmit={async (feeUsd, applyToPending) => {
+            const json = await act({ action: 'set_fee', feeUsd, applyToPending }, 'fee');
+            if (!json) return;
+            const changed = Number(json.drafts) + Number(json.resent);
+            setOk(
+              `Fee for ${name} is now ${formatUsd(Number(json.feeUsd))} per employee per month.` +
+                (changed ? ` ${changed} employee${changed === 1 ? '' : 's'} not yet signed updated${Number(json.resent) ? `; the signatory was sent ${Number(json.resent)} updated schedule${Number(json.resent) === 1 ? '' : 's'}` : ''}.` : ''),
+            );
+            setPanel(null);
+            setReloadKey((k) => k + 1);
+          }}
         />
       )}
       {panel === 'edit' && <EditClient company={company} busy={busy === 'edit'} onSubmit={async (invite) => (await act({ action: 'update_invite', invite }, 'edit', 'Client updated.')) && setPanel(null)} />}
@@ -517,7 +541,7 @@ function EditClient({ company, busy, onSubmit }: { company: EorCompany; busy: bo
       }}
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        {([['companyName', 'Company name'], ['contactName', 'Contact name'], ['contactEmail', 'Contact email'], ['defaultFeeUsd', 'Default fee (USD/month)'], ['notes', 'Internal notes']] as const).map(([k, label]) => (
+        {([['companyName', 'Company name'], ['contactName', 'Contact name'], ['contactEmail', 'Contact email'], ['notes', 'Internal notes']] as const).map(([k, label]) => (
           <label key={k} className="block text-sm">
             <span className="mb-1 block text-ink-secondary">{label}</span>
             <input className={inputClass} value={form[k]} aria-invalid={Boolean(errors[k])} onChange={(e) => setForm((f) => ({ ...f, [k]: e.target.value }))} />
@@ -525,9 +549,60 @@ function EditClient({ company, busy, onSubmit }: { company: EorCompany; busy: bo
           </label>
         ))}
       </div>
-      <p className="text-xs text-ink-secondary">A changed default fee applies to employees added from now on. A new contact email is invited; the old contact keeps access until removed.</p>
+      <p className="text-xs text-ink-secondary">A new contact email is invited; the old contact keeps access until removed. The fee is changed with Change fee.</p>
       <button type="submit" disabled={busy} className={buttonClass}>
         {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save
+      </button>
+    </form>
+  );
+}
+
+/** The fee agreed with this client. Changing it never touches a Schedule A the customer has already signed. */
+function ChangeFee({ current, counts, busy, onSubmit }: { current: number; counts: EmployeeCounts; busy: boolean; onSubmit: (feeUsd: number, applyToPending: boolean) => void }) {
+  const [value, setValue] = useState(String(current));
+  const [applyToPending, setApplyToPending] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const pending = counts.draft + counts.awaitingSignature;
+  const fixed = counts.toCountersign + counts.onboarding + counts.active;
+  return (
+    <form
+      noValidate
+      className="space-y-3 rounded-xl border border-line-subtle bg-bg-primary p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const feeUsd = parseFeeUsd(value);
+        if (feeUsd === null) return setError('Enter the monthly fee in whole US dollars.');
+        setError(null);
+        onSubmit(feeUsd, applyToPending && pending > 0);
+      }}
+    >
+      <label className="block max-w-xs text-sm">
+        <span className="mb-1 block font-medium text-ink-primary">Fee agreed with this client (USD per employee per month)</span>
+        <input id="fee-usd" className={inputClass} inputMode="numeric" value={value} aria-invalid={Boolean(error)} onChange={(e) => { setValue(e.target.value); setError(null); }} />
+        {error && <span className="mt-1 block text-xs text-red-600">{error}</span>}
+      </label>
+      <p className="text-xs text-ink-secondary">Currently {formatUsd(current)}. Each new employee starts with this fee, and one hire can still be given a different fee on their own page.</p>
+      {pending > 0 && (
+        <label className="flex items-start gap-3 text-sm text-ink-primary">
+          <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={applyToPending} onChange={(e) => setApplyToPending(e.target.checked)} />
+          <span>
+            Also update the {pending} employee{pending === 1 ? '' : 's'} the customer has not signed for yet, including any given their own fee
+            <span className="block text-xs text-ink-secondary">
+              {counts.draft} draft{counts.draft === 1 ? '' : 's'}
+              {counts.awaitingSignature > 0 && `, and ${counts.awaitingSignature} schedule${counts.awaitingSignature === 1 ? '' : 's'} awaiting signature, which ${counts.awaitingSignature === 1 ? 'is' : 'are'} re-sent to the signatory with the new fee`}.
+            </span>
+          </span>
+        </label>
+      )}
+      {fixed > 0 && (
+        <p className="text-xs text-ink-secondary">
+          {fixed} employee{fixed === 1 ? ' has' : 's have'} a signed Schedule A at {fixed === 1 ? 'its' : 'their'} own fee, which this does not change.
+          {counts.toCountersign > 0 && ' One signed but not yet countersigned can be edited on the employee\'s page (the customer signs again).'}
+          {counts.onboarding + counts.active > 0 && ' For someone already onboarding or active, a new fee needs a new signed schedule agreed with the customer.'}
+        </p>
+      )}
+      <button type="submit" disabled={busy} className={buttonClass}>
+        {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save fee
       </button>
     </form>
   );

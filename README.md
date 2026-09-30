@@ -8,7 +8,7 @@ Ensaar helps companies outside India build teams inside it. The site leads with 
 and treats the rest as what those teams then do:
 
 1. Employer of Record: Ensaar is the legal employer, so a foreign company hires in India without
-   its own entity. The published price is a monthly fee per employee, from $199, with a refundable one-month deposit.
+   its own entity. The published price is a monthly fee per employee, starting from $199 and agreed with each client, with a refundable one-month deposit.
 2. India capability centres: a pod of three to fifteen people that converts into the client's own
    subsidiary once headcount makes that cheaper.
 3. Software engineering, enterprise AI enablement, DailyByte, and BCEP certification.

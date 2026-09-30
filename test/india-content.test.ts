@@ -135,7 +135,11 @@ describe('the published price is quoted the same way everywhere', () => {
     expect(sources).not.toMatch(/no (security )?deposit/i);
     expect(sources).not.toMatch(/flat \$\d+/i);
     expect(sources).toMatch(/refundable/i);
-    expect(buildLlmsTxt()).toContain(`from $${EOR_PRICE_USD} per employee per month`);
+    expect(buildLlmsTxt()).toContain(`starts from $${EOR_PRICE_USD} per employee per month`);
+    // Wherever the figure is shown as the price, it is introduced as where the fee starts.
+    expect(read('app/services/employer-of-record/page.tsx')).toContain('>starts from</span>');
+    expect(read('components/hero/Hero.tsx')).toContain('>starts from</span>');
+    expect(read('app/services/gcc/page.tsx')).toContain('Starts from ${EOR_PRICE_USD}');
   });
 
   it('quotes the recruitment fee consistently', () => {
