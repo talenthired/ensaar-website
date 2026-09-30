@@ -301,6 +301,9 @@ CREATE TABLE IF NOT EXISTS ensaar_eor_companies (
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- Assisted onboarding: the Ensaar person who entered the company details for a
+-- customer with no time to. NULL when the customer entered them.
+ALTER TABLE ensaar_eor_companies ADD COLUMN IF NOT EXISTS details_entered_by TEXT;
 CREATE INDEX IF NOT EXISTS ensaar_eor_companies_status_idx ON ensaar_eor_companies (status, created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_companies_idempotency_idx
   ON ensaar_eor_companies (idempotency_key) WHERE idempotency_key IS NOT NULL;

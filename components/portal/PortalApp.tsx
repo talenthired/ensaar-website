@@ -134,7 +134,14 @@ export function PortalApp() {
               </Notice>
             ) : (
               <>
-                <p className="text-sm text-ink-secondary">Three steps, once, before Ensaar can employ anyone for {view.name}. About ten minutes.</p>
+                {view.enteredByEnsaar && editable ? (
+                  <Notice kind="warn">
+                    To save you time, Ensaar entered {view.name}&apos;s company details{docsDone ? ' and uploaded its documents' : ''} from what you gave us.
+                    Please check them, correct anything that is wrong, and then {view.me.isSignatory ? 'sign the agreement' : `${view.signatory?.name} signs the agreement`}. About two minutes.
+                  </Notice>
+                ) : (
+                  <p className="text-sm text-ink-secondary">Three steps, once, before Ensaar can employ anyone for {view.name}. About ten minutes.</p>
+                )}
                 <Step n={1} title="Company details" done={detailsDone && !editingDetails} subtitle="Who we are contracting with, and who signs.">
                   <CompanyDetailsForm view={view} editable={editable} onSaved={setView} say={say} onEditing={setEditingDetails} />
                 </Step>

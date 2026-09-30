@@ -16,6 +16,7 @@ import {
   MAX_DOCUMENTS,
   isCompanyEditable,
   missingRequiredDocuments,
+  signatureBlockers,
   unacceptedRequiredDocuments,
   type CompanyDetails,
   type CompanyInvite,
@@ -23,7 +24,7 @@ import {
   type DocumentReview,
 } from './onboarding';
 import { likePattern, ok, pageArgs, refuse, type Outcome, type Page } from './outcome';
-import { companyRecipients, ensurePortalUser } from './portal-auth';
+import { companyRecipients, ensurePortalUser, requestSignature } from './portal-auth';
 
 /*
  * A client company: verified once, one master agreement, many employees
@@ -46,6 +47,8 @@ export type EorCompany = {
   defaultFeeUsd: number;
   notes: string | null;
   company: CompanyDetails | null;
+  /** The Ensaar person who entered the details for the customer; null when the customer did. */
+  detailsEnteredBy: string | null;
   agreementVersion: string | null;
   agreementHash: string | null;
   signedName: string | null;
@@ -83,6 +86,7 @@ type Row = {
   default_fee_usd: number;
   notes: string | null;
   company: CompanyDetails | null;
+  details_entered_by: string | null;
   agreement_version: string | null;
   agreement_hash: string | null;
   signed_name: string | null;
@@ -99,7 +103,7 @@ type Row = {
 };
 
 export const COMPANY_COLUMNS = [
-  'id', 'status', 'company_name', 'contact_name', 'contact_email', 'default_fee_usd', 'notes', 'company',
+  'id', 'status', 'company_name', 'contact_name', 'contact_email', 'default_fee_usd', 'notes', 'company', 'details_entered_by',
   'agreement_version', 'agreement_hash', 'signed_name', 'signed_title', 'signed_email', 'signed_at', 'signed_ip',
   'countersigned_by', 'countersigned_at', 'changes_note', 'changes_requested_at', 'created_at', 'updated_at',
 ];
@@ -116,6 +120,7 @@ export function toCompany(row: Row): EorCompany {
     defaultFeeUsd: row.default_fee_usd,
     notes: row.notes,
     company: row.company,
+    detailsEnteredBy: row.details_entered_by,
     agreementVersion: row.agreement_version,
     agreementHash: row.agreement_hash,
     signedName: row.signed_name,
@@ -281,8 +286,17 @@ export async function findCompanyByIdempotencyKey(key: string): Promise<EorCompa
   return rows[0] ? toCompany(rows[0]) : null;
 }
 
-/** Create a client company and invite its first contact to the portal. */
-export async function createCompany(invite: CompanyInvite, invitedBy: string | null, idempotencyKey: string | null): Promise<EorCompany> {
+/**
+ * Create a client company and invite its first contact to the portal. With
+ * `assisted`, Ensaar will enter the details and documents itself: the contact
+ * gets access but no "please set up your company" email.
+ */
+export async function createCompany(
+  invite: CompanyInvite,
+  invitedBy: string | null,
+  idempotencyKey: string | null,
+  assisted = false,
+): Promise<EorCompany> {
   return requireDatabase().begin(async (tx) => {
     const rows = await tx<Row[]>`
       INSERT INTO ensaar_eor_companies (id, company_name, contact_name, contact_email, default_fee_usd, notes, invited_by, idempotency_key)
@@ -297,6 +311,7 @@ export async function createCompany(invite: CompanyInvite, invitedBy: string | n
       email: company.contactEmail,
       name: company.contactName,
       role: 'contact',
+      notify: !assisted,
     });
     return company;
   });
@@ -331,24 +346,36 @@ export async function addContact(companyId: string, email: string, name: string 
   });
 }
 
-// --- Customer: company details and documents -----------------------------------------------
+// --- Company details and documents: entered by the customer, or by Ensaar for them -----------
 
 /**
  * Save the company details. Naming a signatory gives them portal access (and
  * tells them); only they can sign. Draft schedules already sent are rebuilt so
  * they carry the current legal name.
+ *
+ * `staff` names the Ensaar person entering the details for the customer. The
+ * signatory is then not emailed yet: they are asked to sign once everything is
+ * in (sendForSignature). Whoever saved last is who the record says entered them.
  */
 export async function saveCompanyDetails(
   companyId: string,
   details: CompanyDetails,
   rebuildSchedules: (tx: Tx, company: EorCompany) => Promise<void>,
+  staff: string | null = null,
 ): Promise<Outcome<EorCompany>> {
   return requireDatabase().begin(async (tx) => {
     const company = await lockCompany(tx, companyId);
     if (!company) return refuse(404, 'No such client.');
-    if (!isCompanyEditable(company.status)) return refuse(409, 'The agreement is signed, so company details can no longer be changed here. Write to Ensaar.');
+    if (!isCompanyEditable(company.status)) {
+      return refuse(
+        409,
+        staff
+          ? 'The agreement is signed, so the details it rests on are closed. Request changes to reopen them (that voids the signature).'
+          : 'The agreement is signed, so company details can no longer be changed here. Write to Ensaar.',
+      );
+    }
     const rows = await tx<Row[]>`
-      UPDATE ensaar_eor_companies SET company = ${tx.json(details as never)},
+      UPDATE ensaar_eor_companies SET company = ${tx.json(details as never)}, details_entered_by = ${staff},
         status = CASE WHEN status = 'invited' THEN 'onboarding' ELSE status END, updated_at = NOW()
       WHERE id = ${companyId} RETURNING ${tx(COMPANY_COLUMNS)}
     `;
@@ -359,6 +386,7 @@ export async function saveCompanyDetails(
       email: details.signatoryEmail,
       name: details.signatoryName,
       role: 'signatory',
+      notify: !staff,
     });
     await rebuildSchedules(tx, updated);
     return ok(updated);
@@ -519,6 +547,28 @@ export function evidenceText(text: string, signer: { name: string | null; title:
 
 const attachmentName = (company: EorCompany, what: string) =>
   `Ensaar-${what}-${displayName(company).replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')}.txt`;
+
+/**
+ * Ask the signatory to review and sign, once details and required documents are
+ * in. This is how assisted onboarding hands over: Ensaar enters everything, the
+ * customer's signatory still signs as themselves. Returns the sign-in link so
+ * staff can pass it on directly.
+ */
+export async function sendForSignature(companyId: string): Promise<Outcome<{ link: string; email: string; name: string }>> {
+  return requireDatabase().begin(async (tx) => {
+    const company = await lockCompany(tx, companyId);
+    if (!company) return refuse(404, 'No such client.');
+    if (!isCompanyEditable(company.status)) return refuse(409, 'The agreement has already been signed.');
+    const blockers = signatureBlockers(company.company, await listCompanyDocuments(companyId, tx));
+    if (blockers.length || !company.company) return refuse(409, `Still needed before anyone can sign: ${blockers.join(', ')}.`);
+    if (!(await getTemplateApproval(AGREEMENT_VERSION, tx))) {
+      return refuse(423, 'Customers cannot sign yet: record the legal sign-off for this agreement version first (see Clients).');
+    }
+    const { signatoryEmail: email, signatoryName: name, legalName } = company.company;
+    const link = await requestSignature(tx, { companyId, companyName: legalName, email, name, assisted: Boolean(company.detailsEnteredBy) });
+    return ok({ link, email, name });
+  });
+}
 
 /**
  * The signatory signs the master agreement. Re-checked under the company lock:

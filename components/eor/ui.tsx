@@ -1,7 +1,7 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight, Loader2, Search, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 /** Shared pieces for the client and employee tables in Basecamp and the portal. */
@@ -139,6 +139,19 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
       <p className="text-sm font-medium text-ink-primary">{title}</p>
       {children && <div className="mt-1 text-sm text-ink-secondary">{children}</div>}
     </div>
+  );
+}
+
+/** Picks one PDF or image to upload. The server decides what the file really is. */
+export function UploadButton({ label, busy, disabled, onFile }: { label: string; busy: boolean; disabled: boolean; onFile: (file: File) => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <input ref={ref} type="file" aria-label={`Upload ${label}`} accept="application/pdf,image/png,image/jpeg" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) onFile(file); }} />
+      <button type="button" disabled={disabled} onClick={() => ref.current?.click()} className={cn(buttonClass, 'shrink-0 px-3 py-1.5')}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Upload className="h-4 w-4" aria-hidden />} Upload
+      </button>
+    </>
   );
 }
 

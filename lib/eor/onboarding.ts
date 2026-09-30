@@ -185,6 +185,18 @@ export function unacceptedRequiredDocuments(uploaded: Array<{ kind: string; revi
 }
 
 /**
+ * What still stands between a company and its signatory being asked to sign,
+ * in words that finish "Still needed: ...". Empty means ready. Shared by
+ * Basecamp (to offer "Send for signature") and the server (to refuse it).
+ */
+export function signatureBlockers(
+  details: unknown,
+  uploaded: Array<{ kind: string; reviewStatus?: DocumentReview }>,
+): string[] {
+  return [...(details ? [] : ['the company details']), ...missingRequiredDocuments(uploaded).map((d) => d.label)];
+}
+
+/**
  * What happens after countersignature. Approval opens this checklist so "the
  * agreement is signed" and "the employee is ready to start" are never confused.
  */

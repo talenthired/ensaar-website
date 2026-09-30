@@ -70,14 +70,16 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-    const company = await createCompany(result.value, gate.session.userId, idempotencyKey);
+    // Assisted: Ensaar will enter the details and documents, so the contact is not asked to.
+    const assisted = body.assisted === true;
+    const company = await createCompany(result.value, gate.session.userId, idempotencyKey, assisted);
     await deliverSoon();
     await writeAudit({
       actorId: gate.session.userId,
       actorEmail: gate.session.email,
       action: 'eor.company.create',
       target: company.id,
-      metadata: { company: company.companyName, contact: company.contactEmail },
+      metadata: { company: company.companyName, contact: company.contactEmail, assisted },
     });
     return NextResponse.json({ company, emailConfigured: emailConfigured() }, { status: 201 });
   } catch (error) {

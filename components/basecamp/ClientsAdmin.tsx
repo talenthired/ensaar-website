@@ -147,7 +147,7 @@ export function ClientsAdmin() {
         </section>
       )}
 
-      {showForm && <NewClientForm onCreated={(id) => (window.location.href = `/basecamp/clients/${id}`)} onClose={() => setShowForm(false)} />}
+      {showForm && <NewClientForm onCreated={(id, assisted) => (window.location.href = `/basecamp/clients/${id}${assisted ? '?tab=company' : ''}`)} onClose={() => setShowForm(false)} />}
 
       <section className="space-y-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -232,12 +232,14 @@ export function ClientsAdmin() {
   );
 }
 
-function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void; onClose: () => void }) {
+function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assisted: boolean) => void; onClose: () => void }) {
   const [form, setForm] = useState({ companyName: '', contactName: '', contactEmail: '', defaultFeeUsd: String(EOR_PRICE_USD), notes: '' });
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState<string | null>(null);
   const [duplicate, setDuplicate] = useState<{ message: string; id: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  // Assisted: Ensaar enters the details and documents for a customer with no time to.
+  const [assisted, setAssisted] = useState(false);
   const key = useRef(newKey());
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -251,7 +253,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void
       const response = await fetch('/api/basecamp/clients', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...form, idempotencyKey: key.current, confirmDuplicate }),
+        body: JSON.stringify({ ...form, assisted, idempotencyKey: key.current, confirmDuplicate }),
       });
       const json = await response.json();
       if (response.status === 409 && json.duplicate) return setDuplicate({ message: json.error, id: json.duplicate.id });
@@ -259,7 +261,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void
         setErrors(json.errors ?? {});
         throw new Error(json.error || 'Unable to create the client.');
       }
-      onCreated(json.company.id);
+      onCreated(json.company.id, assisted);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to create the client.');
     } finally {
@@ -281,7 +283,9 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void
         <Building2 className="h-4 w-4" aria-hidden /> New client
       </h2>
       <p className="mt-1 text-xs text-ink-secondary">
-        The contact gets a portal invitation to add company details and documents. You add employees on the client&apos;s page.
+        {assisted
+          ? 'Nobody is emailed yet. You enter the company details and documents on the client\'s page, then send the agreement to their signatory to sign.'
+          : 'The contact gets a portal invitation to add company details and documents. You add employees on the client\'s page.'}
       </p>
       <form
         noValidate
@@ -294,13 +298,22 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void
         <div className="grid gap-4 sm:grid-cols-3">
           {field('companyName', 'Company name', { placeholder: 'Pristinno Tech' })}
           {field('contactName', 'Contact name')}
-          {field('contactEmail', 'Contact email', { type: 'email' }, 'Receives the portal invitation.')}
+          {field('contactEmail', 'Contact email', { type: 'email' }, assisted ? 'Gets portal access, but no email yet.' : 'Receives the portal invitation.')}
           {field('defaultFeeUsd', 'Default fee (USD per employee per month)', { inputMode: 'numeric' }, `Published price is $${EOR_PRICE_USD}. Each hire can differ.`)}
           <label className="block text-sm sm:col-span-2">
             <span className="mb-1 block text-ink-secondary">Internal notes</span>
             <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Not shown to the customer" />
           </label>
         </div>
+        <label className="flex items-start gap-3 text-sm text-ink-primary">
+          <input type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={assisted} onChange={(e) => setAssisted(e.target.checked)} />
+          <span>
+            We will do the onboarding for this client
+            <span className="block text-xs text-ink-secondary">
+              For a customer with no time for the portal: gather their details and documents, enter them here, and they only review and sign.
+            </span>
+          </span>
+        </label>
         {duplicate && (
           <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
             <p className="flex items-center gap-2 font-medium">
@@ -320,7 +333,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string) => void
         {error && <Notice kind="error">{error}</Notice>}
         <div className="flex gap-3">
           <button type="submit" disabled={busy} className={primaryButtonClass}>
-            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Create and invite
+            {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} {assisted ? 'Create, and enter details' : 'Create and invite'}
           </button>
           <button type="button" onClick={onClose} className="text-sm text-ink-secondary">
             Close

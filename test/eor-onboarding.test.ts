@@ -7,6 +7,7 @@ import {
   missingRequiredDocuments,
   normalizeEin,
   parseEmployeesCsv,
+  signatureBlockers,
   signatureMatches,
   sniffDocumentType,
   todayInIndia,
@@ -18,6 +19,7 @@ import {
   type CompanyDetails,
   type EmployeeInput,
 } from '@/lib/eor/onboarding';
+import { signRequestEmail } from '@/lib/eor/email';
 import { can } from '@/lib/basecamp/roles';
 import { sameOriginMutation } from '@/lib/basecamp/guard';
 import { EOR_PRICE_USD } from '@/lib/content/india';
@@ -328,6 +330,47 @@ describe('document review rules (EOR-02, GAP-01)', () => {
         { kind: 'ein', reviewStatus: 'accepted' },
       ]),
     ).toHaveLength(0);
+  });
+});
+
+describe('assisted onboarding: Ensaar enters, the customer signs', () => {
+  const details = validateCompany(company);
+
+  it('is not ready for signature until the details and both required documents are in', () => {
+    expect(signatureBlockers(null, [])).toEqual([
+      'the company details',
+      'Certificate of incorporation or formation',
+      'EIN confirmation',
+    ]);
+    expect(details.ok && signatureBlockers(details.value, [{ kind: 'formation', reviewStatus: 'pending' }])).toEqual(['EIN confirmation']);
+    expect(
+      details.ok &&
+        signatureBlockers(details.value, [
+          { kind: 'formation', reviewStatus: 'pending' },
+          { kind: 'ein', reviewStatus: 'accepted' },
+        ]),
+    ).toEqual([]);
+  });
+
+  it('does not count a rejected document, whoever uploaded it', () => {
+    expect(
+      details.ok &&
+        signatureBlockers(details.value, [
+          { kind: 'formation', reviewStatus: 'rejected' },
+          { kind: 'ein', reviewStatus: 'accepted' },
+        ]),
+    ).toEqual(['Certificate of incorporation or formation']);
+  });
+
+  it('tells the signatory when Ensaar entered the details they are about to vouch for', () => {
+    const link = 'https://ensaar.com/portal/auth#token';
+    const assisted = signRequestEmail({ name: 'Jane Doe', companyName: 'Pristinno Tech Inc.', link, assisted: true });
+    expect(assisted.text).toContain('Ensaar has entered');
+    expect(assisted.text).toContain('check them and sign');
+    expect(assisted.text).toContain(link);
+    const own = signRequestEmail({ name: 'Jane Doe', companyName: 'Pristinno Tech Inc.', link, assisted: false });
+    expect(own.text).not.toContain('Ensaar has entered');
+    expect(own.subject).toBe(assisted.subject);
   });
 });
 

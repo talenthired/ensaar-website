@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
-import { getCompanyDocumentFile } from '@/lib/eor/companies';
+import { writeAudit } from '@/lib/basecamp/audit';
+import { requireNamed } from '@/lib/basecamp/actor';
+import { deleteCompanyDocument, getCompanyDocumentFile } from '@/lib/eor/companies';
 
 export const runtime = 'nodejs';
 
@@ -22,4 +24,22 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       'cache-control': 'private, no-store',
     },
   });
+}
+
+/** Remove a document while the company is still being set up (a wrong file uploaded for the customer, say). */
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string; docId: string }> }) {
+  const gate = await requireBasecamp(request, 'clients:write');
+  if (!gate.ok) return gate.response;
+  const refused = requireNamed(gate.session);
+  if (refused) return refused;
+  const { id, docId } = await context.params;
+  try {
+    const removed = await deleteCompanyDocument(id, docId);
+    if (!removed.ok) return NextResponse.json({ error: removed.error }, { status: removed.status });
+    await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.document.delete', target: id, metadata: { documentId: docId } });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Client document delete failed', error);
+    return NextResponse.json({ error: 'Unable to remove that document.' }, { status: 500 });
+  }
 }

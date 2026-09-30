@@ -17,9 +17,12 @@ import {
   masterDraft,
   requestCompanyChanges,
   reviewCompanyDocument,
+  saveCompanyDetails,
+  sendForSignature,
   updateCompanyInvite,
 } from '@/lib/eor/companies';
-import { validateCompanyInvite } from '@/lib/eor/onboarding';
+import { rebuildPendingSchedules } from '@/lib/eor/employees';
+import { validateCompany, validateCompanyInvite } from '@/lib/eor/onboarding';
 import type { Outcome } from '@/lib/eor/outcome';
 import { deactivatePortalUser, listPortalUsers, reinvitePortalUser } from '@/lib/eor/portal-auth';
 
@@ -68,7 +71,7 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['approve', 'request_changes', 'review_document', 'update_invite'].includes(action)) {
+  if (['approve', 'request_changes', 'review_document', 'update_invite', 'save_details', 'send_for_signature'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
@@ -86,6 +89,20 @@ export async function POST(request: NextRequest, context: Context) {
         const invite = validateCompanyInvite(body.invite);
         if (!invite.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: invite.errors }, { status: 400 });
         return done(await updateCompanyInvite(id, invite.value), 'eor.company.update');
+      }
+      // Assisted onboarding: staff enter what the customer sent them. The signatory still signs as themselves.
+      case 'save_details': {
+        const details = validateCompany(body.details);
+        if (!details.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: details.errors }, { status: 400 });
+        return done(await saveCompanyDetails(id, details.value, rebuildPendingSchedules, actor), 'eor.company.details', { forCustomer: true });
+      }
+      case 'send_for_signature': {
+        const sent = await sendForSignature(id);
+        if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: sent.status });
+        await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.master.send', target: id, metadata: { to: sent.value.email } });
+        await deliverSoon();
+        // The link is returned so staff can pass it on directly if email is not working.
+        return NextResponse.json({ ...sent.value, emailConfigured: emailConfigured() });
       }
       case 'add_contact': {
         const email = str(body.email, 254).toLowerCase();

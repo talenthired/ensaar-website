@@ -35,6 +35,8 @@ export async function companyView(company: EorCompany, ctx: PortalContext) {
     status: company.status,
     name: company.company?.legalName ?? company.companyName,
     details: company.company,
+    // Whether, not who: the customer is told to check what Ensaar entered for them.
+    enteredByEnsaar: Boolean(company.company && company.detailsEnteredBy),
     changesNote: company.status === 'changes_requested' ? company.changesNote : null,
     me: { email: ctx.user.email, name: ctx.user.name, isSignatory: Boolean(signatory && signatory.email.toLowerCase() === ctx.user.email.toLowerCase()) },
     signatory,

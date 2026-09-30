@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, BadgeCheck, Check, Copy, Download, Loader2, MessageSquareWarning, Pencil, Printer, RotateCw, UserPlus, X, XCircle } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Check, Copy, Download, Loader2, MessageSquareWarning, Pencil, Printer, RotateCw, Send, Trash2, UserPlus, X, XCircle } from 'lucide-react';
 import type { CompanyDocument, EmployeeCounts, EorCompany, VoidedSignature } from '@/lib/eor/companies';
 import type { PortalUser } from '@/lib/eor/portal-auth';
 import type { OutboxEntry } from '@/lib/notify/outbox';
@@ -10,14 +10,18 @@ import type { AgreementDocument } from '@/lib/eor/agreement';
 import {
   COMPANY_STATUS_LABELS,
   DOCUMENT_KINDS,
+  MAX_DOCUMENT_BYTES,
   entityTypeLabel,
   formatUsd,
+  isCompanyEditable,
+  signatureBlockers,
   usStateName,
   validateCompanyInvite,
   type Errors,
 } from '@/lib/eor/onboarding';
 import { AgreementView } from '@/components/eor/AgreementView';
-import { Badge, Notice, STATUS_TONE, Tabs, buttonClass, inputClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
+import { CompanyForm, companyFormInitial, type CompanyFormValues } from '@/components/eor/CompanyForm';
+import { Badge, Notice, STATUS_TONE, Tabs, UploadButton, buttonClass, inputClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
 import { AddEmployees } from './AddEmployees';
 import { EmployeesTable } from './EmployeesTable';
@@ -36,6 +40,14 @@ type Detail = {
 };
 
 const stamp = (value: string | null) => (value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
+/** The two declarations, worded as what the customer told the person entering them. The signatory repeats both by signing (clauses 3 and 7). */
+const STAFF_CONFIRMATIONS = {
+  legend: 'The customer has confirmed to you',
+  sanctions: 'The company, and anyone who owns or controls it, is not subject to US, UN, EU, UK or Indian sanctions.',
+  noContracting:
+    'Employees hired through Ensaar will not negotiate or sign contracts in the company\'s name. (If one will, for example in a sales role, stop and agree it with them first: it affects their tax position in India.)',
+};
+
 const size = (b: number) => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} KB`);
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
@@ -54,7 +66,9 @@ export function ClientDetail({ id }: { id: string }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [tabState, setTab] = useQueryState({ tab: 'employees' });
   const [reloadKey, setReloadKey] = useState(0);
-  const [panel, setPanel] = useState<'changes' | 'edit' | 'contact' | null>(null);
+  const [panel, setPanel] = useState<'changes' | 'edit' | 'contact' | 'details' | null>(null);
+  // The signatory's sign-in link from the last "Send for signature", to pass on directly if wanted.
+  const [signLink, setSignLink] = useState<{ link: string; email: string; emailed: boolean; copied: boolean } | null>(null);
 
   const load = useCallback(async () => {
     const response = await fetch(`/api/basecamp/clients/${id}`, { cache: 'no-store' });
@@ -87,6 +101,61 @@ export function ClientDetail({ id }: { id: string }) {
     }
   }
 
+  // Assisted onboarding: staff enter the details and upload the documents a customer sent them.
+  async function saveDetails(form: CompanyFormValues): Promise<Errors | null> {
+    setError(null);
+    setOk(null);
+    const response = await fetch(`/api/basecamp/clients/${id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'save_details', details: form }) }).catch(() => null);
+    const json = (await response?.json().catch(() => ({}))) ?? {};
+    if (!response?.ok) {
+      if (json.errors) return json.errors as Errors;
+      setError(json.error || 'Unable to save.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return null;
+    }
+    setPanel(null);
+    setOk('Company details saved for the customer. Nobody has been emailed: send the agreement for signature when the documents are in.');
+    await load();
+    return null;
+  }
+
+  async function documentRequest(label: string, success: string, url: string, init: RequestInit) {
+    setBusy(label);
+    setError(null);
+    setOk(null);
+    try {
+      const response = await fetch(url, init);
+      if (!response.ok) throw new Error((await response.json().catch(() => ({}))).error || 'Unable to do that.');
+      setOk(success);
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to do that.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function uploadDocument(kind: string, file: File) {
+    if (file.size > MAX_DOCUMENT_BYTES) return setError(`${file.name} is larger than 10 MB.`);
+    const body = new FormData();
+    body.set('kind', kind);
+    body.set('file', file);
+    void documentRequest(`upload:${kind}`, `${file.name} uploaded for the customer. Review it like any other document.`, `/api/basecamp/clients/${id}/documents`, { method: 'POST', body });
+  }
+
+  function removeDocument(file: CompanyDocument) {
+    if (!window.confirm(`Remove ${file.filename}? This cannot be undone.`)) return;
+    void documentRequest(`delete:${file.id}`, `${file.filename} removed.`, `/api/basecamp/clients/${id}/documents/${file.id}`, { method: 'DELETE' });
+  }
+
+  async function sendForSignature(to: string) {
+    if (!window.confirm(`Email ${to} a link to review and sign the agreement?`)) return;
+    setSignLink(null);
+    const json = await act({ action: 'send_for_signature' }, 'send');
+    if (json) setSignLink({ link: String(json.link), email: String(json.email), emailed: Boolean(json.emailConfigured), copied: false });
+  }
+
   if (!detail) return error ? <Notice kind="error">{error}</Notice> : <p className="text-sm text-ink-secondary">Loading…</p>;
 
   const { company, counts, documents } = detail;
@@ -95,19 +164,29 @@ export function ClientDetail({ id }: { id: string }) {
   const open = !['active', 'cancelled'].includes(company.status);
   const docsToReview = documents.filter((d) => d.reviewStatus === 'pending').length;
   const tab = tabState.tab;
+  // Until the agreement is signed, staff can enter details and documents for the customer.
+  const editable = isCompanyEditable(company.status);
+  const blockers = signatureBlockers(company.company, documents);
+  const signatory = company.company ? `${company.company.signatoryName} (${company.company.signatoryEmail})` : null;
+  const canSend = editable && blockers.length === 0 && signatory !== null;
+  const sendHint = !canSend || company.status === 'changes_requested'
+    ? null
+    : detail.readyToSign
+      ? `Details and documents are in. Send the agreement to ${company.company?.signatoryName} to sign.`
+      : 'Details and documents are in. Signing opens once the legal sign-off is recorded (see Clients).';
 
   // The single most useful next step for this client, shown in the header.
   const next =
     company.status === 'signed'
       ? 'Review the documents, then countersign the agreement.'
-      : company.status === 'invited'
-        ? 'Waiting for the customer to sign in and add company details.'
-        : company.status === 'onboarding'
-          ? docsToReview
-            ? `Review ${docsToReview} document${docsToReview === 1 ? '' : 's'} while the customer finishes setting up.`
-            : 'Waiting for the customer to finish setting up and sign.'
-          : company.status === 'changes_requested'
-            ? 'Waiting for the customer to make the requested changes.'
+      : sendHint
+        ? sendHint
+        : company.status === 'invited'
+          ? 'Waiting for the customer to add company details. If they have no time, enter them yourself under Company.'
+          : company.status === 'onboarding'
+            ? `Still needed before anyone can sign: ${blockers.join(', ')}. The customer can add them, or you can for them.`
+            : company.status === 'changes_requested'
+              ? 'Waiting for the customer to make the requested changes.'
             : counts.toCountersign
               ? `${counts.toCountersign} schedule${counts.toCountersign === 1 ? '' : 's'} signed by the customer to countersign.`
               : counts.draft
@@ -143,6 +222,11 @@ export function ClientDetail({ id }: { id: string }) {
                 {busy === 'approve' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <BadgeCheck className="h-4 w-4" aria-hidden />} Countersign agreement
               </button>
             )}
+            {canSend && signatory && (
+              <button type="button" disabled={busy !== null || !named || !detail.readyToSign} onClick={() => void sendForSignature(signatory)} className={primaryButtonClass}>
+                {busy === 'send' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} Send for signature
+              </button>
+            )}
             {open && (
               <button type="button" disabled={busy !== null || !named} onClick={() => setPanel(panel === 'changes' ? null : 'changes')} className={buttonClass}>
                 <MessageSquareWarning className="h-4 w-4" aria-hidden /> Request changes
@@ -167,7 +251,23 @@ export function ClientDetail({ id }: { id: string }) {
         </div>
       </div>
 
-      {!named && <Notice kind="warn">You are using the shared login. Reviewing, requesting changes and countersigning need your own account.</Notice>}
+      {!named && <Notice kind="warn">You are using the shared login. Entering details or documents for a customer, reviewing, requesting changes and countersigning need your own account.</Notice>}
+      {signLink && (
+        <Notice kind="ok" onClose={() => setSignLink(null)}>
+          {signLink.emailed ? `Sent to ${signLink.email}.` : `Email is off, so nothing was sent to ${signLink.email}.`} They review what is entered, then sign as themselves.{' '}
+          <button
+            type="button"
+            className="underline"
+            onClick={async () => {
+              await navigator.clipboard.writeText(signLink.link).catch(() => undefined);
+              setSignLink({ ...signLink, copied: true });
+            }}
+          >
+            {signLink.copied ? 'Link copied' : 'Copy their sign-in link'}
+          </button>{' '}
+          to pass it on yourself. It works once, for {signLink.email} only.
+        </Notice>
+      )}
       {error && <Notice kind="error" onClose={() => setError(null)}>{error}</Notice>}
       {ok && <Notice kind="ok" onClose={() => setOk(null)}>{ok}</Notice>}
       {company.status === 'changes_requested' && company.changesNote && <Notice kind="warn">Waiting on the customer: {company.changesNote}</Notice>}
@@ -221,9 +321,35 @@ export function ClientDetail({ id }: { id: string }) {
 
       {tab === 'company' && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <section className="rounded-xl border border-line-subtle bg-bg-primary p-5">
-            <h2 className="text-sm font-semibold text-ink-primary">Company details (from the customer)</h2>
-            {company.company ? (
+          <section className={cn('rounded-xl border border-line-subtle bg-bg-primary p-5', panel === 'details' && 'lg:col-span-2')}>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold text-ink-primary">
+                Company details{' '}
+                <span className="font-normal text-ink-secondary">
+                  {!company.company ? '' : company.detailsEnteredBy ? `(entered for the customer by ${company.detailsEnteredBy})` : '(from the customer)'}
+                </span>
+              </h2>
+              {editable && named && panel !== 'details' && (
+                <button type="button" className={cn(buttonClass, 'shrink-0 px-2.5 py-1 text-xs')} onClick={() => setPanel('details')}>
+                  <Pencil className="h-3.5 w-3.5" aria-hidden /> {company.company ? 'Edit for the customer' : 'Enter for the customer'}
+                </button>
+              )}
+            </div>
+            {panel === 'details' && editable ? (
+              <div className="mt-4 space-y-4">
+                <p className="text-xs text-ink-secondary">
+                  Enter what the customer gave you, exactly as it appears on their documents. The agreement is built from these details, and
+                  their signatory checks them and signs as themselves: you cannot sign for a customer.
+                </p>
+                <CompanyForm
+                  initial={companyFormInitial(company.company, { companyName: company.companyName, personName: company.contactName, email: company.contactEmail })}
+                  onSubmit={saveDetails}
+                  onCancel={() => setPanel(null)}
+                  confirmations={STAFF_CONFIRMATIONS}
+                  submitLabel="Save for the customer"
+                />
+              </div>
+            ) : company.company ? (
               <dl className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Row label="Legal name" value={company.company.legalName} />
                 <Row label="Entity" value={`${entityTypeLabel(company.company.entityType)}, ${usStateName(company.company.incorporationState)}`} />
@@ -277,18 +403,32 @@ export function ClientDetail({ id }: { id: string }) {
 
       {tab === 'documents' && (
         <section className="rounded-xl border border-line-subtle bg-bg-primary p-5">
-          <p className="text-xs text-ink-secondary">Open each file and check it is the right company and the right document. Countersigning needs every required document accepted.</p>
+          <p className="text-xs text-ink-secondary">
+            Open each file and check it is the right company and the right document. Countersigning needs every required document accepted.
+            {editable && named && ' If the customer sent you a document instead of using the portal, upload it here for them.'}
+          </p>
           <ul className="mt-3 space-y-4">
             {DOCUMENT_KINDS.map((kind) => {
               const files = documents.filter((d) => d.kind === kind.kind);
               return (
                 <li key={kind.kind} className="text-sm">
-                  <p className="text-ink-secondary">
-                    {kind.label}
-                    {kind.required && !files.some((f) => f.reviewStatus !== 'rejected') && <span className="ml-2 text-xs text-red-600">missing</span>}
-                  </p>
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-ink-secondary">
+                      {kind.label}
+                      {kind.required && !files.some((f) => f.reviewStatus !== 'rejected') && <span className="ml-2 text-xs text-red-600">missing</span>}
+                    </p>
+                    {editable && named && <UploadButton label={kind.label} busy={busy === `upload:${kind.kind}`} disabled={busy !== null} onFile={(file) => uploadDocument(kind.kind, file)} />}
+                  </div>
                   {files.map((file) => (
-                    <DocumentRow key={file.id} companyId={id} file={file} editable={open && named} busy={busy !== null} onReview={(decision, note) => act({ action: 'review_document', documentId: file.id, decision, note }, `doc:${file.id}`)} />
+                    <DocumentRow
+                      key={file.id}
+                      companyId={id}
+                      file={file}
+                      editable={open && named}
+                      busy={busy !== null}
+                      onReview={(decision, note) => act({ action: 'review_document', documentId: file.id, decision, note }, `doc:${file.id}`)}
+                      onRemove={editable && named ? () => removeDocument(file) : undefined}
+                    />
                   ))}
                 </li>
               );
@@ -430,7 +570,7 @@ function ReinviteButton({ companyId, userId, onError }: { companyId: string; use
   );
 }
 
-function DocumentRow({ companyId, file, editable, busy, onReview }: { companyId: string; file: CompanyDocument; editable: boolean; busy: boolean; onReview: (decision: string, note?: string) => Promise<unknown> }) {
+function DocumentRow({ companyId, file, editable, busy, onReview, onRemove }: { companyId: string; file: CompanyDocument; editable: boolean; busy: boolean; onReview: (decision: string, note?: string) => Promise<unknown>; onRemove?: () => void }) {
   const [rejecting, setRejecting] = useState<string | null>(null);
   return (
     <div className="mt-1 flex flex-col gap-2 rounded-lg border border-line-subtle p-2 sm:flex-row sm:items-center sm:justify-between">
@@ -438,6 +578,7 @@ function DocumentRow({ companyId, file, editable, busy, onReview }: { companyId:
         <Download className="h-4 w-4 shrink-0" aria-hidden />
         <span className="truncate">{file.filename}</span>
         <span className="shrink-0 text-xs text-ink-secondary">({size(file.sizeBytes)})</span>
+        {file.uploadedBy && <span className="hidden shrink-0 truncate text-xs text-ink-secondary md:inline">· uploaded by {file.uploadedBy}</span>}
       </a>
       <div className="flex flex-wrap items-center gap-2">
         <Badge tone={file.reviewStatus === 'accepted' ? 'good' : file.reviewStatus === 'rejected' ? 'bad' : 'neutral'}>
@@ -451,6 +592,11 @@ function DocumentRow({ companyId, file, editable, busy, onReview }: { companyId:
         {editable && file.reviewStatus !== 'rejected' && (
           <button type="button" disabled={busy} onClick={() => setRejecting('')} className={cn(buttonClass, 'px-2 py-1 text-xs text-red-700')}>
             <X className="h-3 w-3" aria-hidden /> Reject
+          </button>
+        )}
+        {onRemove && (
+          <button type="button" disabled={busy} aria-label={`Remove ${file.filename}`} onClick={onRemove} className={cn(buttonClass, 'px-2 py-1 text-xs text-ink-secondary')}>
+            <Trash2 className="h-3 w-3" aria-hidden />
           </button>
         )}
       </div>

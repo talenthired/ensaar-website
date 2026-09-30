@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 import { db, hasDatabase, requireDatabase } from '@/lib/db/client';
 import { sameOriginMutation } from '@/lib/basecamp/guard';
 import { enqueue } from '@/lib/notify/outbox';
-import { loginEmail, portalAuthLink, portalInviteEmail, portalUrl } from './email';
+import { loginEmail, portalAuthLink, portalInviteEmail, portalUrl, signRequestEmail } from './email';
 import { INVITE_LINK_TTL_DAYS, LOGIN_LINK_TTL_MINUTES, PORTAL_SESSION_DAYS, type CompanyStatus } from './onboarding';
 
 /*
@@ -77,10 +77,13 @@ export async function companyRecipients(sql: Executor, companyId: string): Promi
  * Add (or reactivate) a person and email them an invitation. A person who was
  * already active is left as they are and not re-invited. The signatory role is
  * sticky: naming someone signatory never demotes them.
+ *
+ * `notify: false` gives access without the email, for when Ensaar is doing the
+ * onboarding for the customer and will ask them to sign once it is ready.
  */
 export async function ensurePortalUser(
   tx: Executor,
-  input: { companyId: string; companyName: string; email: string; name: string | null; role: 'contact' | 'signatory' },
+  input: { companyId: string; companyName: string; email: string; name: string | null; role: 'contact' | 'signatory'; notify?: boolean },
 ): Promise<{ user: PortalUser; invited: boolean }> {
   const email = input.email.trim().toLowerCase();
   const [existing] = await tx<UserRow[]>`
@@ -103,6 +106,7 @@ export async function ensurePortalUser(
         RETURNING id, company_id, email, name, role, active, last_login_at, created_at
       `;
   const user = toUser(rows[0]!);
+  if (input.notify === false) return { user, invited: false };
   // An existing active contact newly named signatory is told, but needs no new link to sign in.
   const alreadyIn = Boolean(existing?.active);
   const link = alreadyIn ? null : await createLoginLink(tx, user.id, 'invite');
@@ -129,6 +133,25 @@ async function createLoginLink(tx: Executor, userId: string, purpose: 'invite' |
     VALUES (${randomUUID()}, ${userId}, ${sha256(token)}, ${purpose}, NOW() + make_interval(mins => ${ttlMinutes}))
   `;
   return portalAuthLink(token);
+}
+
+/**
+ * Ask the signatory to review and sign, with a fresh sign-in link. Returned so
+ * staff can pass it on directly if email is not working.
+ */
+export async function requestSignature(
+  tx: Executor,
+  input: { companyId: string; companyName: string; email: string; name: string; assisted: boolean },
+): Promise<string> {
+  const { user } = await ensurePortalUser(tx, { ...input, role: 'signatory', notify: false });
+  const link = await createLoginLink(tx, user.id, 'invite');
+  await enqueue(tx, {
+    kind: 'portal.sign_request',
+    to: [user.email],
+    relatedId: input.companyId,
+    ...signRequestEmail({ name: user.name ?? input.name, companyName: input.companyName, link, assisted: input.assisted }),
+  });
+  return link;
 }
 
 /** A fresh invitation link for one person (staff "resend"). Returned so staff can copy it if email fails. */

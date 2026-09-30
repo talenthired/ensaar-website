@@ -47,6 +47,29 @@ export function portalInviteEmail(input: { name: string | null; companyName: str
   };
 }
 
+/**
+ * Asks the signatory to review and sign once details and documents are in.
+ * `assisted` is true when Ensaar entered the details for the customer: the
+ * email says so, because the signatory is about to vouch for them.
+ */
+export function signRequestEmail(input: { name: string | null; companyName: string; link: string; assisted: boolean }): Mail {
+  return {
+    subject: `${input.companyName}: your Ensaar agreement is ready to sign`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `Hi ${firstName(input.name)}, your agreement is ready to sign`,
+      paragraphs: [
+        input.assisted
+          ? `To save you time, Ensaar has entered ${input.companyName}'s company details and uploaded its documents, from what you gave us.`
+          : `${input.companyName}'s company details and documents are in.`,
+        `All that is left is for you to ${input.assisted ? 'check them and sign' : 'review and sign'} the Employer of Record agreement. It takes about two minutes, and you can correct anything that is wrong before you sign.`,
+      ],
+      action: { label: 'Review and sign', href: input.link },
+      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${portalUrl()} with this email address. Questions? Write to ${supportAddress()}.`,
+    }),
+  };
+}
+
 export function loginEmail(input: { name: string | null; companyName: string; link: string }): Mail {
   return {
     subject: `Your Ensaar sign-in link for ${input.companyName}`,
