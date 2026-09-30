@@ -122,6 +122,22 @@ describe('the published price is quoted the same way everywhere', () => {
     }
   });
 
+  it('says the fee starts at the published figure, and names the deposit, wherever it states terms', () => {
+    const sources = [
+      ...FAQ.map((item) => item.answer),
+      read('app/services/employer-of-record/page.tsx'),
+      read('components/hero/Hero.tsx'),
+      read('lib/content/knowledge.ts'),
+      read('lib/content/services.ts'),
+      buildLlmsTxt(),
+    ].join('\n');
+    // The agreement takes a deposit and the fee is set per client, so the site must not promise otherwise.
+    expect(sources).not.toMatch(/no (security )?deposit/i);
+    expect(sources).not.toMatch(/flat \$\d+/i);
+    expect(sources).toMatch(/refundable/i);
+    expect(buildLlmsTxt()).toContain(`from $${EOR_PRICE_USD} per employee per month`);
+  });
+
   it('quotes the recruitment fee consistently', () => {
     const answer = GCC_FAQ.find((item) => item.question.includes('What does Ensaar charge'))!;
     expect(answer.answer).toContain(`${RECRUITMENT_FEE_PERCENT}%`);

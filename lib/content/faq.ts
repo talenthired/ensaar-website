@@ -51,7 +51,7 @@ export const EOR_FAQ: FaqItem[] = [
     category: 'india',
     question: 'How much does an Employer of Record cost in India?',
     answer:
-      'Ensaar charges a flat $199 per employee per month, with no setup fee, no security deposit, and no minimum term. On top of that you pay the salary itself and the statutory employer contributions, both passed through at cost. India specialists generally charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+      'Ensaar\'s fee starts at $199 per employee per month, with no setup fee and no minimum term. Before each employee starts you pay a refundable deposit of one month\'s total cost for that employee, returned when they leave. On top of the fee you pay the salary itself and the statutory employer contributions, both passed through at cost. India specialists generally charge $99 to $399 and global platforms $499 to $699 for the same hire.',
   },
   {
     category: 'india',
@@ -127,7 +127,7 @@ export const GCC_FAQ: FaqItem[] = [
     category: 'india',
     question: 'What does Ensaar charge to build an India team?',
     answer:
-      'Recruitment is 8.33% of annual salary per hire, which is one month, charged when the person joins, with a 90-day replacement. Employment through our Employer of Record is $199 per person per month, with salary and statutory costs passed through at cost. Converting to your own entity is quoted per engagement once the structure is known.',
+      'Recruitment is 8.33% of annual salary per hire, which is one month, charged when the person joins, with a 90-day replacement. Employment through our Employer of Record starts at $199 per person per month, with salary and statutory costs passed through at cost. Converting to your own entity is quoted per engagement once the structure is known.',
   },
 ];
 

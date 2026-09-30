@@ -20,8 +20,9 @@ import {
  * so the hash taken at signing identifies exactly what was signed, and the
  * stored snapshot is what is shown afterwards even if this template changes.
  *
- * The commercial terms mirror what ensaar.com publishes (flat monthly fee, no
- * setup fee, no deposit, no minimum term, statutory costs passed through at cost).
+ * The commercial terms mirror what ensaar.com publishes (a monthly fee per
+ * employee, no setup fee, no minimum term, a refundable deposit of one month's
+ * total cost per employee, statutory costs passed through at cost).
  * Assets are the one thing not at cost: the Customer pays for them, and when
  * Ensaar buys, handles or ships one it recovers every cost plus PROCUREMENT_FEE_PERCENT.
  * The invoice date, payment term and late interest come from lib/eor/billing.ts,
@@ -34,7 +35,7 @@ import {
  * Bump AGREEMENT_VERSION whenever the wording of either part changes: customers
  * cannot sign a version until an owner records its legal review in Basecamp.
  */
-export const AGREEMENT_VERSION = '2026-09-30.2';
+export const AGREEMENT_VERSION = '2026-09-30.3';
 
 export const ENSAAR_PARTY = {
   legalName: 'Ensaar Global Pvt. Ltd.',
@@ -43,6 +44,8 @@ export const ENSAAR_PARTY = {
 
 export const PROBATION_MONTHS = 3;
 export const NOTICE_DAYS = 30;
+/** The least time an Employee is given to improve before their employment is ended for performance. */
+export const IMPROVEMENT_DAYS = 30;
 /** Charged on the Asset Costs Ensaar incurs (a purchase price it paid, shipping, handling), on top of those costs. */
 export const PROCUREMENT_FEE_PERCENT = 5;
 
@@ -88,13 +91,15 @@ export function buildMasterAgreement(companyName: string, company: CompanyDetail
         heading: '3. What the Customer does',
         paragraphs: [
           'The Customer directs each Employee\'s day-to-day work, sets their tasks and reviews their output. The Customer will not ask an Employee to do anything unlawful, and will tell Ensaar promptly about any performance, conduct or safety concern so that Ensaar, as employer, can deal with it lawfully. Decisions about pay changes, discipline or ending an employment are made by Ensaar on the Customer\'s instruction, in line with Indian law.',
+          `Only Ensaar, as employer, may discipline, suspend or dismiss an Employee. The Customer will not do so, and will not tell an Employee that their employment is ending. If the Customer has a concern about an Employee's conduct or performance, it will notify Ensaar in writing promptly, with the facts and any evidence. For performance, Ensaar will give the Employee a written warning and an improvement period of at least ${IMPROVEMENT_DAYS} days before ending the employment. For misconduct, Ensaar may remove the Employee from the Customer's work at once and will follow the notice and enquiry that Indian law requires; where serious misconduct is proven, Ensaar may dismiss without notice, and the notice and payment in lieu in clause 8 do not apply. The Customer will co-operate with the process, continues to pay the Service Fee and Employment Costs until the employment lawfully ends, and indemnifies Ensaar against any claim caused by the Customer acting outside this clause.`,
           'The Customer will not authorise any Employee to negotiate or conclude contracts in the Customer\'s name, and will not treat any place in India as its own fixed place of business, without first agreeing it with Ensaar in writing. This is to avoid creating a permanent establishment of the Customer in India. Responsibility for the Customer\'s own tax position remains with the Customer.',
         ],
       },
       {
         heading: '4. Fees and payment',
         paragraphs: [
-          'For each Employee the Customer pays Ensaar the monthly service fee stated in that Employee\'s Schedule A (the "Service Fee"). There is no setup fee, no deposit and no minimum term. The Service Fee for a part month is pro-rated by calendar days.',
+          'For each Employee the Customer pays Ensaar the monthly service fee stated in that Employee\'s Schedule A (the "Service Fee"). There is no setup fee and no minimum term. The Service Fee for a part month is pro-rated by calendar days.',
+          `Before an Employee's start date the Customer pays Ensaar a deposit equal to one month's estimated Employment Costs and Service Fee for that Employee (the "Deposit"), and Ensaar is not obliged to employ the Employee until it is received. Ensaar holds the Deposit without interest as security for the Customer's obligations and may apply it to any overdue amount; if it does, the Customer restores the Deposit within ${PAYMENT_DAYS} days of being asked. Ensaar refunds the Deposit, less anything the Customer owes, within 30 days after that Employee's arrangement has ended and the final invoice is paid.`,
           'The Customer also pays the Employment Costs of each Employee: gross salary and any bonus or allowance the Customer approves, the employer\'s statutory contributions (including provident fund, employees\' state insurance where it applies and gratuity accrual), and expenses the Customer approves. Employment Costs are passed through at cost, with no margin.',
           `The Customer pays for every asset an Employee needs for the work, whether digital or physical, such as a laptop (each an "Asset"). If the Customer asks Ensaar to arrange the purchase of an Asset, the Customer reimburses Ensaar the full purchase price. Whether the Customer or Ensaar buys an Asset, the Customer also reimburses every cost Ensaar incurs in procuring, handling or shipping it, including shipping costs and any other administrative or miscellaneous cost. The purchase price Ensaar pays and those other costs are together the "Asset Costs". Asset Costs are not Employment Costs: in addition to reimbursing them, the Customer pays Ensaar a procurement fee of ${PROCUREMENT_FEE_PERCENT}% of the Asset Costs (the "Procurement Fee").`,
           `Ensaar will invoice in US dollars on the ${INVOICE_DAY}th of each month for that month's Service Fees and Employment Costs, and for any Asset Costs and Procurement Fee incurred since the last invoice, converting rupee amounts at the rate on the invoice date. Each invoice is payable within ${PAYMENT_DAYS} days of its date, by bank transfer. Each party bears its own bank charges. The services are an export of services from India and are invoiced without Indian GST where the law allows.`,
@@ -123,7 +128,7 @@ export function buildMasterAgreement(companyName: string, company: CompanyDetail
       {
         heading: '8. Ending the agreement',
         paragraphs: [
-          `Either party may end this agreement, or the arrangement for any one Employee, on ${NOTICE_DAYS} days' written notice. Either party may end it immediately by notice if the other materially breaches it and does not fix the breach within 15 days of being told, or if an invoice remains unpaid 15 days after it was due.`,
+          `Either party may end this agreement, or the arrangement for any one Employee, on ${NOTICE_DAYS} days' written notice. If the Customer wants an Employee's arrangement to end sooner than that, it pays in lieu of notice the Service Fee and Employment Costs for the rest of the ${NOTICE_DAYS} days. Either party may end it immediately by notice if the other materially breaches it and does not fix the breach within 15 days of being told, or if an invoice remains unpaid 15 days after it was due.`,
           'When an Employee\'s arrangement ends, the Customer pays the Service Fee up to that Employee\'s last working day and all Employment Costs of a lawful exit, including notice pay, encashment of accrued leave and gratuity where it is payable. If the Customer wants to employ an Employee directly or through its own Indian entity, Ensaar will co-operate with the transfer and charges no conversion fee.',
         ],
       },
@@ -137,7 +142,8 @@ export function buildMasterAgreement(companyName: string, company: CompanyDetail
       {
         heading: '10. General',
         paragraphs: [
-          'This agreement is governed by the laws of India. Any dispute that the parties cannot settle within 30 days will be resolved by arbitration under the Arbitration and Conciliation Act, 1996, by a sole arbitrator, seated in Hyderabad, conducted in English. This agreement, with its Schedules, is the whole agreement on its subject. Changes must be in writing and signed by both parties.',
+          'This agreement is governed by the laws of India. Any dispute that the parties cannot settle within 30 days will be resolved by arbitration under the Arbitration and Conciliation Act, 1996, by a sole arbitrator, seated in Hyderabad, conducted in English. This agreement, with its Schedules, is the whole agreement on its subject. Except as the next paragraph allows, changes must be in writing and signed by both parties.',
+          `Ensaar may revise this agreement from time to time. Ensaar will send the Customer the revised version in writing, by email or through the client portal, at least ${NOTICE_DAYS} days before it takes effect. If the Customer does not agree to a revision, it may end this agreement by written notice given before that date, and the revision does not apply during its notice period. If the Customer continues to use the services after that date without giving notice, the revised version applies from that date and replaces this one.`,
           'The parties agree that this agreement and each Schedule may be signed electronically, and that an electronic signature has the same effect as a handwritten one under India\'s Information Technology Act, 2000 and the United States ESIGN Act.',
         ],
       },

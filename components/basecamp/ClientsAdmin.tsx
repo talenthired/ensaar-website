@@ -299,7 +299,7 @@ function NewClientForm({ onCreated, onClose }: { onCreated: (id: string, assiste
           {field('companyName', 'Company name', { placeholder: 'Pristinno Tech' })}
           {field('contactName', 'Contact name')}
           {field('contactEmail', 'Contact email', { type: 'email' }, assisted ? 'Gets portal access, but no email yet.' : 'Receives the portal invitation.')}
-          {field('defaultFeeUsd', 'Default fee (USD per employee per month)', { inputMode: 'numeric' }, `Published price is $${EOR_PRICE_USD}. Each hire can differ.`)}
+          {field('defaultFeeUsd', 'Default fee (USD per employee per month)', { inputMode: 'numeric' }, `The published fee starts at $${EOR_PRICE_USD}. Each hire can differ.`)}
           <label className="block text-sm sm:col-span-2">
             <span className="mb-1 block text-ink-secondary">Internal notes</span>
             <input className={inputClass} value={form.notes} onChange={(e) => set('notes', e.target.value)} placeholder="Not shown to the customer" />

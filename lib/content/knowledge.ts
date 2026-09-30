@@ -53,7 +53,7 @@ const INDIA_ENTRIES: KnowledgeEntry[] = [
       'how much', 'price', 'pricing', 'fee', 'rate', 'charges', 'deposit', 'setup fee',
     ],
     answer:
-      'Ensaar charges a flat $199 per employee per month, with no setup fee, no security deposit, and no minimum term. Salary and statutory employer contributions are passed through at cost. For comparison, India specialists usually charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+      'Ensaar\'s fee starts at $199 per employee per month, with no setup fee and no minimum term. Before each employee starts you pay a refundable deposit of one month\'s total cost for that employee, returned when they leave. Salary and statutory employer contributions are passed through at cost. For comparison, India specialists usually charge $99 to $399 and global platforms $499 to $699 for the same hire.',
     cta: 'contact',
   },
   {

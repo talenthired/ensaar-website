@@ -17,7 +17,7 @@ const OFFERS = [
     title: 'Employ someone in India in about two weeks.',
     description:
       'Ensaar becomes the legal employer. Compliant contract, payroll in rupees, provident fund, state insurance, professional tax, and TDS filed on time. You manage the person.',
-    proof: `Employer of Record, $${EOR_PRICE_USD} per person per month`,
+    proof: `Employer of Record, from $${EOR_PRICE_USD} per person per month`,
     action: 'See how it works',
     href: '/services/employer-of-record',
   },

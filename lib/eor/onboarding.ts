@@ -201,6 +201,8 @@ export function signatureBlockers(
  * agreement is signed" and "the employee is ready to start" are never confused.
  */
 export const EMPLOYEE_STEPS = [
+  // Clause 4: one month's total cost, before the start date.
+  { key: 'deposit', label: 'Deposit received from the customer' },
   { key: 'contract_issued', label: 'Employment contract issued to the employee' },
   { key: 'contract_signed', label: 'Employee signed the employment contract' },
   { key: 'identity', label: 'Identity, PAN and right to work verified' },

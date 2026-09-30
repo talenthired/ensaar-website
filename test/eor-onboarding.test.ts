@@ -210,7 +210,7 @@ describe('the agreement: master and Schedule A', () => {
     expect(text).toContain('Pristinno Tech Inc.');
     expect(text).toContain('EIN 12-3456789');
     expect(text).toContain('Delaware');
-    expect(text).toContain('no setup fee, no deposit and no minimum term');
+    expect(text).toContain('There is no setup fee and no minimum term');
     expect(text).toContain('passed through at cost, with no margin');
     expect(text).toContain('each an "Employee"');
     expect(text).not.toContain('Ravi Kumar');

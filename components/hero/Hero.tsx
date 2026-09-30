@@ -8,7 +8,7 @@ import { EOR_PRICE_USD } from '@/lib/content/india';
 
 const PROOF = [
   ['Since 2014', 'Technology and capability delivery'],
-  [`$${EOR_PRICE_USD}`, 'Per employee, per month, all in'],
+  [`From $${EOR_PRICE_USD}`, 'Per employee, per month'],
   ['5 to 10 days', 'Typical time to a first working day'],
   ['DailyByte™', 'AI Learn and AI Jobs paths'],
 ] as const;
@@ -87,12 +87,13 @@ export function Hero() {
             </div>
             <div className="border border-white/15 bg-black/25 p-7 shadow-[0_35px_90px_rgba(0,0,0,0.38)] backdrop-blur-sm md:p-9">
               <div className="flex items-baseline gap-2">
+                <span className="text-sm text-emerald-100/75">from</span>
                 <span className="font-display text-[3rem] leading-none text-white">${EOR_PRICE_USD}</span>
                 <span className="text-sm text-emerald-100/75">per employee, per month</span>
               </div>
               <p className="mt-3 text-sm text-emerald-100/75">
-                No setup fee, no deposit, no minimum term. Salary and statutory costs are passed
-                through at cost.
+                No setup fee, no minimum term, and a refundable one-month deposit. Salary and
+                statutory costs are passed through at cost.
               </p>
               <ul className="mt-7 flex flex-col gap-3 border-t border-white/15 pt-6">
                 {CARRIED.map((item) => (

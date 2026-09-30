@@ -46,6 +46,35 @@ describe('payment terms in the agreement', () => {
   });
 });
 
+describe('deposit, notice, dismissal and revisions in the agreement', () => {
+  const text = agreementToText(buildMasterAgreement('Pristinno Tech', null));
+
+  it('takes a refundable deposit of one month\'s total cost before each employee starts', () => {
+    expect(text).toContain('a deposit equal to one month\'s estimated Employment Costs and Service Fee for that Employee');
+    expect(text).toContain('Ensaar refunds the Deposit, less anything the Customer owes');
+    expect(text).not.toMatch(/no deposit/i);
+  });
+
+  it('gives 30 days\' notice on either side, or payment in lieu from the customer', () => {
+    expect(text).toContain('Either party may end this agreement, or the arrangement for any one Employee, on 30 days\' written notice');
+    expect(text).toContain('it pays in lieu of notice the Service Fee and Employment Costs for the rest of the 30 days');
+  });
+
+  it('has the customer notify Ensaar instead of dismissing anyone itself', () => {
+    expect(text).toContain('Only Ensaar, as employer, may discipline, suspend or dismiss an Employee');
+    expect(text).toContain('will not tell an Employee that their employment is ending');
+    expect(text).toContain('it will notify Ensaar in writing promptly');
+    expect(text).toContain('an improvement period of at least 30 days');
+    expect(text).toContain('where serious misconduct is proven, Ensaar may dismiss without notice');
+  });
+
+  it('can be revised on notice, with a way out for a customer who does not agree', () => {
+    expect(text).toContain('Ensaar may revise this agreement from time to time');
+    expect(text).toContain('at least 30 days before it takes effect');
+    expect(text).toContain('it may end this agreement by written notice given before that date');
+  });
+});
+
 describe('invoice dates', () => {
   it('defaults to the 15th of the current month, due 7 days later', () => {
     expect(defaultInvoiceDates('2026-10-03')).toEqual({ issuedOn: '2026-10-15', dueOn: '2026-10-22', period: '2026-10' });

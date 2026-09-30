@@ -15,7 +15,9 @@
 export const INDIA_RULES_ASOF = '2026-09-23';
 
 /**
- * Published EOR price. Flat, per employee, per month.
+ * Published EOR price: where the fee starts, per employee, per month. A
+ * client's actual fee is agreed with them and written into each Schedule A, so
+ * the site always says "from", never that everyone pays this.
  *
  * Stated in USD because the buyer is a foreign company and pays in USD. India
  * specialists sit at roughly $99 to $399 and the global platforms at $499 to
@@ -89,6 +91,7 @@ export const EOR_EXCLUDED: string[] = [
   'The salary itself, and any bonus or allowance you agree with the employee',
   'Statutory employer contributions, which are passed through at cost with no margin',
   'Equipment you choose to buy, and reimbursements you approve',
+  'A refundable deposit of one month\'s total cost for each employee, paid before they start and returned when they leave',
   'Recruitment, if you want Ensaar to find the person rather than bring your own',
 ];
 

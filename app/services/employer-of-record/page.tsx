@@ -90,11 +90,12 @@ export default function EmployerOfRecordPage() {
                 Our price
               </div>
               <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-sm text-ink-secondary">from</span>
                 <span className="font-display text-[3.25rem] leading-none text-ink-primary">${EOR_PRICE_USD}</span>
                 <span className="text-sm text-ink-secondary">per employee, per month</span>
               </div>
               <ul className="mt-6 flex flex-col gap-2.5 text-[0.9375rem] text-ink-secondary">
-                {['No setup fee', 'No security deposit', 'No minimum term', 'Statutory costs passed through at cost'].map((line) => (
+                {['No setup fee', 'No minimum term', 'One month refundable deposit', 'Statutory costs passed through at cost'].map((line) => (
                   <li key={line} className="flex items-start gap-2.5">
                     <Check className="mt-1 h-4 w-4 shrink-0 text-accent-primary" aria-hidden />
                     {line}
@@ -147,7 +148,7 @@ export default function EmployerOfRecordPage() {
           </h2>
           <p className="mt-5 max-w-2xl leading-relaxed text-ink-secondary">
             Your monthly invoice is the salary, the statutory employer contributions at cost, and our
-            ${EOR_PRICE_USD}. Recruitment is separate and only applies if we find the person:{' '}
+            fee, which starts at ${EOR_PRICE_USD} per employee. Recruitment is separate and only applies if we find the person:{' '}
             {RECRUITMENT_FEE_PERCENT}% of annual salary, one month, charged when they join, with a{' '}
             {REPLACEMENT_GUARANTEE_DAYS}-day replacement if it does not work out.
           </p>

@@ -191,7 +191,7 @@ function getRecommendation(intent: AdvisorIntent, answers: AnswerMap) {
       return {
         title: 'Employer of Record',
         description:
-          'Ensaar employs your hires in India, runs payroll and every statutory filing, and you manage the work. A flat fee per person per month, with no entity to set up.',
+          'Ensaar employs your hires in India, runs payroll and every statutory filing, and you manage the work. A monthly fee per person, with no entity to set up.',
         workType: 'Employer of Record hiring in India',
       };
     }
