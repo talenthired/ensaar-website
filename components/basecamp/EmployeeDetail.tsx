@@ -9,7 +9,7 @@ import type { VoidedSignature } from '@/lib/eor/companies';
 import type { OutboxEntry } from '@/lib/notify/outbox';
 import {
   EMPLOYEE_STATUS_LABELS,
-  EMPLOYEE_STEPS,
+  employeeSteps,
   INDIA_STATES,
   pricingLabel,
   formatDay,
@@ -22,6 +22,7 @@ import {
 import { Badge, Notice, STATUS_TONE, buttonClass, inputClass, primaryButtonClass } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
 import { EmailLog } from './ClientDetail';
+import { EmployeePortalPanel, type PortalData } from './EmployeePortalPanel';
 
 type Detail = {
   employee: EorEmployee;
@@ -30,7 +31,7 @@ type Detail = {
   voided: VoidedSignature[];
   messages: OutboxEntry[];
   viewer: { email: string | null; bootstrap: boolean };
-};
+} & PortalData;
 
 const stamp = (value: string | null) => (value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
 
@@ -62,7 +63,7 @@ export function EmployeeDetail({ id }: { id: string }) {
     void load();
   }, [load]);
 
-  async function act(payload: Record<string, unknown>, label: string, success?: string): Promise<boolean> {
+  async function act(payload: Record<string, unknown>, label: string, success?: string): Promise<Record<string, unknown> | null> {
     setBusy(label);
     setError(null);
     setOk(null);
@@ -81,10 +82,10 @@ export function EmployeeDetail({ id }: { id: string }) {
       }
       if (success) setOk(success);
       await load();
-      return true;
+      return json;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to do that.');
-      return false;
+      return null;
     } finally {
       setBusy(null);
     }
@@ -94,7 +95,7 @@ export function EmployeeDetail({ id }: { id: string }) {
   const { employee: e, company } = detail;
   const named = !detail.viewer.bootstrap;
   const editable = ['draft', 'awaiting_signature', 'signed'].includes(e.status);
-  const doneSteps = e.employeeCase ? Object.values(e.employeeCase.steps).filter(Boolean).length : 0;
+  const doneSteps = e.employeeCase ? employeeSteps(e).filter((s) => e.employeeCase?.steps[s.key]).length : 0;
 
   return (
     <div className="space-y-6">
@@ -182,6 +183,15 @@ export function EmployeeDetail({ id }: { id: string }) {
         <ExitForm busy={busy === 'exit'} onSubmit={async (exitDate, reason) => (await act({ action: 'exit', exitDate, reason }, 'exit', 'Exit recorded.')) && setPanel(null)} />
       )}
 
+      <EmployeePortalPanel
+        employeeId={e.id}
+        hasEmail={Boolean(e.employeeEmail)}
+        canInvite={!['draft', 'cancelled'].includes(e.status)}
+        named={named}
+        data={detail}
+        act={act}
+      />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-line-subtle bg-bg-primary p-5">
           <h2 className="text-sm font-semibold text-ink-primary">Offer</h2>
@@ -194,6 +204,7 @@ export function EmployeeDetail({ id }: { id: string }) {
               <Row label="EOR fee" value={`${formatUsd(e.monthlyFeeUsd ?? 0)} a month`} />
             )}
             <Row label={e.pricing === 'loaded' ? 'Annual gross salary (not shown to the customer)' : 'Annual gross salary'} value={formatInr(e.salaryInr)} />
+            <Row label="Deposit" value={e.depositRequired ? 'One month, refundable' : 'Not required at signing'} />
             <Row label="Start date" value={<span className={cn(e.startDate < todayInIndia() && ['draft', 'awaiting_signature', 'signed', 'onboarding'].includes(e.status) && 'font-medium text-orange-700')}>{formatDay(e.startDate)}</span>} />
             <Row label="Added" value={`${stamp(e.createdAt)} by ${e.createdBy ?? '—'}`} />
             {e.signedAt && <Row label="Customer signed" value={`${e.signedName} <${e.signedEmail}>, ${stamp(e.signedAt)}${e.signedIp ? ` from ${e.signedIp}` : ''}`} />}
@@ -206,7 +217,7 @@ export function EmployeeDetail({ id }: { id: string }) {
         <section className="rounded-xl border border-line-subtle bg-bg-primary p-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <h2 className="text-sm font-semibold text-ink-primary">
-              Onboarding {e.employeeCase ? `(${doneSteps} of ${EMPLOYEE_STEPS.length})` : ''}
+              Onboarding {e.employeeCase ? `(${doneSteps} of ${employeeSteps(e).length})` : ''}
             </h2>
             {e.employeeCase && (
               <form className="flex items-end gap-2" onSubmit={(ev) => { ev.preventDefault(); void act({ action: 'owner', owner: new FormData(ev.currentTarget).get('owner') }, 'owner', 'Owner saved.'); }}>
@@ -222,7 +233,7 @@ export function EmployeeDetail({ id }: { id: string }) {
           </div>
           {e.employeeCase ? (
             <ul className="mt-3 space-y-2">
-              {EMPLOYEE_STEPS.map((step) => {
+              {employeeSteps(e).map((step) => {
                 const done = e.employeeCase?.steps[step.key];
                 return (
                   <li key={step.key}>
@@ -285,6 +296,7 @@ function EditOffer({ employee, errors, setErrors, busy, onSubmit }: { employee: 
     pricing: employee.pricing as string,
     monthlyFeeUsd: employee.monthlyFeeUsd === null ? '' : String(employee.monthlyFeeUsd),
     loadedCostUsd: employee.loadedCostUsd === null ? '' : String(employee.loadedCostUsd),
+    depositRequired: employee.depositRequired ? 'yes' : '',
     notes: employee.notes ?? '',
   });
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));

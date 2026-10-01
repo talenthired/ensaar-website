@@ -201,13 +201,13 @@ export function signatureBlockers(
  * agreement is signed" and "the employee is ready to start" are never confused.
  */
 export const EMPLOYEE_STEPS = [
-  // Clause 4: one month's total cost, before the start date.
+  // Clause 4: one month's total cost before the start date, for an employee whose Schedule A asks for it.
   { key: 'deposit', label: 'Deposit received from the customer' },
-  { key: 'contract_issued', label: 'Employment contract issued to the employee' },
-  { key: 'contract_signed', label: 'Employee signed the employment contract' },
+  { key: 'contract_issued', label: 'Offer letter and employment agreement issued to the employee' },
+  { key: 'contract_signed', label: 'Employee signed the offer letter and employment agreement' },
   { key: 'identity', label: 'Identity, PAN and right to work verified' },
   { key: 'bank_tax', label: 'Bank and tax details collected' },
-  { key: 'uan', label: 'Provident fund (UAN) linked' },
+  { key: 'uan', label: 'Provident fund (UAN) linked, once Ensaar offers provident fund' },
   { key: 'payroll', label: 'Added to payroll' },
   { key: 'equipment', label: 'Equipment and access arranged' },
   { key: 'first_day', label: 'First working day confirmed' },
@@ -218,6 +218,11 @@ export type EmployeeCase = {
   dueDate: string;
   steps: Record<string, { doneAt: string; doneBy: string } | null>;
 };
+
+/** The checklist for one employee: the deposit step only when their Schedule A asks for a deposit. */
+export function employeeSteps(e: { depositRequired: boolean }) {
+  return EMPLOYEE_STEPS.filter((s) => s.key !== 'deposit' || e.depositRequired);
+}
 
 export function isEmployeeStep(value: unknown): value is EmployeeStepKey {
   return typeof value === 'string' && EMPLOYEE_STEPS.some((s) => s.key === value);
@@ -379,6 +384,9 @@ const PRICING_WORDS: Record<string, Pricing> = {
   loaded: 'loaded', 'unit loaded cost': 'loaded', 'loaded cost': 'loaded', 'unit cost': 'loaded', 'all-in': 'loaded', 'all in': 'loaded',
 };
 
+/** How a form or a spreadsheet says "yes, take a deposit". Anything else is no. */
+const YES = new Set(['yes', 'y', 'true', '1', 'required', 'deposit']);
+
 /** Sanity bound on a monthly all-in cost, against a slipped digit. */
 export const MAX_LOADED_COST_USD = 100_000;
 
@@ -401,6 +409,11 @@ export type EmployeeInput = {
   monthlyFeeUsd: number | null;
   /** The all-in monthly amount, under 'loaded' pricing; null under 'fee'. */
   loadedCostUsd: number | null;
+  /**
+   * Whether this employee needs the one-month deposit (clause 4). Ensaar's choice,
+   * hire by hire: a safety net for a high salary, say. Off unless chosen.
+   */
+  depositRequired: boolean;
   notes: string | null;
 };
 
@@ -462,10 +475,13 @@ export function validateEmployee(input: unknown, options: { now?: Date } = {}): 
 
   if (!(INDIA_STATES as readonly string[]).includes(workState)) errors.workState = 'Choose the state or union territory the employee will work from.';
 
+  const depositRaw = body.depositRequired;
+  const depositRequired = depositRaw === true || (typeof depositRaw === 'string' && YES.has(depositRaw.trim().toLowerCase()));
+
   if (Object.keys(errors).length || !pricing) return { ok: false, errors };
   return {
     ok: true,
-    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, pricing, monthlyFeeUsd, loadedCostUsd, notes: notes || null },
+    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, pricing, monthlyFeeUsd, loadedCostUsd, depositRequired, notes: notes || null },
   };
 }
 
@@ -482,13 +498,14 @@ const CSV_COLUMNS: Record<string, keyof EmployeeInput> = {
   fee: 'monthlyFeeUsd', 'monthly fee': 'monthlyFeeUsd', 'fee usd': 'monthlyFeeUsd', 'monthly fee usd': 'monthlyFeeUsd', 'eor fee': 'monthlyFeeUsd', 'eor fee usd': 'monthlyFeeUsd',
   'loaded cost': 'loadedCostUsd', 'loaded cost usd': 'loadedCostUsd', 'unit loaded cost': 'loadedCostUsd', 'unit loaded cost usd': 'loadedCostUsd',
   'monthly loaded cost usd': 'loadedCostUsd',
+  deposit: 'depositRequired', 'deposit required': 'depositRequired', 'one month deposit': 'depositRequired',
   notes: 'notes',
 };
 
 export const CSV_TEMPLATE =
-  'Name,Email,Job title,Annual salary INR,Start date,Work state,Pricing,Monthly fee USD,Loaded cost USD\n' +
-  'Anita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,Salary + EOR fee,249,\n' +
-  'Ravi Kumar,ravi@example.com,QA Analyst,1500000,2026-11-09,Telangana,Unit loaded cost,,2400\n';
+  'Name,Email,Job title,Annual salary INR,Start date,Work state,Pricing,Monthly fee USD,Loaded cost USD,Deposit\n' +
+  'Anita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,Salary + EOR fee,249,,No\n' +
+  'Ravi Kumar,ravi@example.com,QA Analyst,1500000,2026-11-09,Telangana,Unit loaded cost,,2400,Yes\n';
 
 /** Split one CSV line, honouring double quotes (a comma inside "Rao, Anita" stays in the field). */
 function splitCsvLine(line: string): string[] {

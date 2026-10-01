@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { agreementToText, buildMasterAgreement } from '@/lib/eor/agreement';
+import { agreementToText, buildMasterAgreement, buildSchedule } from '@/lib/eor/agreement';
+import { employeeSteps, validateEmployee } from '@/lib/eor/onboarding';
 import {
   addDays,
   billingNow,
@@ -49,10 +50,35 @@ describe('payment terms in the agreement', () => {
 describe('deposit, notice, dismissal and revisions in the agreement', () => {
   const text = agreementToText(buildMasterAgreement('Pristinno Tech', null));
 
-  it('takes a refundable deposit of one month\'s total cost before each employee starts', () => {
-    expect(text).toContain('a deposit equal to one month\'s estimated Monthly Charges for that Employee');
+  it('always provides for a refundable one-month deposit, required at Ensaar\'s discretion', () => {
+    expect(text).toContain('The Customer pays Ensaar a refundable deposit for an Employee, equal to one month\'s estimated Monthly Charges for that Employee (the "Deposit"), whenever Ensaar requires one');
+    expect(text).toContain('Whether to require a Deposit, and for which Employees, is at Ensaar\'s discretion');
+    expect(text).toContain('either in the Employee\'s Schedule A, in which case it is payable before that Employee\'s start date');
+    expect(text).toContain('or later by written notice, in which case it is payable within 7 days of the notice');
     expect(text).toContain('Ensaar refunds the Deposit, less anything the Customer owes');
-    expect(text).not.toMatch(/no deposit/i);
+  });
+
+  it('each Schedule A says whether a deposit is required, and the checklist asks for it only then', () => {
+    const employee = (deposit: boolean) => ({
+      employeeName: 'Ravi Kumar', employeeEmail: null, jobTitle: 'Engineer', salaryInr: 4_800_000, startDate: '2026-11-02', workState: 'Karnataka',
+      pricing: 'fee' as const, monthlyFeeUsd: 249, loadedCostUsd: null, depositRequired: deposit, notes: null,
+    });
+    const schedule = (deposit: boolean) => agreementToText(buildSchedule({ number: 1, companyName: 'X', company: null, masterHash: null, employee: employee(deposit) }));
+    expect(schedule(true)).toContain("Deposit: Required: one month's Monthly Charges, refundable (clause 4)");
+    expect(schedule(false)).toContain('Deposit: Not required at signing (clause 4)');
+    expect(employeeSteps({ depositRequired: true }).map((s) => s.key)).toContain('deposit');
+    expect(employeeSteps({ depositRequired: false }).map((s) => s.key)).not.toContain('deposit');
+    expect(employeeSteps({ depositRequired: false })).toHaveLength(employeeSteps({ depositRequired: true }).length - 1);
+  });
+
+  it('a deposit is off unless chosen, and a spreadsheet can ask for it', () => {
+    const base = { employeeName: 'Ravi Kumar', jobTitle: 'Engineer', salaryInr: '4800000', startDate: '2026-11-02', workState: 'Karnataka', monthlyFeeUsd: '249' };
+    const now = { now: new Date('2026-10-01T00:00:00Z') };
+    const read = (extra: Record<string, unknown>) => (validateEmployee({ ...base, ...extra }, now) as { ok: true; value: { depositRequired: boolean } }).value.depositRequired;
+    expect(read({})).toBe(false);
+    expect(read({ depositRequired: '' })).toBe(false);
+    expect(read({ depositRequired: 'No' })).toBe(false);
+    for (const yes of ['yes', 'Yes', 'Y', 'true', '1', 'required', true]) expect(read({ depositRequired: yes }), String(yes)).toBe(true);
   });
 
   it('gives 30 days\' notice on either side, or payment in lieu from the customer', () => {
@@ -191,9 +217,10 @@ describe('the email layout', () => {
   it('carries the Ensaar logo, the company name and the support address', () => {
     expect(mail.html).toContain('src="https://ensaar.com/ensaar-logo.png"');
     expect(mail.html).toContain('alt="Ensaar Global"');
-    expect(mail.html).toContain('Ensaar Global Pvt. Ltd.');
+    expect(mail.html).toContain('Ensaar Global Private Limited');
+    expect(mail.html).toContain('GSTIN 36AAECE2158G1ZS');
     expect(mail.html).toContain('mailto:support@ensaar.com');
-    expect(mail.text).toContain('Ensaar Global Pvt. Ltd., Hyderabad, Telangana, India');
+    expect(mail.text).toContain('Ensaar Global Private Limited, Second Floor, H.No 16-11-20/G/204, Bhavani Apartments, Saleem Nagar, Malakpet, Hyderabad, Telangana 500036, India. GSTIN 36AAECE2158G1ZS');
   });
 
   it('escapes everything a caller passes in', () => {

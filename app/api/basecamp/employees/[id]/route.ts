@@ -14,6 +14,12 @@ import {
 } from '@/lib/eor/employees';
 import { validateEmployee } from '@/lib/eor/onboarding';
 import type { Outcome } from '@/lib/eor/outcome';
+import { HOLIDAYS_PER_YEAR, choicesAllowed } from '@/lib/eor/holidays';
+import { decideHolidayPlan, holidayView, isDocumentKind, issueEmployeeDocument, listEmployeeDocuments, taxView } from '@/lib/eor/team';
+import { inviteEmployee } from '@/lib/eor/team-auth';
+import { holidayYear } from '@/lib/eor/years';
+import { requireDatabase } from '@/lib/db/client';
+import { emailConfigured } from '@/lib/notify/outbox';
 
 export const runtime = 'nodejs';
 
@@ -26,11 +32,15 @@ export async function GET(request: NextRequest, context: Context) {
   const { id } = await context.params;
   const employee = await getEmployee(id);
   if (!employee) return NextResponse.json({ error: 'No such employee.' }, { status: 404 });
-  const [company, scheduleText, voided, messages] = await Promise.all([
+  const year = holidayYear(request.nextUrl.searchParams.get('year'));
+  const [company, scheduleText, voided, messages, documents, tax, holidays] = await Promise.all([
     getCompany(employee.companyId),
     getScheduleText(id),
     listVoidedSignatures(employee.companyId, id),
     listMessages(employee.companyId),
+    listEmployeeDocuments(id),
+    taxView(employee),
+    holidayView(employee, year),
   ]);
   return NextResponse.json({
     employee,
@@ -38,6 +48,10 @@ export async function GET(request: NextRequest, context: Context) {
     scheduleText,
     voided,
     messages: messages.filter((m) => m.kind.startsWith('eor.schedules')).slice(0, 10),
+    documents,
+    tax,
+    holidays: { ...holidays, allowed: choicesAllowed(holidays.catalogue), perYear: HOLIDAYS_PER_YEAR },
+    emailConfigured: emailConfigured(),
     viewer: { email: gate.session.email, bootstrap: gate.session.bootstrap },
   });
 }
@@ -53,7 +67,7 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['update', 'countersign', 'exit', 'cancel'].includes(action)) {
+  if (['update', 'countersign', 'exit', 'cancel', 'issue_document', 'invite_employee', 'holiday_decision'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
@@ -92,6 +106,32 @@ export async function POST(request: NextRequest, context: Context) {
       return done(await changeEmployee(id, { kind: 'exit', exitDate: str(body.exitDate, 10), reason: str(body.reason) }, actor), 'eor.employee.exit');
     case 'cancel':
       return done(await changeEmployee(id, { kind: 'cancel' }, actor), 'eor.employee.cancel');
+    // The employee portal: documents to sign, an invitation, and Ensaar deciding a holiday choice.
+    case 'issue_document': {
+      if (!isDocumentKind(body.kind)) return NextResponse.json({ error: 'Choose the offer letter or the employment agreement.' }, { status: 400 });
+      const issued = await issueEmployeeDocument(id, body.kind, { name: gate.session.name ?? '', label: actor });
+      if (!issued.ok) return NextResponse.json({ error: issued.error }, { status: issued.status });
+      await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.document.issue', target: id, metadata: { kind: body.kind, hash: issued.value.document.hash } });
+      await deliverSoon();
+      // The link is returned so staff can pass it on directly if email is not working.
+      return NextResponse.json({ document: issued.value.document, link: issued.value.link, emailConfigured: emailConfigured() });
+    }
+    case 'invite_employee': {
+      if (!employee.employeeEmail) return NextResponse.json({ error: "Add the employee's email address first." }, { status: 409 });
+      if (['draft', 'cancelled'].includes(employee.status)) return NextResponse.json({ error: 'Send the schedule to the client first; the employee portal opens once there is an offer.' }, { status: 409 });
+      const link = await requireDatabase().begin((tx) => inviteEmployee(tx, employee, 'You can now sign in to the Ensaar employee portal.'));
+      await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.invite', target: id });
+      await deliverSoon();
+      return NextResponse.json({ link, emailConfigured: emailConfigured() });
+    }
+    case 'holiday_decision': {
+      if (body.decision !== 'approved' && body.decision !== 'rejected') return NextResponse.json({ error: 'Approve or ask for changes.' }, { status: 400 });
+      return done(
+        await decideHolidayPlan({ employeeId: id, year: holidayYear(String(body.year ?? '')), approve: body.decision === 'approved', note: str(body.note, 500) || null, by: actor, role: 'ensaar' }),
+        'eor.employee.holidays.decide',
+        { year: body.year, decision: body.decision },
+      );
+    }
     default:
       return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
   }

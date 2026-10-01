@@ -16,7 +16,7 @@ import {
 } from './companies';
 import { schedulesCountersignedEmail, schedulesReadyEmail, schedulesSignedCustomerEmail, schedulesSignedStaffEmail } from './email';
 import {
-  EMPLOYEE_STEPS,
+  employeeSteps,
   isEmployeeStatus,
   masterSigned,
   todayInIndia,
@@ -79,6 +79,7 @@ type Row = {
   pricing: string;
   monthly_fee_usd: number | null;
   loaded_cost_usd: number | null;
+  deposit_required: boolean;
   notes: string | null;
   schedule_number: number | null;
   schedule_version: string | null;
@@ -99,7 +100,7 @@ type Row = {
 
 const COLUMNS = [
   'id', 'company_id', 'status', 'employee_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
-  'pricing', 'monthly_fee_usd', 'loaded_cost_usd', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
+  'pricing', 'monthly_fee_usd', 'loaded_cost_usd', 'deposit_required', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
   'signed_at', 'signed_ip', 'countersigned_by', 'countersigned_at', 'employee_case', 'exit_date', 'exit_reason',
   'created_by', 'created_at', 'updated_at',
 ];
@@ -121,6 +122,7 @@ function toEmployee(r: Row): EorEmployee {
     pricing: r.pricing === 'loaded' ? 'loaded' : 'fee',
     monthlyFeeUsd: r.monthly_fee_usd,
     loadedCostUsd: r.loaded_cost_usd,
+    depositRequired: r.deposit_required,
     notes: r.notes,
     scheduleNumber: r.schedule_number,
     scheduleVersion: r.schedule_version,
@@ -281,9 +283,9 @@ export async function addEmployees(
     for (const e of inputs) {
       const rows = await tx<Row[]>`
         INSERT INTO ensaar_eor_employees (id, company_id, employee_name, employee_email, job_title, salary_inr, start_date,
-                                          work_state, pricing, monthly_fee_usd, loaded_cost_usd, notes, created_by)
+                                          work_state, pricing, monthly_fee_usd, loaded_cost_usd, deposit_required, notes, created_by)
         VALUES (${randomUUID()}, ${companyId}, ${e.employeeName}, ${e.employeeEmail}, ${e.jobTitle}, ${e.salaryInr},
-                ${e.startDate}, ${e.workState}, ${e.pricing}, ${e.monthlyFeeUsd}, ${e.loadedCostUsd}, ${e.notes}, ${actor})
+                ${e.startDate}, ${e.workState}, ${e.pricing}, ${e.monthlyFeeUsd}, ${e.loadedCostUsd}, ${e.depositRequired}, ${e.notes}, ${actor})
         RETURNING ${tx(COLUMNS)}
       `;
       out.push(toEmployee(rows[0]!));
@@ -436,8 +438,20 @@ export async function countersignSchedules(
       const employeeCase: EmployeeCase = {
         owner: countersignedBy,
         dueDate: e.startDate,
-        steps: Object.fromEntries(EMPLOYEE_STEPS.map((s) => [s.key, null])),
+        steps: Object.fromEntries(employeeSteps(e).map((s) => [s.key, null])),
       };
+      // The offer letter and agreement may already be out, or signed, before the checklist opens.
+      const docs = await tx<{ kind: string; status: string; issued_by: string | null; issued_at: Date; signed_at: Date | null }[]>`
+        SELECT kind, status, issued_by, issued_at, signed_at FROM ensaar_employee_documents WHERE employee_id = ${e.id} AND status <> 'void' ORDER BY issued_at
+      `;
+      if (docs.length && 'contract_issued' in employeeCase.steps) {
+        employeeCase.steps.contract_issued = { doneAt: docs[0]!.issued_at.toISOString(), doneBy: docs[0]!.issued_by ?? 'Ensaar' };
+      }
+      const signed = docs.filter((d) => d.status === 'signed');
+      if (new Set(signed.map((d) => d.kind)).size === 2 && 'contract_signed' in employeeCase.steps) {
+        const last = signed.reduce((a, b) => (a.signed_at! > b.signed_at! ? a : b));
+        employeeCase.steps.contract_signed = { doneAt: last.signed_at!.toISOString(), doneBy: 'Employee portal' };
+      }
       const rows = await tx<Row[]>`
         UPDATE ensaar_eor_employees SET status = 'onboarding', countersigned_by = ${countersignedBy}, countersigned_at = NOW(),
           employee_case = ${tx.json(employeeCase as never)}, updated_at = NOW()
@@ -495,7 +509,7 @@ export async function updateEmployee(id: string, input: EmployeeInput, actor: st
     const rows = await tx<Row[]>`
       UPDATE ensaar_eor_employees SET employee_name = ${input.employeeName}, employee_email = ${input.employeeEmail},
         job_title = ${input.jobTitle}, salary_inr = ${input.salaryInr}, start_date = ${input.startDate}, work_state = ${input.workState},
-        pricing = ${input.pricing}, monthly_fee_usd = ${input.monthlyFeeUsd}, loaded_cost_usd = ${input.loadedCostUsd}, notes = ${input.notes},
+        pricing = ${input.pricing}, monthly_fee_usd = ${input.monthlyFeeUsd}, loaded_cost_usd = ${input.loadedCostUsd}, deposit_required = ${input.depositRequired}, notes = ${input.notes},
         status = ${sent ? 'awaiting_signature' : 'draft'},
         schedule_version = ${s?.doc.version ?? null}, schedule_text = ${s?.text ?? null}, schedule_hash = ${s?.hash ?? null},
         signed_name = NULL, signed_email = NULL, signed_at = NULL, signed_ip = NULL, signed_user_agent = NULL, updated_at = NOW()
@@ -549,7 +563,7 @@ export async function changeEmployee(
         if (!e.employeeCase || !['onboarding', 'active'].includes(e.status)) return refuse(409, 'The checklist opens when the schedule is countersigned.');
         const next: EmployeeCase = { ...e.employeeCase, steps: { ...e.employeeCase.steps } };
         if (change.kind === 'step') {
-          if (!EMPLOYEE_STEPS.some((s) => s.key === change.step)) return refuse(400, 'Unknown step.');
+          if (!employeeSteps(e).some((s) => s.key === change.step)) return refuse(400, 'Unknown step.');
           next.steps[change.step] = change.done ? { doneAt: new Date().toISOString(), doneBy: actor } : null;
         } else {
           next.owner = change.owner.trim().slice(0, 200) || null;

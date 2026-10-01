@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Notice, buttonClass, inputClass, primaryButtonClass } from '@/components/eor/ui';
 
-const EMPTY = { employeeName: '', employeeEmail: '', jobTitle: '', salaryInr: '', startDate: '', workState: '', pricing: 'fee', monthlyFeeUsd: '', loadedCostUsd: '', notes: '' };
+const EMPTY = { employeeName: '', employeeEmail: '', jobTitle: '', salaryInr: '', startDate: '', workState: '', pricing: 'fee', monthlyFeeUsd: '', loadedCostUsd: '', depositRequired: '', notes: '' };
 
 /** What each pricing option means for the customer, shown where the option is chosen. */
 export const PRICING_HINTS: Record<Pricing, string> = {
@@ -59,7 +59,7 @@ async function post(companyId: string, employees: unknown[], send: boolean) {
 }
 
 /** The pricing option and the one amount it needs. Shared by the add form and the edit form. */
-export function PricingFields({ form, errors, set }: { form: { pricing: string; monthlyFeeUsd: string; loadedCostUsd: string }; errors: Errors; set: (key: 'pricing' | 'monthlyFeeUsd' | 'loadedCostUsd', value: string) => void }) {
+export function PricingFields({ form, errors, set }: { form: { pricing: string; monthlyFeeUsd: string; loadedCostUsd: string; depositRequired: string }; errors: Errors; set: (key: 'pricing' | 'monthlyFeeUsd' | 'loadedCostUsd' | 'depositRequired', value: string) => void }) {
   const loaded = form.pricing === 'loaded';
   const key = loaded ? 'loadedCostUsd' : 'monthlyFeeUsd';
   const cost = parseLoadedCostUsd(form.loadedCostUsd);
@@ -82,6 +82,13 @@ export function PricingFields({ form, errors, set }: { form: { pricing: string; 
         ) : (
           <span className="mt-1 block text-xs text-ink-secondary">{loaded ? (cost ? `${formatUsd(cost)} a month, ${formatUsd(cost * 12)} a year, all-in.` : 'Agreed with the client for this employee.') : 'Agreed with the client for this employee.'}</span>
         )}
+      </label>
+      <label className="flex items-start gap-3 self-center text-sm text-ink-primary">
+        <input id="emp-deposit" type="checkbox" className="mt-0.5 h-4 w-4 shrink-0" checked={form.depositRequired === 'yes'} onChange={(e) => set('depositRequired', e.target.checked ? 'yes' : '')} />
+        <span>
+          Ask for a one-month deposit
+          <span className="block text-xs text-ink-secondary">Refundable. Use it as a safety net, for example when the salary is high.</span>
+        </span>
       </label>
       <p className="text-xs text-ink-secondary sm:col-span-3">{PRICING_HINTS[loaded ? 'loaded' : 'fee']}</p>
     </>
@@ -221,8 +228,8 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
     <div className="space-y-3 rounded-xl border border-line-subtle bg-bg-primary p-4">
       <p className="text-sm text-ink-secondary">
         One row per employee. Columns: Name, Email, Job title, Annual salary INR, Start date (YYYY-MM-DD), Work state, Pricing
-        (&ldquo;Salary + EOR fee&rdquo; or &ldquo;Unit loaded cost&rdquo;), and then Monthly fee USD or Loaded cost USD to match. Each row
-        carries its own amount; nothing is added until every row is valid.
+        (&ldquo;Salary + EOR fee&rdquo; or &ldquo;Unit loaded cost&rdquo;), and then Monthly fee USD or Loaded cost USD to match, and optionally Deposit
+        (Yes to ask for a one-month deposit). Each row carries its own terms; nothing is added until every row is valid.
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <input ref={input} type="file" accept=".csv,text/csv" className="hidden" aria-label="Choose a CSV file" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void read(f); }} />
@@ -242,7 +249,7 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
             {rows.length} row{rows.length === 1 ? '' : 's'}: {rows.length - invalid} ready{invalid ? `, ${invalid} need fixing in the spreadsheet` : ''}.
           </p>
           <div className="max-h-96 overflow-auto rounded-lg border border-line-subtle">
-            <table className="w-full min-w-[820px] text-left text-xs">
+            <table className="w-full min-w-[880px] text-left text-xs">
               <thead className="sticky top-0 bg-bg-secondary text-ink-secondary">
                 <tr>
                   <th className="px-2 py-2">#</th>
@@ -253,6 +260,7 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
                   <th className="px-2 py-2">State</th>
                   <th className="px-2 py-2">Pricing</th>
                   <th className="px-2 py-2">Customer pays</th>
+                  <th className="px-2 py-2">Deposit</th>
                   <th className="px-2 py-2">Problems</th>
                 </tr>
               </thead>
@@ -267,6 +275,7 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
                     <td className="px-2 py-1.5">{r.result.ok ? r.result.value.workState : r.raw.workState}</td>
                     <td className="px-2 py-1.5">{r.result.ok ? pricingLabel(r.result.value.pricing) : r.raw.pricing ?? ''}</td>
                     <td className="px-2 py-1.5">{r.result.ok ? customerPrice(r.result.value) : r.raw.monthlyFeeUsd ?? r.raw.loadedCostUsd ?? ''}</td>
+                    <td className="px-2 py-1.5">{r.result.ok ? (r.result.value.depositRequired ? 'Yes' : 'No') : r.raw.depositRequired ?? ''}</td>
                     <td className="px-2 py-1.5 text-red-700">{r.result.ok ? '' : Object.values(r.result.errors).join(' ')}</td>
                   </tr>
                 ))}

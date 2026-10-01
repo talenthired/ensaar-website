@@ -80,7 +80,17 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'no-referrer' },
         ],
       },
+      // The employee portal shows salaries, tax declarations and signed documents.
+      ...['/team', '/team/:path*'].map((source) => ({
+        source,
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      })),
       { source: '/api/portal/:path*', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
+      { source: '/api/team/:path*', headers: [{ key: 'Cache-Control', value: 'no-store, max-age=0' }] },
       // Basecamp holds lead PII: never cache it, never let it be indexed.
       {
         source: '/basecamp/:path*',

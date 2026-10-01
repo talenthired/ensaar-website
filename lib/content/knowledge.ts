@@ -42,7 +42,7 @@ const INDIA_ENTRIES: KnowledgeEntry[] = [
       'legal employer', 'without entity', 'no entity', 'india hire', 'record',
     ],
     answer:
-      'Yes. Ensaar acts as the legal employer in India so you can hire without registering a company there. We issue the Indian employment contract with your IP terms, pay salary in rupees, and file provident fund, state insurance, professional tax, and TDS. You manage the work day to day. Onboarding usually takes five to ten working days.',
+      'Yes. Ensaar acts as the legal employer in India so you can hire without registering a company there. We issue the Indian employment contract with your IP terms, pay salary in rupees, and file professional tax, TDS and state insurance where it applies. You manage the work day to day. Onboarding usually takes five to ten working days.',
     cta: 'contact',
   },
   {
@@ -53,7 +53,7 @@ const INDIA_ENTRIES: KnowledgeEntry[] = [
       'how much', 'price', 'pricing', 'fee', 'rate', 'charges', 'deposit', 'setup fee',
     ],
     answer:
-      'Ensaar\'s fee starts from $199 per employee per month and is agreed with each client, with no setup fee and no minimum term. Before each employee starts you pay a refundable deposit of one month\'s total cost for that employee, returned when they leave. Salary and statutory employer contributions are passed through at cost. For comparison, India specialists usually charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+      'Ensaar\'s fee starts from $199 per employee per month and is agreed with each client, with no setup fee and no minimum term. For some hires, for example at a high salary, Ensaar may ask for a refundable deposit of one month\'s total cost before they start, returned when they leave. Salary and statutory employer contributions are passed through at cost. For comparison, India specialists usually charge $99 to $399 and global platforms $499 to $699 for the same hire.',
     cta: 'contact',
   },
   {
@@ -64,7 +64,7 @@ const INDIA_ENTRIES: KnowledgeEntry[] = [
       'tds', 'payroll', 'employer cost', 'contributions', 'form 16', 'uan', 'compliance',
     ],
     answer:
-      'Provident fund at 12% of basic, commonly applied on the Rs 15,000 wage ceiling so about Rs 1,800 a month; state insurance at 3.25% of gross where gross is Rs 21,000 or below; gratuity accrued at about 4.81% of basic; and state professional tax, typically Rs 200 a month and capped at Rs 2,500 a year. Together that is roughly 13% to 18% on top of gross at junior and mid salaries, and less at senior salaries because provident fund is capped.',
+      'Provident fund at 12% of basic, commonly applied on the Rs 15,000 wage ceiling so about Rs 1,800 a month; state insurance at 3.25% of gross where gross is Rs 21,000 or below; gratuity accrued at about 4.81% of basic; and state professional tax, typically Rs 200 a month and capped at Rs 2,500 a year. Together that is roughly 13% to 18% on top of gross at junior and mid salaries, and less at senior salaries because provident fund is capped. Ensaar does not currently operate provident fund; once it does, the cost passes through at cost.',
     cta: 'contact',
   },
   {

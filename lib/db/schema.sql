@@ -370,6 +370,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS ensaar_eor_employees_schedule_idx
 ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS pricing TEXT NOT NULL DEFAULT 'fee';
 ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS loaded_cost_usd INTEGER;
 ALTER TABLE ensaar_eor_employees ALTER COLUMN monthly_fee_usd DROP NOT NULL;
+-- The one-month deposit is Ensaar's choice per employee (a safety net for a high salary, say).
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS deposit_required BOOLEAN NOT NULL DEFAULT FALSE;
 -- There is no client-level fee any more. The column stays for rows that have one.
 ALTER TABLE ensaar_eor_companies ALTER COLUMN default_fee_usd DROP NOT NULL;
 
@@ -484,3 +486,94 @@ SELECT c.id || '-u1', c.id, lower(c.contact_email), c.contact_name, 'contact'
 FROM ensaar_eor_clients c
 WHERE c.status <> 'cancelled'
   AND NOT EXISTS (SELECT 1 FROM ensaar_portal_users x WHERE x.company_id = c.id AND lower(x.email) = lower(c.contact_email));
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-01 the employee portal (/team). An employee signs in by email link,
+-- signs their offer letter and employment agreement, chooses a tax regime and
+-- declares investments, and chooses holidays for the client to approve.
+
+CREATE TABLE IF NOT EXISTS ensaar_team_login_tokens (
+  id           TEXT PRIMARY KEY,
+  employee_id  TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  token_hash   TEXT NOT NULL UNIQUE,
+  -- invite | login
+  purpose      TEXT NOT NULL DEFAULT 'login',
+  expires_at   TIMESTAMPTZ NOT NULL,
+  used_at      TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS ensaar_team_sessions (
+  id           TEXT PRIMARY KEY,
+  employee_id  TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  token_hash   TEXT NOT NULL UNIQUE,
+  expires_at   TIMESTAMPTZ NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_team_sessions_employee_idx ON ensaar_team_sessions (employee_id);
+
+-- Offer letters and employment agreements as issued: the exact text and its
+-- fingerprint are frozen at issue, and the employee signs that text.
+CREATE TABLE IF NOT EXISTS ensaar_employee_documents (
+  id                 TEXT PRIMARY KEY,
+  employee_id        TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  -- offer | agreement
+  kind               TEXT NOT NULL,
+  -- sent | signed | void
+  status             TEXT NOT NULL DEFAULT 'sent',
+  document           JSONB NOT NULL,
+  text               TEXT NOT NULL,
+  hash               TEXT NOT NULL,
+  issued_by          TEXT,
+  issued_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  signed_name        TEXT,
+  signed_email       TEXT,
+  signed_at          TIMESTAMPTZ,
+  signed_ip          TEXT,
+  signed_user_agent  TEXT,
+  voided_at          TIMESTAMPTZ,
+  void_reason        TEXT
+);
+CREATE INDEX IF NOT EXISTS ensaar_employee_documents_idx ON ensaar_employee_documents (employee_id, kind, issued_at DESC);
+
+-- The employee's tax regime and old-regime declarations, per tax year.
+CREATE TABLE IF NOT EXISTS ensaar_employee_tax (
+  employee_id   TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  tax_year      TEXT NOT NULL,
+  -- new | old
+  regime        TEXT NOT NULL DEFAULT 'new',
+  declarations  JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (employee_id, tax_year)
+);
+
+-- Holidays Ensaar loads each year: India's festival holidays from the official
+-- list, and anything else. US federal holidays are computed, not stored.
+CREATE TABLE IF NOT EXISTS ensaar_holiday_calendar (
+  id          TEXT PRIMARY KEY,
+  -- IN | US
+  country     TEXT NOT NULL,
+  day         DATE NOT NULL,
+  name        TEXT NOT NULL,
+  created_by  TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_holiday_calendar_unique_idx ON ensaar_holiday_calendar (country, day, lower(name));
+
+-- An employee's holiday choice for a year, approved by the client (or decided by Ensaar).
+CREATE TABLE IF NOT EXISTS ensaar_holiday_plans (
+  id            TEXT PRIMARY KEY,
+  employee_id   TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  year          INTEGER NOT NULL,
+  chosen        JSONB NOT NULL DEFAULT '[]'::jsonb,
+  -- draft | submitted | approved | rejected
+  status        TEXT NOT NULL DEFAULT 'draft',
+  submitted_at  TIMESTAMPTZ,
+  decided_by    TEXT,
+  -- client | ensaar
+  decided_role  TEXT,
+  decided_at    TIMESTAMPTZ,
+  note          TEXT,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_holiday_plans_unique_idx ON ensaar_holiday_plans (employee_id, year);

@@ -36,7 +36,7 @@ export const metadata: Metadata = pageMetadata({
     'EOR India pricing',
     'hire in India without an entity',
     'India payroll compliance',
-    'India PF ESI professional tax',
+    'India ESI professional tax TDS',
     'permanent establishment risk India',
   ],
 });

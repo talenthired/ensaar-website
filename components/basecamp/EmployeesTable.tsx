@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BadgeCheck, Loader2, Send, XCircle } from 'lucide-react';
-import { EMPLOYEE_STATUS_LABELS, customerPrice, formatDay, formatInr, todayInIndia, type EmployeeStatus, type Pricing } from '@/lib/eor/onboarding';
+import { EMPLOYEE_STATUS_LABELS, customerPrice, employeeSteps, formatDay, formatInr, todayInIndia, type EmployeeStatus, type Pricing } from '@/lib/eor/onboarding';
 import { cn } from '@/lib/utils';
 import { Badge, EmptyState, FilterChips, Notice, Pagination, STATUS_TONE, SearchBox, buttonClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 
@@ -20,6 +20,7 @@ type Employee = {
   pricing: Pricing;
   monthlyFeeUsd: number | null;
   loadedCostUsd: number | null;
+  depositRequired: boolean;
   scheduleNumber: number | null;
   employeeCase: { steps: Record<string, unknown> } | null;
 };
@@ -187,7 +188,8 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
             </thead>
             <tbody className="divide-y divide-line-subtle">
               {data.items.map((e) => {
-                const done = e.employeeCase ? Object.values(e.employeeCase.steps).filter(Boolean).length : 0;
+                const steps = employeeSteps(e);
+                const done = e.employeeCase ? steps.filter((s) => e.employeeCase?.steps[s.key]).length : 0;
                 const late = ['onboarding', 'signed', 'awaiting_signature', 'draft'].includes(e.status) && e.startDate < today;
                 return (
                   <tr key={e.id} className={cn('hover:bg-bg-secondary', selected.has(e.id) && 'bg-bg-secondary')}>
@@ -223,7 +225,7 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
                     )}
                     <td className="px-3 py-2.5">
                       <Badge tone={STATUS_TONE[e.status] ?? 'neutral'}>{EMPLOYEE_STATUS_LABELS[e.status]}</Badge>
-                      {e.status === 'onboarding' && <span className="mt-0.5 block text-xs text-ink-secondary">{done} of 8 steps</span>}
+                      {e.status === 'onboarding' && <span className="mt-0.5 block text-xs text-ink-secondary">{done} of {steps.length} steps</span>}
                     </td>
                     <td className={cn('px-3 py-2.5 whitespace-nowrap', late && 'font-medium text-orange-700')}>
                       {formatDay(e.startDate)}
@@ -231,7 +233,10 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
                     </td>
                     <td className="px-3 py-2.5">{e.workState}</td>
                     <td className="px-3 py-2.5 text-right whitespace-nowrap">{formatInr(e.salaryInr)}</td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap">{customerPrice(e)}</td>
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      {customerPrice(e)}
+                      {e.depositRequired && <span className="block text-xs text-ink-secondary">+ 1-month deposit</span>}
+                    </td>
                     <td className="px-3 py-2.5 text-ink-secondary">{e.scheduleNumber ? `A-${e.scheduleNumber}` : '—'}</td>
                   </tr>
                 );

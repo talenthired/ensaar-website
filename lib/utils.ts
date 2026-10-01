@@ -7,7 +7,17 @@ export function cn(...inputs: ClassValue[]) {
 
 export const siteConfig = {
   name: 'Ensaar Global',
-  legalName: 'Ensaar Global Pvt. Ltd.',
+  // As on the GST registration certificate (Form GST REG-06, issued 5 August 2019).
+  legalName: 'Ensaar Global Private Limited',
+  gstin: '36AAECE2158G1ZS',
+  /** Principal place of business, as registered for GST. */
+  address: {
+    street: 'Second Floor, H.No 16-11-20/G/204, Bhavani Apartments, Saleem Nagar, Malakpet',
+    city: 'Hyderabad',
+    region: 'Telangana',
+    postalCode: '500036',
+    country: 'India',
+  },
   url: 'https://ensaar.com',
   description:
     'Ensaar Global helps companies outside India build teams inside it. Hire through our Employer of Record without setting up a company, grow that team into your own capability centre, and use the same people for software engineering and practical AI work. Operating from Hyderabad and Noida since 2014.',

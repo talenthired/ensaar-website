@@ -270,6 +270,10 @@ export type EmailContent = {
   footer?: string;
 };
 
+/** Ensaar's registered address on one line, for footers. */
+const companyAddress = () =>
+  [siteConfig.address.street, siteConfig.address.city, `${siteConfig.address.region} ${siteConfig.address.postalCode}`, siteConfig.address.country].join(', ');
+
 const BRAND = { navy: '#0c2343', blue: '#008ecf', teal: '#13a694', ink: '#33445c', muted: '#6b7a90', line: '#e3e8ef', page: '#eef2f6' };
 const FONT = "'Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif";
 const NOTICE = {
@@ -296,7 +300,7 @@ export function renderEmail(input: EmailContent): { text: string; html: string }
     ...(input.action ? [`${input.action.label}: ${input.action.href}`, ''] : []),
     footer,
     '',
-    `${siteConfig.legalName}, ${siteConfig.locality}, ${siteConfig.region}, ${siteConfig.country}`,
+    `${siteConfig.legalName}, ${companyAddress()}. GSTIN ${siteConfig.gstin}`,
   ].join('\n');
 
   const notice = input.notice && NOTICE[input.notice.tone];
@@ -342,7 +346,8 @@ export function renderEmail(input: EmailContent): { text: string; html: string }
       </td></tr>
       <tr><td style="background:${BRAND.navy};padding:22px 36px">
         <p style="margin:0 0 4px;font:600 13px ${FONT};color:#ffffff">${escapeHtml(siteConfig.legalName)}</p>
-        <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(`${siteConfig.locality}, ${siteConfig.region}, ${siteConfig.country}`)} &nbsp;&middot;&nbsp; <a href="mailto:${escapeHtml(supportAddress())}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(supportAddress())}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
+        <p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(companyAddress())} &nbsp;&middot;&nbsp; GSTIN ${escapeHtml(siteConfig.gstin)}</p>
+        <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1"><a href="mailto:${escapeHtml(supportAddress())}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(supportAddress())}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
       </td></tr>
     </table>
   </td></tr></table>

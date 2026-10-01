@@ -35,7 +35,7 @@ export const metadata: Metadata = pageMetadata({
 const WHAT_YOU_GET = [
   'A proper Indian employment contract, not a contractor invoice arrangement',
   'Salary on time in rupees, with payslips and Form 16',
-  'Provident fund with your own UAN, gratuity accrual, and statutory leave',
+  'Statutory leave and holidays, with gratuity and provident fund as the law and Ensaar\'s policies provide',
   'The client team you work with day to day, and Ensaar for everything employment',
 ];
 
@@ -79,7 +79,7 @@ export default function CareersPage() {
             </h1>
             <p className="mt-6 max-w-2xl text-[clamp(1rem,1.25vw,1.18rem)] leading-relaxed text-ink-secondary">
               Ensaar hires in India on behalf of companies in other countries. You work inside their
-              team. We are your employer, which means a real contract, provident fund, gratuity, and
+              team. We are your employer, which means a real contract, statutory leave and benefits, and
               a payslip every month, rather than the contractor arrangement these roles often become.
             </p>
           </div>

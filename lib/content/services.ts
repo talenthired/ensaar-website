@@ -18,12 +18,12 @@ export const SERVICES: Service[] = [
     shortDescription:
       'Ensaar employs your hire in India as the legal employer, runs payroll and every statutory filing, and leaves you to manage the work. A monthly fee per employee, starting from $199, with no setup charge and a refundable one-month deposit.',
     longDescription:
-      'Setting up an Indian entity to make your first two hires costs more in time and attention than the hires are worth. An Employer of Record removes that step: Ensaar issues a compliant Indian employment contract, pays salary in rupees, files provident fund, state insurance, professional tax, and TDS, accrues gratuity, and issues Form 16, while your managers direct the work exactly as they would for any other team member. Your IP and confidentiality terms are assigned to you in the employment contract. When headcount makes your own subsidiary the cheaper answer, the same team can move into it with their service continuity intact.',
+      'Setting up an Indian entity to make your first two hires costs more in time and attention than the hires are worth. An Employer of Record removes that step: Ensaar issues a compliant Indian employment contract, pays salary in rupees, files professional tax, TDS and state insurance where it applies, accrues gratuity where it is payable, and issues Form 16, while your managers direct the work exactly as they would for any other team member. Your IP and confidentiality terms are assigned to you in the employment contract. When headcount makes your own subsidiary the cheaper answer, the same team can move into it with their service continuity intact.',
     serviceType: 'Employer of Record and India Payroll Compliance',
     offerings: [
       'Compliant Indian employment contracts with IP assignment',
       'Monthly payroll in rupees, with payslips and Form 16',
-      'Provident fund, ESI, professional tax, and TDS filings',
+      'Professional tax, TDS, and ESI filings where they apply',
       'Gratuity accrual and statutory leave administration',
       'State-specific Shops and Establishments compliance',
       'Onboarding in five to ten working days',

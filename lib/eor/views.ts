@@ -11,7 +11,7 @@ import {
   type EorCompany,
 } from './companies';
 import { getScheduleText, type EorEmployee } from './employees';
-import { EMPLOYEE_STEPS, missingRequiredDocuments } from './onboarding';
+import { employeeSteps, missingRequiredDocuments } from './onboarding';
 import type { PortalContext } from './portal-auth';
 
 /*
@@ -86,10 +86,11 @@ export function employeeListItem(e: EorEmployee) {
     startDate: e.startDate,
     monthlyFeeUsd: e.pricing === 'loaded' ? null : e.monthlyFeeUsd,
     loadedCostUsd: e.pricing === 'loaded' ? e.loadedCostUsd : null,
+    depositRequired: e.depositRequired,
     scheduleNumber: e.scheduleNumber,
     scheduleHash: e.status === 'awaiting_signature' ? e.scheduleHash : null,
     progress: e.employeeCase
-      ? { done: Object.values(e.employeeCase.steps).filter(Boolean).length, total: EMPLOYEE_STEPS.length }
+      ? { done: Object.values(e.employeeCase.steps).filter(Boolean).length, total: employeeSteps(e).length }
       : null,
     exitDate: e.exitDate,
   };
@@ -105,7 +106,7 @@ export async function employeeDetail(e: EorEmployee) {
     signature: e.signedAt
       ? { name: e.signedName, email: e.signedEmail, at: e.signedAt, countersignedBy: e.countersignedBy, countersignedAt: e.countersignedAt, hash: e.scheduleHash }
       : null,
-    steps: e.employeeCase ? EMPLOYEE_STEPS.map((s) => ({ key: s.key, label: s.label, done: Boolean(e.employeeCase?.steps[s.key]) })) : null,
+    steps: e.employeeCase ? employeeSteps(e).map((s) => ({ key: s.key, label: s.label, done: Boolean(e.employeeCase?.steps[s.key]) })) : null,
     exitReason: null,
   };
 }

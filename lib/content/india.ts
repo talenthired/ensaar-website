@@ -47,7 +47,7 @@ export const STATUTORY_COSTS: StatutoryItem[] = [
   {
     name: 'Provident fund (EPF)',
     rate: '12% of basic',
-    note: 'Commonly applied on the statutory wage ceiling of Rs 15,000, so Rs 1,800 a month, plus small administrative charges. Applying it on full basic instead is a choice some employers make, and it costs more.',
+    note: 'Commonly applied on the statutory wage ceiling of Rs 15,000, so Rs 1,800 a month, plus small administrative charges. It applies to employers above a size threshold: Ensaar does not currently operate provident fund, and will pass the cost through at cost once it does.',
   },
   {
     name: 'State insurance (ESI)',
@@ -78,8 +78,8 @@ export const STATUTORY_SUMMARY =
 export const EOR_INCLUDED: string[] = [
   'An employment contract that holds up under Indian law, with your IP and confidentiality terms assigned to you',
   'Monthly payroll, payslips, and salary paid on time in rupees',
-  'Provident fund, state insurance where it applies, professional tax, and monthly TDS, filed and paid',
-  'Form 16 at year end, and the UAN the employee needs to move their provident fund later',
+  'Professional tax and monthly TDS, and state insurance where it applies, filed and paid',
+  'Form 16 at year end, and a tax estimate each employee can check under the new or old regime',
   'Leave, probation, and notice terms that match the state Shops and Establishments Act that governs them',
   'Statutory policies a compliant Indian employer must have, including the POSH committee obligation once headcount reaches ten',
   'Gratuity accrued from day one, not discovered at year five',
@@ -91,7 +91,7 @@ export const EOR_EXCLUDED: string[] = [
   'The salary itself, and any bonus or allowance you agree with the employee',
   'Statutory employer contributions, which are passed through at cost with no margin',
   'Equipment you choose to buy, and reimbursements you approve',
-  'A refundable deposit of one month\'s total cost for each employee, paid before they start and returned when they leave',
+  'A refundable deposit of one month\'s total cost, for the hires where Ensaar asks for one, returned when they leave',
   'Recruitment, if you want Ensaar to find the person rather than bring your own',
 ];
 
@@ -187,7 +187,7 @@ export const COMPLIANCE_COMMITMENTS: StatutoryItem[] = [
   {
     name: 'Filed on the statutory calendar',
     rate: 'Monthly',
-    note: 'Provident fund and ESI by the 15th, TDS by the 7th, professional tax on the state schedule. Late filing is our cost to carry, not yours.',
+    note: 'TDS by the 7th, ESI by the 15th where it applies, professional tax on the state schedule. Late filing is our cost to carry, not yours.',
   },
   {
     name: 'Documented at onboarding',

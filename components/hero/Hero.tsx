@@ -19,7 +19,7 @@ const PROOF = [
 const CARRIED = [
   'The employment contract, under Indian law',
   'Payroll in rupees, every month',
-  'Provident fund, ESI, professional tax, TDS',
+  'Professional tax, TDS, and ESI where it applies',
   'Gratuity accrual, leave, and a lawful exit',
 ] as const;
 

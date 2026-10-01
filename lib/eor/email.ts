@@ -341,3 +341,98 @@ export function invoiceOverdueStaffEmail(input: { companyName: string; companyId
     }),
   };
 }
+
+// --- The employee portal ------------------------------------------------------------------------
+
+const teamUrlFor = (path = '') => `${siteUrl()}/team${path}`;
+
+/** Invites an employee into the portal, saying why (documents to sign, holidays to choose, tax to declare). */
+export function teamInviteEmail(input: { name: string; companyName: string | null; reason: string; link: string }): Mail {
+  return {
+    subject: `${firstName(input.name)}, ${input.reason.charAt(0).toLowerCase()}${input.reason.slice(1).replace(/\.$/, '')}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      heading: `Hi ${firstName(input.name)}, welcome to Ensaar`,
+      paragraphs: [
+        input.reason,
+        `Ensaar is your employer${input.companyName ? ` for your work with ${input.companyName}` : ''}. In the employee portal you sign your offer letter and employment agreement, choose your tax regime and declare investments, and choose your holidays for the year.`,
+      ],
+      action: { label: 'Open the employee portal', href: input.link },
+      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${teamUrlFor()} with this email address. Questions? Write to ${supportAddress()}.`,
+    }),
+  };
+}
+
+export function teamLoginEmail(input: { name: string; link: string }): Mail {
+  return {
+    subject: 'Your Ensaar employee portal sign-in link',
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      heading: `Hi ${firstName(input.name)}, here is your sign-in link`,
+      paragraphs: [`Use this link to sign in to the Ensaar employee portal. It works once and expires in ${LOGIN_LINK_TTL_MINUTES} minutes.`],
+      action: { label: 'Sign in', href: input.link },
+      footer: `If you did not ask to sign in, you can ignore this email. Questions? Write to ${supportAddress()}.`,
+    }),
+  };
+}
+
+const DOC_NAMES = { offer: 'offer letter', agreement: 'employment agreement' } as const;
+
+/** The employee's copy of what they signed, with the signed text attached. */
+export function employeeDocumentSignedEmail(input: { name: string; kind: keyof typeof DOC_NAMES }): Mail {
+  return {
+    subject: `Your signed ${DOC_NAMES[input.kind]}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      heading: `Thank you, ${firstName(input.name)}`,
+      paragraphs: [`You signed your ${DOC_NAMES[input.kind]} with Ensaar. A copy of exactly what you signed is attached, and it stays available in the employee portal.`],
+      action: { label: 'Open the employee portal', href: teamUrlFor() },
+    }),
+  };
+}
+
+export function employeeDocumentSignedStaffEmail(input: { name: string; kind: keyof typeof DOC_NAMES; employeeId: string; companyName: string }): Mail {
+  return {
+    subject: `Signed: ${input.name}'s ${DOC_NAMES[input.kind]} (${input.companyName})`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: employees',
+      heading: `${input.name} signed their ${DOC_NAMES[input.kind]}`,
+      paragraphs: [`${input.name}, who works for ${input.companyName}, signed the ${DOC_NAMES[input.kind]} Ensaar issued. The signed copy is on their page in Basecamp.`],
+      action: { label: 'Open in Basecamp', href: `${siteUrl()}/basecamp/employees/${input.employeeId}` },
+    }),
+  };
+}
+
+/** To the client's portal users: an employee chose holidays, approve them. */
+export function holidaysSubmittedEmail(input: { companyName: string; employeeName: string; year: number; holidays: string[] }): Mail {
+  return {
+    subject: `${input.employeeName} chose ${input.year} holidays: approval needed`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `Approve ${input.employeeName}'s holidays for ${input.year}`,
+      paragraphs: [
+        `${input.employeeName}, who works for ${input.companyName} through Ensaar, chose the holidays below for ${input.year}, in addition to India's national holidays.`,
+        input.holidays.map((h) => `- ${h}`).join('\n'),
+        'Approve them, or ask for changes with a note, in the portal.',
+      ],
+      action: { label: 'Review in the portal', href: portalUrl('?tab=holidays') },
+    }),
+  };
+}
+
+export function holidaysDecidedEmail(input: { name: string; year: number; approved: boolean; note: string | null; byEnsaar: boolean }): Mail {
+  return {
+    subject: input.approved ? `Your ${input.year} holidays are approved` : `Your ${input.year} holidays need a change`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      heading: input.approved ? `Your ${input.year} holidays are approved` : `Please change your ${input.year} holidays`,
+      notice: input.approved ? undefined : { tone: 'warning', text: input.note ?? 'Your choice was not approved.' },
+      paragraphs: [
+        input.approved
+          ? `${input.byEnsaar ? 'Ensaar' : 'Your client team'} approved the holidays you chose for ${input.year}.${input.note ? ` Note: ${input.note}` : ''}`
+          : `${input.byEnsaar ? 'Ensaar' : 'Your client team'} asked you to change the holidays you chose for ${input.year}. Choose again in the portal and submit.`,
+      ],
+      action: { label: 'Open the employee portal', href: teamUrlFor('?tab=holidays') },
+    }),
+  };
+}

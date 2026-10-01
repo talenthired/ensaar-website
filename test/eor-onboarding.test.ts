@@ -271,7 +271,7 @@ describe('the agreement: master and Schedule A', () => {
 
   it('the master names both parties, the published terms, and no individual', () => {
     const text = agreementToText(buildMasterAgreement('Pristinno Tech', details));
-    expect(text).toContain('Ensaar Global Pvt. Ltd.');
+    expect(text).toContain('Ensaar Global Private Limited, a private limited company incorporated in India, with its principal place of business at Second Floor, H.No 16-11-20/G/204, Bhavani Apartments, Saleem Nagar, Malakpet, Hyderabad, Telangana 500036, India (GSTIN 36AAECE2158G1ZS)');
     expect(text).toContain('Pristinno Tech Inc.');
     expect(text).toContain('EIN 12-3456789');
     expect(text).toContain('Delaware');

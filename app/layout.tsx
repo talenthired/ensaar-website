@@ -166,9 +166,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // The client portal and Basecamp show salaries, EINs and signed agreements.
   // No analytics, attribution capture or chat widget runs on them.
   const path = requestHeaders.get('x-ensaar-path') ?? '';
-  const privatePage = /^\/(portal|basecamp)(\/|$)/.test(path);
+  const privatePage = /^\/(portal|basecamp|team)(\/|$)/.test(path);
   // Basecamp and the client portal have their own bars; the website navigation and footer have no place there.
-  const adminPage = /^\/(basecamp|portal)(\/|$)/.test(path);
+  const adminPage = /^\/(basecamp|portal|team)(\/|$)/.test(path);
   return (
     <html
       lang="en-IN"

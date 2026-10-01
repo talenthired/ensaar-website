@@ -1,4 +1,4 @@
-import type { AgreementDocument } from '@/lib/eor/agreement';
+import { ENSAAR_PARTY, type AgreementDocument } from '@/lib/eor/agreement';
 
 export type SignatureBlock = {
   name: string | null;
@@ -94,7 +94,7 @@ export function AgreementView({
           )}
         </div>
         <div>
-          <p className="text-xs uppercase tracking-wide text-ink-secondary">For Ensaar Global Pvt. Ltd.</p>
+          <p className="text-xs uppercase tracking-wide text-ink-secondary">For {ENSAAR_PARTY.legalName}</p>
           {signature?.countersignedAt ? (
             <>
               <p className="mt-2 font-serif text-xl italic">{signature.countersignedBy}</p>

@@ -16,7 +16,7 @@ export const CAREERS_FAQ: FaqItem[] = [
     category: 'careers',
     question: 'Who would I actually work for?',
     answer:
-      'Ensaar employs you in India and is your legal employer: the contract, payroll, provident fund, and Form 16 come from us. Your day-to-day work sits with the client company and their managers. It is one job, with employment and work responsibilities split between two organisations.',
+      'Ensaar employs you in India and is your legal employer: the contract, payroll, payslips and Form 16 come from us. Your day-to-day work sits with the client company and their managers. It is one job, with employment and work responsibilities split between two organisations.',
   },
   {
     category: 'careers',
@@ -28,7 +28,7 @@ export const CAREERS_FAQ: FaqItem[] = [
     category: 'careers',
     question: 'What happens if the client opens their own company in India?',
     answer:
-      'You transfer to it, with your service continuity preserved, which matters for gratuity and notice. Your provident fund follows you through your UAN. This is planned from the first hire rather than handled as an afterthought.',
+      'You transfer to it, with your service continuity preserved, which matters for gratuity and notice. If you have a provident fund account from an earlier job, it stays yours through your UAN. This is planned from the first hire rather than handled as an afterthought.',
   },
 ];
 
@@ -45,13 +45,13 @@ export const EOR_FAQ: FaqItem[] = [
     category: 'india',
     question: 'What is an Employer of Record in India?',
     answer:
-      'An Employer of Record is the company that legally employs someone on your behalf. Ensaar issues the Indian employment contract, pays the salary in rupees, and files provident fund, state insurance, professional tax, and TDS. You direct the work day to day. It is how a foreign company hires in India without first registering a company there.',
+      'An Employer of Record is the company that legally employs someone on your behalf. Ensaar issues the Indian employment contract, pays the salary in rupees, and files professional tax, TDS and state insurance where it applies. You direct the work day to day. It is how a foreign company hires in India without first registering a company there.',
   },
   {
     category: 'india',
     question: 'How much does an Employer of Record cost in India?',
     answer:
-      'Ensaar\'s fee starts from $199 per employee per month and is agreed with each client, with no setup fee and no minimum term. Before each employee starts you pay a refundable deposit of one month\'s total cost for that employee, returned when they leave. On top of the fee you pay the salary itself and the statutory employer contributions, both passed through at cost. India specialists generally charge $99 to $399 and global platforms $499 to $699 for the same hire.',
+      'Ensaar\'s fee starts from $199 per employee per month and is agreed with each client, with no setup fee and no minimum term. For some hires, for example at a high salary, Ensaar may ask for a refundable deposit of one month\'s total cost before they start, returned when they leave. On top of the fee you pay the salary itself and the statutory employer contributions, both passed through at cost. India specialists generally charge $99 to $399 and global platforms $499 to $699 for the same hire.',
   },
   {
     category: 'india',
@@ -63,7 +63,7 @@ export const EOR_FAQ: FaqItem[] = [
     category: 'india',
     question: 'What does an employer pay on top of salary in India?',
     answer:
-      'Provident fund at 12% of basic pay, commonly applied on the statutory wage ceiling of Rs 15,000 so about Rs 1,800 a month; state insurance at 3.25% of gross, only where gross is Rs 21,000 a month or below; gratuity accrued at about 4.81% of basic; and professional tax set by each state, typically Rs 200 a month and capped at Rs 2,500 a year. That adds roughly 13% to 18% at junior and mid salaries, and proportionally less at senior salaries because provident fund is capped.',
+      'Provident fund at 12% of basic pay, commonly applied on the statutory wage ceiling of Rs 15,000 so about Rs 1,800 a month; state insurance at 3.25% of gross, only where gross is Rs 21,000 a month or below; gratuity accrued at about 4.81% of basic; and professional tax set by each state, typically Rs 200 a month and capped at Rs 2,500 a year. That adds roughly 13% to 18% at junior and mid salaries, and proportionally less at senior salaries because provident fund is capped. Provident fund applies to employers above a size threshold; Ensaar does not currently operate it, and will pass its cost through at cost once it does.',
   },
   {
     category: 'india',

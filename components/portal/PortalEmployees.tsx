@@ -188,6 +188,7 @@ function EmployeePanel({ id, say }: { id: string; say: Say }) {
                 ['Annual gross salary', formatInr(detail.salaryInr ?? 0)],
                 ['Ensaar fee', `${formatUsd(detail.monthlyFeeUsd ?? 0)} a month`],
               ]),
+          ['Deposit', detail.depositRequired ? 'One month, refundable' : 'Not required at signing'],
           ['Works from', `${detail.workState}, India`],
           ['Schedule', detail.scheduleNumber ? `A-${detail.scheduleNumber}` : '—'],
           ...(detail.signature ? [['Signed', `${detail.signature.name}, ${new Date(detail.signature.at!).toLocaleDateString()}`]] : []),

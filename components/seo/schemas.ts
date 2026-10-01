@@ -24,12 +24,19 @@ export function organizationSchema() {
     knowsAbout: siteConfig.knowsAbout,
     knowsLanguage: ['en'],
     ...(siteConfig.sameAs.length > 0 ? { sameAs: siteConfig.sameAs } : {}),
-    address: siteConfig.locations.map((location) => ({
-      '@type': 'PostalAddress',
-      addressLocality: location.city,
-      addressRegion: location.state,
-      addressCountry: siteConfig.countryCode,
-    })),
+    address: siteConfig.locations.map((location) =>
+      location.city === siteConfig.address.city
+        ? {
+            '@type': 'PostalAddress',
+            streetAddress: siteConfig.address.street,
+            addressLocality: siteConfig.address.city,
+            addressRegion: siteConfig.address.region,
+            postalCode: siteConfig.address.postalCode,
+            addressCountry: siteConfig.countryCode,
+          }
+        : { '@type': 'PostalAddress', addressLocality: location.city, addressRegion: location.state, addressCountry: siteConfig.countryCode },
+    ),
+    taxID: siteConfig.gstin,
     geo: {
       '@type': 'GeoCoordinates',
       latitude: 17.4474,

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { CompanyDetailsForm, CompanyDocuments, MasterAgreement, type Say } from './CompanySetup';
 import { PortalBar, SignIn } from './PortalChrome';
 import { PortalBilling } from './PortalBilling';
+import { PortalHolidays } from './PortalHolidays';
 import { PortalEmployees } from './PortalEmployees';
 
 function Step({ n, title, done, children, subtitle }: { n: number; title: string; done: boolean; subtitle: string; children: React.ReactNode }) {
@@ -110,6 +111,7 @@ export function PortalApp() {
             { key: 'employees', label: 'Employees', count: awaiting },
             { key: 'agreement', label: 'Agreement' },
             { key: 'documents', label: 'Documents' },
+            { key: 'holidays', label: 'Holidays' },
             { key: 'billing', label: 'Billing' },
           ]}
         />
@@ -175,6 +177,8 @@ export function PortalApp() {
             <MasterAgreement view={view} blocked={signBlocked} onSigned={setView} say={say} />
           </section>
         )}
+
+        {tab === 'holidays' && <PortalHolidays say={say} />}
 
         {tab === 'billing' && <PortalBilling say={say} />}
 

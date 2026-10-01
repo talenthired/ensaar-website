@@ -4,7 +4,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type postgres from 'postgres';
 import { db, hasDatabase, requireDatabase } from '@/lib/db/client';
 import { enqueue, staffRecipients } from '@/lib/notify/outbox';
-import { AGREEMENT_VERSION, agreementToText, buildMasterAgreement, type AgreementDocument } from './agreement';
+import { AGREEMENT_VERSION, ENSAAR_PARTY, agreementToText, buildMasterAgreement, type AgreementDocument } from './agreement';
 import {
   companyApprovedEmail,
   companyChangesEmail,
@@ -536,7 +536,7 @@ export function evidenceText(text: string, signer: { name: string | null; title:
     '',
     'SIGNATURES',
     `For ${party}: ${signer.name}${signer.title ? `, ${signer.title}` : ''} <${signer.email}>, signed electronically ${signer.at} (UTC), signed in to the Ensaar portal as that address`,
-    counter.at ? `For Ensaar Global Pvt. Ltd.: ${counter.by}, countersigned electronically ${counter.at} (UTC)` : 'For Ensaar Global Pvt. Ltd.: pending countersignature',
+    counter.at ? `For ${ENSAAR_PARTY.legalName}: ${counter.by}, countersigned electronically ${counter.at} (UTC)` : `For ${ENSAAR_PARTY.legalName}: pending countersignature`,
     '',
     `Document fingerprint (SHA-256): ${hash}`,
   ].join('\n');
