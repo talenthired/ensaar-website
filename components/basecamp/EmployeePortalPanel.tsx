@@ -33,6 +33,8 @@ const KINDS = [['offer', 'Offer letter'], ['agreement', 'Employment agreement']]
  */
 export function EmployeePortalPanel({
   employeeId,
+  legalName,
+  givenName,
   hasEmail,
   canInvite,
   named,
@@ -40,6 +42,8 @@ export function EmployeePortalPanel({
   act,
 }: {
   employeeId: string;
+  legalName: string;
+  givenName: string | null;
   hasEmail: boolean;
   canInvite: boolean;
   named: boolean;
@@ -89,6 +93,7 @@ export function EmployeePortalPanel({
 
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Documents</h3>
+        <GreetingField legalName={legalName} givenName={givenName} named={named} act={act} />
         <ul className="mt-2 divide-y divide-line-subtle">
           {KINDS.map(([kind, label]) => {
             const doc = latest(kind);
@@ -209,5 +214,40 @@ export function EmployeePortalPanel({
         )}
       </div>
     </section>
+  );
+}
+
+/** The given name the documents greet the employee by, e.g. "Dear Lakshmi" for Pulla Lakshmi. */
+function GreetingField({ legalName, givenName, named, act }: { legalName: string; givenName: string | null; named: boolean; act: (payload: Record<string, unknown>, label: string, success?: string) => Promise<Record<string, unknown> | null> }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(givenName ?? '');
+  const greeting = givenName || legalName.trim().split(/\s+/)[0];
+  if (!editing) {
+    return (
+      <p className="mt-1 text-xs text-ink-secondary">
+        Documents greet them as &ldquo;Dear {greeting}&rdquo;.{' '}
+        {named && (
+          <button type="button" className="underline hover:text-ink-primary" onClick={() => setEditing(true)}>
+            Change the given name
+          </button>
+        )}
+      </p>
+    );
+  }
+  return (
+    <form
+      className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (await act({ action: 'given_name', givenName: value }, 'given_name', 'Given name saved. Re-issue a document for it to take effect.')) setEditing(false);
+      }}
+    >
+      <input className={cn(inputClass, 'sm:max-w-xs')} aria-label="Given name" placeholder={legalName.trim().split(/\s+/)[0]} value={value} onChange={(e) => setValue(e.target.value)} />
+      <span className="text-xs text-ink-secondary">If it is not the first word of the legal name ({legalName}). Blank uses the first word.</span>
+      <span className="flex gap-2">
+        <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Save</button>
+        <button type="button" className={cn(buttonClass, 'px-3 py-1.5')} onClick={() => setEditing(false)}>Cancel</button>
+      </span>
+    </form>
   );
 }

@@ -166,3 +166,23 @@ describe('rendering', () => {
     expect(html).toContain('@page { size: A4');
   });
 });
+
+describe('the greeting', () => {
+  it('greets by the given name when set, and keeps the legal name everywhere else', async () => {
+    const { buildOfferLetter, employmentDocToText } = await import('@/lib/eor/employment-docs');
+    const doc = buildOfferLetter({
+      employee: { employeeName: 'Pulla Lakshmi', givenName: 'Lakshmi', employeeEmail: 'l@example.com', jobTitle: 'Lead Recruiter', salaryInr: 1_600_000, startDate: '2026-10-01', workState: 'Telangana' },
+      customerName: 'Pristinno Technology LLC',
+      issuedOn: '2026-10-02',
+      signatory: { name: 'Shanimole', title: 'Managing Director' },
+      reference: 'ENS-TEST',
+    });
+    const text = employmentDocToText(doc);
+    expect(text).toContain('Dear Lakshmi,');
+    expect(text).not.toContain('Leena');
+    expect(text).not.toContain('Dear Pulla');
+    expect(text).toContain('To: Pulla Lakshmi <l@example.com>');
+    const plain = buildOfferLetter({ employee: { employeeName: 'Anita Rao', employeeEmail: null, jobTitle: 'Engineer', salaryInr: 2_400_000, startDate: '2026-11-02', workState: 'Karnataka' }, customerName: 'X', issuedOn: '2026-10-02', signatory: { name: 'S', title: 'MD' }, reference: 'R' });
+    expect(employmentDocToText(plain)).toContain('Dear Anita,');
+  });
+});

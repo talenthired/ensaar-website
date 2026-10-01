@@ -45,6 +45,8 @@ import { companyRecipients } from './portal-auth';
 export const MAX_BATCH = 500;
 
 export type EorEmployee = EmployeeInput & {
+  /** To greet them in their documents, when not the first word of the legal name. */
+  givenName: string | null;
   id: string;
   companyId: string;
   companyName?: string;
@@ -73,6 +75,7 @@ type Row = {
   status: string;
   employee_name: string;
   business_name: string | null;
+  given_name: string | null;
   employee_email: string | null;
   job_title: string;
   salary_inr: string | number;
@@ -101,7 +104,7 @@ type Row = {
 };
 
 const COLUMNS = [
-  'id', 'company_id', 'status', 'employee_name', 'business_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
+  'id', 'company_id', 'status', 'employee_name', 'business_name', 'given_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
   'pricing', 'monthly_fee_usd', 'loaded_cost_usd', 'deposit_required', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
   'signed_at', 'signed_ip', 'countersigned_by', 'countersigned_at', 'employee_case', 'exit_date', 'exit_reason',
   'created_by', 'created_at', 'updated_at',
@@ -117,6 +120,7 @@ function toEmployee(r: Row): EorEmployee {
     status: r.status as EmployeeStatus,
     employeeName: r.employee_name,
     businessName: r.business_name,
+    givenName: r.given_name,
     employeeEmail: r.employee_email,
     jobTitle: r.job_title,
     salaryInr: Number(r.salary_inr),
@@ -589,3 +593,17 @@ export async function changeEmployee(
   });
 }
 
+
+/**
+ * Set the given name the employee's documents greet them by. It is not part of
+ * the Schedule A, so the client is not asked to sign again; documents issued
+ * after the change use it.
+ */
+export async function setGivenName(id: string, input: unknown): Promise<Outcome<EorEmployee>> {
+  const name = typeof input === 'string' ? input.trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+  if (name && name.length < 2) return refuse(400, 'Enter the given name in full, or leave it blank to use the first word of the legal name.');
+  const rows = await requireDatabase()<Row[]>`
+    UPDATE ensaar_eor_employees SET given_name = ${name || null}, updated_at = NOW() WHERE id = ${id} RETURNING ${requireDatabase()(COLUMNS)}
+  `;
+  return rows[0] ? ok(toEmployee(rows[0])) : refuse(404, 'No such employee.');
+}

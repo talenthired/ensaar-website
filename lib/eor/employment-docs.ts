@@ -1,6 +1,6 @@
 import { siteConfig } from '@/lib/utils';
 import { ENSAAR_ADDRESS, ENSAAR_PARTY, NOTICE_DAYS, PROBATION_MONTHS } from './agreement';
-import { formatDay, formatInr, type EmployeeInput } from './onboarding';
+import { formatDay, formatInr, knownAs, type EmployeeInput } from './onboarding';
 import { salaryBreakup } from './salary';
 import { estimateTax } from './tax';
 
@@ -47,7 +47,7 @@ export type EmploymentDocument = {
 };
 
 export type EmploymentDocInput = {
-  employee: Pick<EmployeeInput, 'employeeName' | 'employeeEmail' | 'jobTitle' | 'salaryInr' | 'startDate' | 'workState'>;
+  employee: Pick<EmployeeInput, 'employeeName' | 'employeeEmail' | 'jobTitle' | 'salaryInr' | 'startDate' | 'workState'> & { givenName?: string | null };
   /** The client the employee works for. */
   customerName: string;
   /** YYYY-MM-DD, the date on the document. */
@@ -118,7 +118,8 @@ export function buildOfferLetter(input: EmploymentDocInput): EmploymentDocument 
     sections: [
       {
         paragraphs: [
-          `Dear ${firstName(employee.employeeName)},`,
+          // Their given name, which is not always the first word of the legal name (Lakshmi, for Pulla Lakshmi).
+          `Dear ${employee.givenName?.trim() || firstName(employee.employeeName)},`,
           `We are pleased to offer you employment with ${ENSAAR_PARTY.legalName} ("Ensaar") as ${employee.jobTitle}, starting on ${formatDay(employee.startDate)}.`,
           `You will work full time on assignments for Ensaar's client, ${customerName} (the "Client"), which will direct your day-to-day work. Ensaar is your employer: your employment, your pay and your benefits are with Ensaar, not with the Client.`,
           `Your place of work is ${employee.workState}, India. Ensaar may ask you to work from another location in India, with reasonable notice.`,

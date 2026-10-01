@@ -6,6 +6,7 @@ import { deliverSoon, listMessages } from '@/lib/notify/outbox';
 import { getCompany, listVoidedSignatures } from '@/lib/eor/companies';
 import {
   changeEmployee,
+  setGivenName,
   countersignSchedules,
   getEmployee,
   getScheduleText,
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['update', 'countersign', 'exit', 'cancel', 'issue_document', 'invite_employee', 'holiday_decision'].includes(action)) {
+  if (['update', 'given_name', 'countersign', 'exit', 'cancel', 'issue_document', 'invite_employee', 'holiday_decision'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
@@ -105,6 +106,9 @@ export async function POST(request: NextRequest, context: Context) {
         step: body.step,
         done: body.done === true,
       });
+    // How the employee's documents greet them; does not touch the Schedule A.
+    case 'given_name':
+      return done(await setGivenName(id, body.givenName), 'eor.employee.given_name', { givenName: str(body.givenName, 60) || null });
     case 'owner':
       return done(await changeEmployee(id, { kind: 'owner', owner: str(body.owner, 200) }, actor), 'eor.employee.owner');
     case 'activate':

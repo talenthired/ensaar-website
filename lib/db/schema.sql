@@ -628,3 +628,7 @@ CREATE TABLE IF NOT EXISTS ensaar_employee_files (
   uploaded_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS ensaar_employee_files_idx ON ensaar_employee_files (employee_id, kind);
+
+-- The employee's given name, to greet them in their documents ("Dear Lakshmi" for
+-- Pulla Lakshmi), when it is not the first word of the legal name. Null: the first word.
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS given_name TEXT;

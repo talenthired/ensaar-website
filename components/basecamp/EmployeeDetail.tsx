@@ -188,6 +188,8 @@ export function EmployeeDetail({ id }: { id: string }) {
 
       <EmployeePortalPanel
         employeeId={e.id}
+        legalName={e.employeeName}
+        givenName={e.givenName}
         hasEmail={Boolean(e.employeeEmail)}
         canInvite={employeeContactable(e.status, detail.company?.status as CompanyStatus | undefined)}
         named={named}
