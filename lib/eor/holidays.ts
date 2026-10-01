@@ -1,5 +1,3 @@
-import { formatDay } from './onboarding';
-
 /**
  * Public holidays an employee can take. Shared by the employee portal, the
  * client portal (which approves the choice), Basecamp (which can override it)
@@ -109,15 +107,10 @@ export function choicesAllowed(catalogue: Holiday[]): number {
   return Math.max(0, HOLIDAYS_PER_YEAR - catalogue.filter((h) => h.mandatory).length);
 }
 
-/** The first day a new choice can fall on: today, or the start date for someone who has not joined yet. */
-export function earliestChoice(startDate: string, today: string): string {
-  return startDate > today ? startDate : today;
-}
-
 /**
  * Check a choice against the catalogue: known, optional, on a weekday, no
  * repeats, within the allowance, and not in the past. A holiday already in the
- * employee's plan stays allowed after its date, so later edits keep it.
+ * client's calendar stays allowed after its date, so later edits keep it.
  */
 export function checkHolidayChoice(
   catalogue: Holiday[],
@@ -134,7 +127,7 @@ export function checkHolidayChoice(
   if (weekend.length) return { ok: false, error: `${weekend[0]!.name} falls on a weekend, so it would not give you a day off. Choose another.` };
   if (timing) {
     const past = ids.map((id) => byId.get(id)!).find((h) => h.date < timing.from && !timing.keep.includes(h.id));
-    if (past) return { ok: false, error: `${past.name} is before ${formatDay(timing.from)} (today, or your start date if later), so it would not give you a day off. Choose another.` };
+    if (past) return { ok: false, error: `${past.name} has already passed. Choose another.` };
   }
   const allowed = choicesAllowed(catalogue);
   if (ids.length > allowed) return { ok: false, error: `Choose at most ${allowed} holidays.` };

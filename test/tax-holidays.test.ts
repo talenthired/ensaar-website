@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   HOLIDAYS_PER_YEAR,
   checkHolidayChoice,
-  earliestChoice,
   choicesAllowed,
   holidayCatalogue,
   holidayId,
@@ -142,11 +141,6 @@ describe('holidays in the past', () => {
   const catalogue = holidayCatalogue(2026, 'US', []);
   const newYear = catalogue.find((h) => h.name === "New Year's Day")!;
   const thanksgiving = catalogue.find((h) => h.name === 'Thanksgiving Day')!;
-
-  it('starts from today, or the start date for someone not yet joined', () => {
-    expect(earliestChoice('2026-10-31', '2026-10-01')).toBe('2026-10-31');
-    expect(earliestChoice('2026-01-05', '2026-10-01')).toBe('2026-10-01');
-  });
 
   it('refuses a new pick that has already passed', () => {
     const r = checkHolidayChoice(catalogue, [newYear.id, thanksgiving.id], { from: '2026-10-01', keep: [] });

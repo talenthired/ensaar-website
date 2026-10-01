@@ -560,14 +560,20 @@ CREATE TABLE IF NOT EXISTS ensaar_holiday_calendar (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ensaar_holiday_calendar_unique_idx ON ensaar_holiday_calendar (country, day, lower(name));
 
--- An employee's holiday choice for a year, approved by the client (or decided by Ensaar).
-CREATE TABLE IF NOT EXISTS ensaar_holiday_plans (
+-- A client's holiday calendar for a year: one per client, the same for all its
+-- employees. An employee proposes it, the client approves it (or Ensaar decides).
+-- It replaced a per-employee table that never held data in production.
+DROP TABLE IF EXISTS ensaar_holiday_plans;
+CREATE TABLE IF NOT EXISTS ensaar_company_holidays (
   id            TEXT PRIMARY KEY,
-  employee_id   TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  company_id    TEXT NOT NULL REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
   year          INTEGER NOT NULL,
   chosen        JSONB NOT NULL DEFAULT '[]'::jsonb,
   -- draft | submitted | approved | rejected
   status        TEXT NOT NULL DEFAULT 'draft',
+  -- The employee who last changed the proposal.
+  proposed_by   TEXT REFERENCES ensaar_eor_employees (id) ON DELETE SET NULL,
+  proposed_name TEXT,
   submitted_at  TIMESTAMPTZ,
   decided_by    TEXT,
   -- client | ensaar
@@ -576,4 +582,4 @@ CREATE TABLE IF NOT EXISTS ensaar_holiday_plans (
   note          TEXT,
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE UNIQUE INDEX IF NOT EXISTS ensaar_holiday_plans_unique_idx ON ensaar_holiday_plans (employee_id, year);
+CREATE UNIQUE INDEX IF NOT EXISTS ensaar_company_holidays_unique_idx ON ensaar_company_holidays (company_id, year);

@@ -406,33 +406,34 @@ export function employeeDocumentSignedStaffEmail(input: { name: string; kind: ke
 /** To the client's portal users: an employee chose holidays, approve them. */
 export function holidaysSubmittedEmail(input: { companyName: string; employeeName: string; year: number; holidays: string[] }): Mail {
   return {
-    subject: `${input.employeeName} chose ${input.year} holidays: approval needed`,
+    subject: `Your team's ${input.year} holiday calendar: approval needed`,
     ...renderEmail({
       eyebrow: 'Ensaar client portal',
-      heading: `Approve ${input.employeeName}'s holidays for ${input.year}`,
+      heading: `Approve your team's holidays for ${input.year}`,
       paragraphs: [
-        `${input.employeeName}, who works for ${input.companyName} through Ensaar, chose the holidays below for ${input.year}, in addition to India's national holidays.`,
+        `${input.employeeName} proposed the holidays below for ${input.year}. Once you approve them, they apply to everyone Ensaar employs for ${input.companyName}, in addition to India's national holidays.`,
         input.holidays.map((h) => `- ${h}`).join('\n'),
-        'Approve them, or ask for changes with a note, in the portal.',
+        'Approve the calendar, or ask for changes with a note, in the portal.',
       ],
       action: { label: 'Review in the portal', href: portalUrl('?tab=holidays') },
     }),
   };
 }
 
-export function holidaysDecidedEmail(input: { name: string; year: number; approved: boolean; note: string | null; byEnsaar: boolean }): Mail {
+export function holidaysDecidedEmail(input: { companyName: string; year: number; approved: boolean; note: string | null; byEnsaar: boolean }): Mail {
+  const who = input.byEnsaar ? 'Ensaar' : input.companyName;
   return {
-    subject: input.approved ? `Your ${input.year} holidays are approved` : `Your ${input.year} holidays need a change`,
+    subject: input.approved ? `Your ${input.year} holidays are set` : `The ${input.year} holiday calendar needs a change`,
     ...renderEmail({
       eyebrow: 'Ensaar employee portal',
-      heading: input.approved ? `Your ${input.year} holidays are approved` : `Please change your ${input.year} holidays`,
-      notice: input.approved ? undefined : { tone: 'warning', text: input.note ?? 'Your choice was not approved.' },
+      heading: input.approved ? `Your ${input.year} holidays are set` : `Please change the ${input.year} holiday calendar`,
+      notice: input.approved ? undefined : { tone: 'warning', text: input.note ?? 'The calendar was not approved.' },
       paragraphs: [
         input.approved
-          ? `${input.byEnsaar ? 'Ensaar' : 'Your client team'} approved the holidays you chose for ${input.year}.${input.note ? ` Note: ${input.note}` : ''}`
-          : `${input.byEnsaar ? 'Ensaar' : 'Your client team'} asked you to change the holidays you chose for ${input.year}. Choose again in the portal and submit.`,
+          ? `${who} approved the ${input.year} holiday calendar. It applies to everyone Ensaar employs for ${input.companyName}, in addition to India's national holidays.${input.note ? ` Note: ${input.note}` : ''}`
+          : `${who} asked for changes to the ${input.year} holiday calendar you proposed. Change it in the portal and submit it again.`,
       ],
-      action: { label: 'Open the employee portal', href: teamUrlFor('?tab=holidays') },
+      action: { label: 'See the calendar', href: teamUrlFor('?tab=holidays') },
     }),
   };
 }

@@ -25,7 +25,8 @@ type Me = {
     allowed: number;
     perYear: number;
     from: string;
-    plan: { chosen: string[]; status: HolidayPlanStatus; note: string | null; decidedRole: 'client' | 'ensaar' | null; decidedAt: string | null };
+    plan: { chosen: string[]; status: HolidayPlanStatus; note: string | null; proposedName: string | null; decidedRole: 'client' | 'ensaar' | null; decidedAt: string | null };
+    chosen: Holiday[];
   };
 };
 
@@ -442,13 +443,17 @@ function Holidays({ me, say, onChanged, onYear }: { me: Me; say: Say; onChanged:
   const thisYear = new Date().getFullYear();
   const national = catalogue.filter((h) => h.mandatory);
   const optional = catalogue.filter((h) => !h.mandatory);
+  const client = me.employee.companyName ?? 'your client';
+  // One calendar per client: fixed while the client reviews it, and once approved.
+  const locked = plan.status === 'submitted' || plan.status === 'approved';
+  const decider = plan.decidedRole === 'ensaar' ? 'Ensaar' : client;
 
   async function save(submit: boolean) {
     setBusy(submit ? 'submit' : 'save');
     try {
       const response = await fetch('/api/team/holidays', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ year, chosen: [...chosen], submit }) });
       if (!response.ok) throw new Error(await apiError(response, 'Unable to save.'));
-      say('ok', submit ? `Sent to ${me.employee.companyName ?? 'your client'} for approval. We will email you their answer.` : 'Saved. Submit when you are ready.');
+      say('ok', submit ? `Sent to ${client} for approval. Everyone is emailed once it is approved.` : 'Saved as a draft. Your colleagues see it too; submit it when it is ready.');
       await onChanged();
     } catch (cause) {
       say('error', cause instanceof Error ? cause.message : 'Unable to save.');
@@ -469,16 +474,33 @@ function Holidays({ me, say, onChanged, onYear }: { me: Me; say: Say; onChanged:
         </div>
         <Badge tone={plan.status === 'approved' ? 'good' : plan.status === 'rejected' ? 'bad' : plan.status === 'submitted' ? 'info' : 'neutral'}>{HOLIDAY_PLAN_LABELS[plan.status]}</Badge>
       </div>
-      {plan.status === 'rejected' && plan.note && <Notice kind="warn">{plan.decidedRole === 'ensaar' ? 'Ensaar' : 'Your client'} asked for a change: {plan.note}</Notice>}
-      {plan.status === 'approved' && <Notice kind="ok">Approved by {plan.decidedRole === 'ensaar' ? 'Ensaar' : 'your client'}{plan.note ? `: ${plan.note}` : '.'} Changing your choice sends it for approval again.</Notice>}
+      {plan.status === 'rejected' && plan.note && <Notice kind="warn">{decider} asked for a change: {plan.note}</Notice>}
+      {plan.status === 'approved' && <Notice kind="ok">Approved by {decider}{plan.note ? `: ${plan.note}` : '.'} These are the {year} holidays for everyone at {client}; if something needs to change, ask Ensaar.</Notice>}
+      {plan.status === 'submitted' && <p className="rounded-lg border border-line-subtle bg-bg-primary px-4 py-3 text-sm text-ink-secondary">{plan.proposedName ?? 'A colleague'} sent this calendar to {client} for approval. You will be emailed when it is decided.</p>}
+      {plan.status === 'draft' && plan.proposedName && <p className="rounded-lg border border-line-subtle bg-bg-primary px-4 py-3 text-sm text-ink-secondary">{plan.proposedName} started this calendar. Change it if you need to, then submit it.</p>}
       <p className="text-sm text-ink-secondary">
-        You have {me.holidays.perYear} paid holidays in {year}: India&apos;s {national.length} national holidays, and {allowed} you choose from India&apos;s festival
-        holidays and {HOLIDAY_COUNTRIES.US} public holidays, so your days off can line up with your team. Your client approves your choice.
+        Everyone Ensaar employs for {client} has the same {me.holidays.perYear} paid holidays in {year}: India&apos;s {national.length} national holidays, and {allowed} chosen
+        once for the whole team from India&apos;s festival holidays and {HOLIDAY_COUNTRIES.US} public holidays, so days off line up with your team. One of you proposes
+        the calendar and {client} approves it.
       </p>
       <section className="rounded-xl border border-line-subtle bg-bg-primary p-4">
         <h2 className="text-sm font-semibold text-ink-primary">Included for everyone</h2>
         <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-3">{national.map((h) => <li key={h.id} className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-600" aria-hidden /> {h.name}, {formatDay(h.date)}</li>)}</ul>
       </section>
+      {locked ? (
+        <section className="rounded-xl border border-line-subtle bg-bg-primary p-4">
+          <h2 className="text-sm font-semibold text-ink-primary">{plan.status === 'approved' ? "Your team's holidays" : 'Proposed holidays'}</h2>
+          <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
+            {me.holidays.chosen.map((h) => (
+              <li key={h.id} className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 shrink-0 text-ink-secondary" aria-hidden /> {h.name}, {formatDay(h.date)}
+                <Badge tone={h.country === 'IN' ? 'info' : 'attention'}>{h.country === 'IN' ? 'India' : 'US'}</Badge>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : (
+      <>
       <section className="rounded-xl border border-line-subtle bg-bg-primary p-4">
         <h2 className="flex items-center justify-between text-sm font-semibold text-ink-primary">
           Choose {allowed} <span className={cn('text-xs font-normal', chosen.size > allowed ? 'text-red-600' : 'text-ink-secondary')}>{chosen.size} of {allowed} chosen</span>
@@ -489,7 +511,7 @@ function Holidays({ me, say, onChanged, onYear }: { me: Me; say: Say; onChanged:
           <ul className="mt-2 divide-y divide-line-subtle">
             {optional.map((h) => {
               const weekend = isWeekend(h.date);
-              // Already chosen stays chosen; a new pick has to be today or later (or after joining).
+              // Already chosen stays chosen; a new pick has to be today or later.
               const gone = h.date < me.holidays.from && !plan.chosen.includes(h.id);
               return (
                 <li key={h.id}>
@@ -520,6 +542,8 @@ function Holidays({ me, say, onChanged, onYear }: { me: Me; say: Say; onChanged:
           {busy === 'save' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />} Save without submitting
         </button>
       </div>
+      </>
+      )}
     </div>
   );
 }

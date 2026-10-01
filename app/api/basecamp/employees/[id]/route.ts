@@ -40,7 +40,7 @@ export async function GET(request: NextRequest, context: Context) {
     listMessages(employee.companyId),
     listEmployeeDocuments(id),
     taxView(employee),
-    holidayView(employee, year),
+    holidayView(employee.companyId, year),
   ]);
   return NextResponse.json({
     employee,
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest, context: Context) {
     case 'holiday_decision': {
       if (body.decision !== 'approved' && body.decision !== 'rejected') return NextResponse.json({ error: 'Approve or ask for changes.' }, { status: 400 });
       return done(
-        await decideHolidayPlan({ employeeId: id, year: holidayYear(String(body.year ?? '')), approve: body.decision === 'approved', note: str(body.note, 500) || null, by: actor, role: 'ensaar' }),
+        await decideHolidayPlan({ companyId: employee.companyId, year: holidayYear(String(body.year ?? '')), approve: body.decision === 'approved', note: str(body.note, 500) || null, by: actor, role: 'ensaar' }),
         'eor.employee.holidays.decide',
         { year: body.year, decision: body.decision },
       );

@@ -7,7 +7,7 @@ import { holidayYear } from '@/lib/eor/years';
 
 export const runtime = 'nodejs';
 
-/** Save a holiday choice for a year, or submit it to the client for approval. */
+/** Propose or change the client's holiday calendar for a year, as a draft or submitted to the client. */
 export async function PUT(request: NextRequest) {
   const gate = await requireTeam(request);
   if (!gate.ok) return gate.response;
@@ -23,5 +23,5 @@ export async function PUT(request: NextRequest) {
     metadata: { year, count: saved.value.chosen.length },
   });
   if (submit) await deliverSoon();
-  return NextResponse.json(await holidayView(gate.employee, year));
+  return NextResponse.json(await holidayView(gate.employee.companyId, year));
 }

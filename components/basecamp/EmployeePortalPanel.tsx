@@ -14,7 +14,7 @@ export type PortalDoc = { id: string; kind: 'offer' | 'agreement'; status: 'sent
 export type PortalData = {
   documents: PortalDoc[];
   tax: { taxYear: string; regime: Regime; declarations: TaxDeclarations; updatedAt: string | null; comparison: { new: TaxEstimate; old: TaxEstimate; lower: Regime; saving: number } };
-  holidays: { year: number; chosen: Holiday[]; catalogue: Holiday[]; allowed: number; plan: { status: HolidayPlanStatus; note: string | null; decidedBy: string | null; decidedRole: 'client' | 'ensaar' | null; submittedAt: string | null } };
+  holidays: { year: number; chosen: Holiday[]; catalogue: Holiday[]; allowed: number; plan: { status: HolidayPlanStatus; note: string | null; proposedName: string | null; decidedBy: string | null; decidedRole: 'client' | 'ensaar' | null; submittedAt: string | null } };
   emailConfigured: boolean;
 };
 
@@ -144,15 +144,16 @@ export function EmployeePortalPanel({
 
       <div>
         <h3 className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-ink-secondary">
-          Holidays, {holidays.year} <Badge tone={holidays.plan.status === 'approved' ? 'good' : holidays.plan.status === 'rejected' ? 'bad' : holidays.plan.status === 'submitted' ? 'info' : 'neutral'}>{HOLIDAY_PLAN_LABELS[holidays.plan.status]}</Badge>
+          Client holiday calendar, {holidays.year} <Badge tone={holidays.plan.status === 'approved' ? 'good' : holidays.plan.status === 'rejected' ? 'bad' : holidays.plan.status === 'submitted' ? 'info' : 'neutral'}>{HOLIDAY_PLAN_LABELS[holidays.plan.status]}</Badge>
         </h3>
         {holidays.chosen.length === 0 ? (
-          <p className="mt-2 text-sm text-ink-secondary">No holidays chosen yet. The employee chooses {holidays.allowed} in the portal, on top of India&apos;s national holidays.</p>
+          <p className="mt-2 text-sm text-ink-secondary">No calendar yet. One of this client&apos;s employees proposes {holidays.allowed} holidays in the portal, on top of India&apos;s national holidays; once approved, they apply to all the client&apos;s employees.</p>
         ) : (
           <ul className="mt-2 grid gap-1 text-sm sm:grid-cols-2">
             {holidays.chosen.map((h) => <li key={h.id}>{h.name} <span className="text-xs text-ink-secondary">{formatDay(h.date)} · {h.country === 'IN' ? 'India' : 'US'}</span></li>)}
           </ul>
         )}
+        {holidays.plan.proposedName && <p className="mt-1 text-xs text-ink-secondary">Proposed by {holidays.plan.proposedName}. Shared by every employee of this client.</p>}
         {holidays.plan.decidedBy && (
           <p className="mt-1 text-xs text-ink-secondary">
             {holidays.plan.status === 'approved' ? 'Approved' : 'Changes asked'} by {holidays.plan.decidedBy} ({holidays.plan.decidedRole === 'ensaar' ? 'Ensaar' : 'client'}){holidays.plan.note ? `: ${holidays.plan.note}` : ''}
@@ -160,10 +161,10 @@ export function EmployeePortalPanel({
         )}
         {holidays.plan.status !== 'draft' && named && (
           <div className="mt-2 space-y-2">
-            <p className="text-xs text-ink-secondary">Ensaar can decide instead of the client; this overrides the client&apos;s decision and emails the employee.</p>
+            <p className="text-xs text-ink-secondary">Ensaar can decide instead of the client. This overrides the client&apos;s decision, applies to all the client&apos;s employees, and emails them.</p>
             <div className="flex flex-wrap gap-2">
               {holidays.plan.status !== 'approved' && (
-                <button type="button" disabled={busy !== null} className={cn(buttonClass, 'px-2.5 py-1 text-xs text-emerald-700')} onClick={() => window.confirm('Approve these holidays for the employee, overriding the client?') && void run({ action: 'holiday_decision', year: holidays.year, decision: 'approved' }, 'approve', 'Holidays approved by Ensaar.')}>
+                <button type="button" disabled={busy !== null} className={cn(buttonClass, 'px-2.5 py-1 text-xs text-emerald-700')} onClick={() => window.confirm("Approve this calendar for all of this client's employees, overriding the client?") && void run({ action: 'holiday_decision', year: holidays.year, decision: 'approved' }, 'approve', 'Holidays approved by Ensaar.')}>
                   <Check className="h-3 w-3" aria-hidden /> Approve (override)
                 </button>
               )}
@@ -174,8 +175,8 @@ export function EmployeePortalPanel({
               )}
             </div>
             {rejecting !== null && (
-              <form className="flex flex-col gap-2 sm:flex-row" onSubmit={async (ev) => { ev.preventDefault(); if (await run({ action: 'holiday_decision', year: holidays.year, decision: 'rejected', note: rejecting }, 'reject', 'Sent back to the employee with your note.')) setRejecting(null); }}>
-                <input autoFocus className={inputClass} placeholder="What should the employee change?" value={rejecting} onChange={(ev) => setRejecting(ev.target.value)} aria-label="Note to the employee" />
+              <form className="flex flex-col gap-2 sm:flex-row" onSubmit={async (ev) => { ev.preventDefault(); if (await run({ action: 'holiday_decision', year: holidays.year, decision: 'rejected', note: rejecting }, 'reject', 'Calendar reopened; the employee who proposed it is emailed your note.')) setRejecting(null); }}>
+                <input autoFocus className={inputClass} placeholder="What should change?" value={rejecting} onChange={(ev) => setRejecting(ev.target.value)} aria-label="What should change?" />
                 <button type="submit" disabled={rejecting.trim().length < 3 || busy !== null} className={cn(buttonClass, 'text-red-700')}>Send</button>
               </form>
             )}

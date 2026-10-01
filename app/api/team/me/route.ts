@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { HOLIDAYS_PER_YEAR, choicesAllowed, earliestChoice } from '@/lib/eor/holidays';
+import { HOLIDAYS_PER_YEAR, choicesAllowed } from '@/lib/eor/holidays';
 import { todayInIndia } from '@/lib/eor/onboarding';
 import { salaryBreakup } from '@/lib/eor/salary';
 import { DECLARATION_FIELDS } from '@/lib/eor/tax';
@@ -16,13 +16,13 @@ export async function GET(request: NextRequest) {
   if (!gate.ok) return gate.response;
   const e = gate.employee;
   const year = holidayYear(request.nextUrl.searchParams.get('year'));
-  const [documents, tax, holidays] = await Promise.all([listEmployeeDocuments(e.id), taxView(e), holidayView(e, year)]);
+  const [documents, tax, holidays] = await Promise.all([listEmployeeDocuments(e.id), taxView(e), holidayView(e.companyId, year)]);
   return NextResponse.json({
     employee: { name: e.employeeName, email: e.employeeEmail, jobTitle: e.jobTitle, companyName: e.companyName, startDate: e.startDate, workState: e.workState, status: e.status },
     // The signing IP is evidence for Ensaar, not something to show back.
     documents: documents.filter((d) => d.status !== 'void').map((d) => ({ ...d, signedIp: null })),
     pay: { salaryInr: e.salaryInr, breakup: salaryBreakup(e.salaryInr) },
     tax: { ...tax, fields: DECLARATION_FIELDS },
-    holidays: { ...holidays, allowed: choicesAllowed(holidays.catalogue), perYear: HOLIDAYS_PER_YEAR, from: earliestChoice(e.startDate, todayInIndia()) },
+    holidays: { ...holidays, allowed: choicesAllowed(holidays.catalogue), perYear: HOLIDAYS_PER_YEAR, from: todayInIndia() },
   });
 }

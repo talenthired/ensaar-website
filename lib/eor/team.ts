@@ -8,7 +8,7 @@ import { displayName, getCompany, sha256 } from './companies';
 import { employeeDocumentSignedEmail, employeeDocumentSignedStaffEmail, holidaysDecidedEmail, holidaysSubmittedEmail } from './email';
 import { getEmployee, type EorEmployee } from './employees';
 import { buildEmploymentAgreement, buildOfferLetter, employmentDocToText, type EmploymentDocument, type SignatureEvidence } from './employment-docs';
-import { checkHolidayChoice, earliestChoice, holidayCatalogue, holidayId, type Holiday, type HolidayCountry, type HolidayPlanStatus } from './holidays';
+import { checkHolidayChoice, holidayCatalogue, holidayId, type Holiday, type HolidayCountry, type HolidayPlanStatus } from './holidays';
 import { signatureMatches, todayInIndia } from './onboarding';
 import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
@@ -21,8 +21,9 @@ import { inviteEmployee } from './team-auth';
  *   - documents: offer letter and employment agreement, issued by Ensaar with
  *     their text frozen and fingerprinted, signed by the employee as themselves;
  *   - tax: the regime (new by default) and old-regime declarations;
- *   - holidays: the employee's choice for a year, approved by the client, with
- *     Ensaar able to decide instead.
+ *   - holidays: one calendar per client per year, proposed by any of its
+ *     employees, approved by the client (or decided by Ensaar), and then the
+ *     same for every employee of that client.
  */
 
 type Executor = postgres.Sql | postgres.TransactionSql;
@@ -256,12 +257,15 @@ export async function holidayCatalogueFor(year: number): Promise<Holiday[]> {
   return holidayCatalogue(year, CLIENT_COUNTRY, await listHolidayCalendar(year));
 }
 
+/** A client's holiday calendar for a year. Before anyone proposes one, it is an empty draft. */
 export type HolidayPlan = {
   id: string | null;
-  employeeId: string;
+  companyId: string;
   year: number;
   chosen: string[];
   status: HolidayPlanStatus;
+  proposedBy: string | null;
+  proposedName: string | null;
   submittedAt: string | null;
   decidedBy: string | null;
   decidedRole: 'client' | 'ensaar' | null;
@@ -270,45 +274,64 @@ export type HolidayPlan = {
 };
 
 type PlanRow = {
-  id: string; employee_id: string; year: number; chosen: string[]; status: HolidayPlanStatus; submitted_at: Date | null;
-  decided_by: string | null; decided_role: 'client' | 'ensaar' | null; decided_at: Date | null; note: string | null;
+  id: string; company_id: string; year: number; chosen: string[]; status: HolidayPlanStatus; proposed_by: string | null; proposed_name: string | null;
+  submitted_at: Date | null; decided_by: string | null; decided_role: 'client' | 'ensaar' | null; decided_at: Date | null; note: string | null;
 };
-const PLAN_COLUMNS = ['id', 'employee_id', 'year', 'chosen', 'status', 'submitted_at', 'decided_by', 'decided_role', 'decided_at', 'note'];
+const PLAN_COLUMNS = ['id', 'company_id', 'year', 'chosen', 'status', 'proposed_by', 'proposed_name', 'submitted_at', 'decided_by', 'decided_role', 'decided_at', 'note'];
 const toPlan = (r: PlanRow): HolidayPlan => ({
-  id: r.id, employeeId: r.employee_id, year: r.year, chosen: r.chosen ?? [], status: r.status, submittedAt: r.submitted_at?.toISOString() ?? null,
-  decidedBy: r.decided_by, decidedRole: r.decided_role, decidedAt: r.decided_at?.toISOString() ?? null, note: r.note,
+  id: r.id, companyId: r.company_id, year: r.year, chosen: r.chosen ?? [], status: r.status, proposedBy: r.proposed_by, proposedName: r.proposed_name,
+  submittedAt: r.submitted_at?.toISOString() ?? null, decidedBy: r.decided_by, decidedRole: r.decided_role, decidedAt: r.decided_at?.toISOString() ?? null, note: r.note,
+});
+const emptyPlan = (companyId: string, year: number): HolidayPlan => ({
+  id: null, companyId, year, chosen: [], status: 'draft', proposedBy: null, proposedName: null, submittedAt: null, decidedBy: null, decidedRole: null, decidedAt: null, note: null,
 });
 
-export async function getHolidayPlan(employeeId: string, year: number): Promise<HolidayPlan> {
-  const empty: HolidayPlan = { id: null, employeeId, year, chosen: [], status: 'draft', submittedAt: null, decidedBy: null, decidedRole: null, decidedAt: null, note: null };
-  if (!hasDatabase()) return empty;
-  const sql = db();
-  const [row] = await sql<PlanRow[]>`SELECT ${sql(PLAN_COLUMNS)} FROM ensaar_holiday_plans WHERE employee_id = ${employeeId} AND year = ${year}`;
-  return row ? toPlan(row) : empty;
+export async function getHolidayPlan(companyId: string, year: number, sql: Executor = db()): Promise<HolidayPlan> {
+  if (!hasDatabase()) return emptyPlan(companyId, year);
+  const [row] = await sql<PlanRow[]>`SELECT ${sql(PLAN_COLUMNS)} FROM ensaar_company_holidays WHERE company_id = ${companyId} AND year = ${year}`;
+  return row ? toPlan(row) : emptyPlan(companyId, year);
 }
 
-/** What the employee portal, Basecamp and the client portal show: the plan with its holidays spelled out. */
-export async function holidayView(employee: Pick<EorEmployee, 'id'>, year: number) {
-  const [catalogue, plan] = await Promise.all([holidayCatalogueFor(year), getHolidayPlan(employee.id, year)]);
+/** What the employee portal, Basecamp and the client portal show: the client's calendar with its holidays spelled out. */
+export async function holidayView(companyId: string, year: number) {
+  const [catalogue, plan] = await Promise.all([holidayCatalogueFor(year), getHolidayPlan(companyId, year)]);
   const byId = new Map(catalogue.map((h) => [h.id, h]));
   return { year, catalogue, plan, chosen: plan.chosen.map((id) => byId.get(id)).filter((h): h is Holiday => Boolean(h)) };
 }
 
+/** Everyone employed for a client who can sign in to the employee portal and has an email address. */
+async function companyEmployeeEmails(tx: Executor, companyId: string): Promise<string[]> {
+  const rows = await tx<{ employee_email: string }[]>`
+    SELECT DISTINCT employee_email FROM ensaar_eor_employees
+    WHERE company_id = ${companyId} AND employee_email IS NOT NULL AND status IN ('awaiting_signature', 'signed', 'onboarding', 'active')
+  `;
+  return rows.map((r) => r.employee_email);
+}
+
 /**
- * The employee saves or submits their choice. A change after a decision goes
- * back for approval: an approved plan cannot be edited silently.
+ * An employee proposes, or changes, their client's calendar for a year, as a
+ * draft or submitted for approval. Every employee of the client works on the
+ * same calendar. While the client is reviewing it, or once it is approved, it
+ * cannot be changed here: only Ensaar can reopen an approved calendar.
  */
 export async function saveHolidayPlan(employee: EorEmployee, year: number, chosen: unknown, submit: boolean): Promise<Outcome<HolidayPlan>> {
-  const [catalogue, current] = await Promise.all([holidayCatalogueFor(year), getHolidayPlan(employee.id, year)]);
-  const check = checkHolidayChoice(catalogue, chosen, { from: earliestChoice(employee.startDate, todayInIndia()), keep: current.chosen });
-  if (!check.ok) return refuse(400, check.error);
-  if (submit && check.ids.length === 0) return refuse(400, 'Choose at least one holiday before submitting.');
+  const catalogue = await holidayCatalogueFor(year);
   return requireDatabase().begin(async (tx) => {
+    // Lock the client's row (or the client, before anyone has proposed) so two employees cannot race.
+    await tx`SELECT id FROM ensaar_eor_companies WHERE id = ${employee.companyId} FOR UPDATE`;
+    const current = await getHolidayPlan(employee.companyId, year, tx);
+    const company = employee.companyName ?? 'your client';
+    if (current.status === 'submitted') return refuse(409, `${company} is reviewing the ${year} calendar${current.proposedName ? ` ${current.proposedName} proposed` : ''}. You can change it if they ask for changes.`);
+    if (current.status === 'approved') return refuse(409, `The ${year} calendar is approved for everyone at ${company}. Ask Ensaar if it needs to change.`);
+    const check = checkHolidayChoice(catalogue, chosen, { from: todayInIndia(), keep: current.chosen });
+    if (!check.ok) return refuse(400, check.error);
+    if (submit && check.ids.length === 0) return refuse(400, 'Choose at least one holiday before submitting.');
     const status: HolidayPlanStatus = submit ? 'submitted' : 'draft';
     const rows = await tx<PlanRow[]>`
-      INSERT INTO ensaar_holiday_plans (id, employee_id, year, chosen, status, submitted_at)
-      VALUES (${randomUUID()}, ${employee.id}, ${year}, ${tx.json(check.ids as never)}, ${status}, ${submit ? new Date() : null})
-      ON CONFLICT (employee_id, year) DO UPDATE SET chosen = EXCLUDED.chosen, status = EXCLUDED.status, submitted_at = EXCLUDED.submitted_at,
+      INSERT INTO ensaar_company_holidays (id, company_id, year, chosen, status, proposed_by, proposed_name, submitted_at)
+      VALUES (${randomUUID()}, ${employee.companyId}, ${year}, ${tx.json(check.ids as never)}, ${status}, ${employee.id}, ${employee.employeeName}, ${submit ? new Date() : null})
+      ON CONFLICT (company_id, year) DO UPDATE SET chosen = EXCLUDED.chosen, status = EXCLUDED.status, proposed_by = EXCLUDED.proposed_by,
+        proposed_name = EXCLUDED.proposed_name, submitted_at = EXCLUDED.submitted_at,
         decided_by = NULL, decided_role = NULL, decided_at = NULL, note = NULL, updated_at = NOW()
       RETURNING ${tx(PLAN_COLUMNS)}
     `;
@@ -331,66 +354,52 @@ export async function saveHolidayPlan(employee: EorEmployee, year: number, chose
 }
 
 /**
- * Approve or ask for changes. The client decides a submitted plan for its own
- * employees; Ensaar can decide any plan that has been submitted, at any time,
- * which overrides the client's decision.
+ * Approve the calendar, or ask for changes. The client decides a submitted
+ * calendar; Ensaar can decide any calendar that has been submitted, at any time,
+ * which overrides the client (asking for changes reopens an approved one).
+ * Approval is announced to all the client's employees; a request for changes
+ * goes to the employee who proposed it.
  */
 export async function decideHolidayPlan(input: {
-  employeeId: string;
+  companyId: string;
   year: number;
   approve: boolean;
   note: string | null;
   by: string;
   role: 'client' | 'ensaar';
-  companyId?: string;
 }): Promise<Outcome<HolidayPlan>> {
   return requireDatabase().begin(async (tx) => {
-    const [row] = await tx<(PlanRow & { company_id: string; employee_name: string; employee_email: string | null })[]>`
-      SELECT ${tx(PLAN_COLUMNS.map((c) => `p.${c}`))}, e.company_id, e.employee_name, e.employee_email
-      FROM ensaar_holiday_plans p JOIN ensaar_eor_employees e ON e.id = p.employee_id
-      WHERE p.employee_id = ${input.employeeId} AND p.year = ${input.year} FOR UPDATE OF p
+    const [row] = await tx<(PlanRow & { company_name: string; legal_name: string | null })[]>`
+      SELECT ${tx(PLAN_COLUMNS.map((c) => `h.${c}`))}, c.company_name, c.company->>'legalName' AS legal_name
+      FROM ensaar_company_holidays h JOIN ensaar_eor_companies c ON c.id = h.company_id
+      WHERE h.company_id = ${input.companyId} AND h.year = ${input.year} FOR UPDATE OF h
     `;
-    if (!row || (input.companyId && row.company_id !== input.companyId)) return refuse(404, 'No holiday choice to decide.');
-    if (row.status === 'draft') return refuse(409, 'The employee has not submitted this choice yet.');
-    if (input.role === 'client' && row.status !== 'submitted') return refuse(409, 'This choice has already been decided.');
-    if (!input.approve && !input.note?.trim()) return refuse(400, 'Tell the employee what to change.');
+    if (!row || row.status === 'draft') return refuse(409, `No ${input.year} calendar has been submitted yet.`);
+    if (input.role === 'client' && row.status !== 'submitted') return refuse(409, 'This calendar has already been decided.');
+    const note = input.note?.trim() || null;
+    if (!input.approve && !note) return refuse(400, 'Say what should change.');
     const rows = await tx<PlanRow[]>`
-      UPDATE ensaar_holiday_plans SET status = ${input.approve ? 'approved' : 'rejected'}, decided_by = ${input.by}, decided_role = ${input.role},
-        decided_at = NOW(), note = ${input.note?.trim() || null}, updated_at = NOW()
+      UPDATE ensaar_company_holidays SET status = ${input.approve ? 'approved' : 'rejected'}, decided_by = ${input.by}, decided_role = ${input.role},
+        decided_at = NOW(), note = ${note}, updated_at = NOW()
       WHERE id = ${row.id} RETURNING ${tx(PLAN_COLUMNS)}
     `;
-    if (row.employee_email) {
+    const companyName = row.legal_name ?? row.company_name;
+    let to: string[] = [];
+    if (input.approve) to = await companyEmployeeEmails(tx, input.companyId);
+    else if (row.proposed_by) {
+      const [p] = await tx<{ employee_email: string | null }[]>`SELECT employee_email FROM ensaar_eor_employees WHERE id = ${row.proposed_by}`;
+      if (p?.employee_email) to = [p.employee_email];
+    }
+    if (to.length) {
       await enqueue(tx, {
         kind: 'holidays.decided',
-        to: [row.employee_email],
-        relatedId: input.employeeId,
-        ...holidaysDecidedEmail({ name: row.employee_name, year: input.year, approved: input.approve, note: input.note?.trim() || null, byEnsaar: input.role === 'ensaar' }),
+        to,
+        relatedId: input.companyId,
+        ...holidaysDecidedEmail({ companyName, year: input.year, approved: input.approve, note, byEnsaar: input.role === 'ensaar' }),
       });
     }
     return ok(toPlan(rows[0]!));
   });
-}
-
-/** For the client portal: every plan its employees have submitted for a year, with the holidays spelled out. */
-export async function listCompanyHolidayPlans(companyId: string, year: number) {
-  if (!hasDatabase()) return [];
-  const sql = db();
-  const [catalogue, rows] = await Promise.all([
-    holidayCatalogueFor(year),
-    sql<(PlanRow & { employee_name: string; job_title: string })[]>`
-      SELECT ${sql(PLAN_COLUMNS.map((c) => `p.${c}`))}, e.employee_name, e.job_title
-      FROM ensaar_holiday_plans p JOIN ensaar_eor_employees e ON e.id = p.employee_id
-      WHERE e.company_id = ${companyId} AND p.year = ${year} AND p.status <> 'draft'
-      ORDER BY (p.status = 'submitted') DESC, e.employee_name
-    `,
-  ]);
-  const byId = new Map(catalogue.map((h) => [h.id, h]));
-  return rows.map((r) => ({
-    ...toPlan(r),
-    employeeName: r.employee_name,
-    jobTitle: r.job_title,
-    holidays: (r.chosen ?? []).map((id) => byId.get(id)).filter((h): h is Holiday => Boolean(h)),
-  }));
 }
 
 export { holidayId };
