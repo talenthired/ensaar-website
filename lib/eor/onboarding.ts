@@ -144,8 +144,8 @@ export const DOCUMENT_KINDS: DocumentKind[] = [
   {
     kind: 'ein',
     label: 'EIN confirmation',
-    hint: 'The IRS letter (CP 575 or 147C), or a signed W-9 showing the same EIN.',
-    required: true,
+    hint: 'Optional. The IRS letter (CP 575 or 147C), or a signed W-9 showing the same EIN.',
+    required: false,
   },
   {
     kind: 'other',
@@ -178,22 +178,24 @@ export function missingRequiredDocuments(
   return DOCUMENT_KINDS.filter((d) => d.required && !have.has(d.kind));
 }
 
-/** Required kinds that staff have not yet accepted. Approval needs this empty. */
-export function unacceptedRequiredDocuments(uploaded: Array<{ kind: string; reviewStatus: DocumentReview }>): DocumentKind[] {
-  const accepted = new Set(uploaded.filter((d) => d.reviewStatus === 'accepted').map((d) => d.kind));
-  return DOCUMENT_KINDS.filter((d) => d.required && !accepted.has(d.kind));
+/**
+ * After the agreement is signed a client can still add a document Ensaar needs
+ * and does not have (a usable one of that kind). Replacing what is there goes
+ * through Ensaar.
+ */
+export function canAddLateDocument(kind: string, uploaded: Array<{ kind: string; reviewStatus: DocumentReview }>): boolean {
+  return DOCUMENT_KINDS.some((d) => d.kind === kind && d.kind !== 'other') && !uploaded.some((d) => d.kind === kind && d.reviewStatus !== 'rejected');
 }
 
 /**
  * What still stands between a company and its signatory being asked to sign,
  * in words that finish "Still needed: ...". Empty means ready. Shared by
  * Basecamp (to offer "Send for signature") and the server (to refuse it).
+ * Only the company details: documents still to come do not hold up signing;
+ * they are chased by reminders (see lib/eor/missing.ts).
  */
-export function signatureBlockers(
-  details: unknown,
-  uploaded: Array<{ kind: string; reviewStatus?: DocumentReview }>,
-): string[] {
-  return [...(details ? [] : ['the company details']), ...missingRequiredDocuments(uploaded).map((d) => d.label)];
+export function signatureBlockers(details: unknown): string[] {
+  return details ? [] : ['the company details'];
 }
 
 /**
@@ -396,7 +398,14 @@ export function parseLoadedCostUsd(input: unknown): number | null {
 }
 
 export type EmployeeInput = {
+  /** The legal name, exactly as on the employee's PAN and Aadhaar: used on contracts, payroll and tax. */
   employeeName: string;
+  /**
+   * The name the employee works under with the client, when it differs from
+   * the legal name (for example "Leena Paul" for Pulla Lakshmi). Used to greet
+   * them and wherever the client sees them; never on payroll or tax documents.
+   */
+  businessName: string | null;
   employeeEmail: string | null;
   jobTitle: string;
   /** Annual gross, in whole rupees. Always recorded; shown to the customer only under 'fee' pricing. */
@@ -422,18 +431,28 @@ export function customerPrice(e: Pick<EmployeeInput, 'pricing' | 'monthlyFeeUsd'
   return e.pricing === 'loaded' ? `${formatUsd(e.loadedCostUsd ?? 0)} all-in` : `${formatUsd(e.monthlyFeeUsd ?? 0)} fee + costs`;
 }
 
+/** How far back staff may date a start, for someone already working when they are entered. */
+export const MAX_BACKDATE_DAYS = 90;
+
+/** The name to greet an employee by and to show the client: the business name if there is one. */
+export function knownAs(e: { employeeName: string; businessName?: string | null }): string {
+  return e.businessName?.trim() || e.employeeName;
+}
+
 /**
  * One employee's offer. The pricing option decides which amount is required:
  * the fee, or the loaded cost. A row that names no option is read as loaded
  * when it carries only a loaded cost, and as salary plus fee otherwise.
+ * `allowPastStart` lets Ensaar staff record a start up to MAX_BACKDATE_DAYS ago.
  */
-export function validateEmployee(input: unknown, options: { now?: Date } = {}): Result<EmployeeInput> {
+export function validateEmployee(input: unknown, options: { now?: Date; allowPastStart?: boolean } = {}): Result<EmployeeInput> {
   const now = options.now ?? new Date();
   const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
   const errors: Errors = {};
   const blank = (key: string) => body[key] === undefined || body[key] === null || body[key] === '';
 
   const employeeName = text(body, 'employeeName', 120);
+  const businessName = text(body, 'businessName', 120);
   const employeeEmail = email(body, 'employeeEmail');
   const jobTitle = text(body, 'jobTitle', 120);
   const startDate = text(body, 'startDate', 10);
@@ -442,7 +461,8 @@ export function validateEmployee(input: unknown, options: { now?: Date } = {}): 
   const workState = (INDIA_STATES as readonly string[]).find((s) => s.toLowerCase() === workStateRaw.toLowerCase()) ?? workStateRaw;
   const notes = text(body, 'notes', 1000);
 
-  if (employeeName.length < 2) errors.employeeName = 'Enter the employee’s full name.';
+  if (employeeName.length < 2) errors.employeeName = 'Enter the employee’s full legal name, as on their PAN.';
+  if (businessName && businessName.length < 2) errors.businessName = 'Enter the business name in full, or leave it blank.';
   if (employeeEmail && !isEmail(employeeEmail)) errors.employeeEmail = 'Enter a valid email address, or leave it blank.';
   if (jobTitle.length < 2) errors.jobTitle = 'Enter the job title.';
 
@@ -469,7 +489,11 @@ export function validateEmployee(input: unknown, options: { now?: Date } = {}): 
     errors.startDate = 'Enter the start date as YYYY-MM-DD.';
   } else {
     const latest = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-    if (startDate < todayInIndia(now)) errors.startDate = 'The start date cannot be in the past.';
+    const today = todayInIndia(now);
+    const earliest = options.allowPastStart ? isoDay(new Date(Date.parse(`${today}T00:00:00Z`) - MAX_BACKDATE_DAYS * 864e5)) : today;
+    if (startDate < earliest) {
+      errors.startDate = options.allowPastStart ? `The start date can be at most ${MAX_BACKDATE_DAYS} days ago.` : 'The start date cannot be in the past.';
+    }
     else if (parsed > latest) errors.startDate = 'The start date must be within the next year.';
   }
 
@@ -481,13 +505,14 @@ export function validateEmployee(input: unknown, options: { now?: Date } = {}): 
   if (Object.keys(errors).length || !pricing) return { ok: false, errors };
   return {
     ok: true,
-    value: { employeeName, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, pricing, monthlyFeeUsd, loadedCostUsd, depositRequired, notes: notes || null },
+    value: { employeeName, businessName: businessName && businessName !== employeeName ? businessName : null, employeeEmail: employeeEmail || null, jobTitle, salaryInr, startDate, workState, pricing, monthlyFeeUsd, loadedCostUsd, depositRequired, notes: notes || null },
   };
 }
 
 /** Column names a spreadsheet might use, mapped to employee fields. */
 const CSV_COLUMNS: Record<string, keyof EmployeeInput> = {
-  name: 'employeeName', 'employee name': 'employeeName', 'full name': 'employeeName', employee: 'employeeName',
+  name: 'employeeName', 'employee name': 'employeeName', 'full name': 'employeeName', employee: 'employeeName', 'legal name': 'employeeName',
+  'business name': 'businessName', 'known as': 'businessName', 'preferred name': 'businessName',
   email: 'employeeEmail', 'employee email': 'employeeEmail',
   title: 'jobTitle', 'job title': 'jobTitle', role: 'jobTitle', designation: 'jobTitle',
   salary: 'salaryInr', 'salary inr': 'salaryInr', 'annual salary': 'salaryInr', 'annual salary inr': 'salaryInr',
@@ -503,9 +528,9 @@ const CSV_COLUMNS: Record<string, keyof EmployeeInput> = {
 };
 
 export const CSV_TEMPLATE =
-  'Name,Email,Job title,Annual salary INR,Start date,Work state,Pricing,Monthly fee USD,Loaded cost USD,Deposit\n' +
-  'Anita Rao,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,Salary + EOR fee,249,,No\n' +
-  'Ravi Kumar,ravi@example.com,QA Analyst,1500000,2026-11-09,Telangana,Unit loaded cost,,2400,Yes\n';
+  'Name,Business name,Email,Job title,Annual salary INR,Start date,Work state,Pricing,Monthly fee USD,Loaded cost USD,Deposit\n' +
+  'Anita Rao,,anita@example.com,Senior Engineer,2400000,2026-11-02,Karnataka,Salary + EOR fee,249,,No\n' +
+  'Kumar Ravi,Ravi Kumar,ravi@example.com,QA Analyst,1500000,2026-11-09,Telangana,Unit loaded cost,,2400,Yes\n';
 
 /** Split one CSV line, honouring double quotes (a comma inside "Rao, Anita" stays in the field). */
 function splitCsvLine(line: string): string[] {
@@ -549,7 +574,8 @@ export function parseEmployeesCsv(csv: string): { rows: Array<Partial<Record<key
 export type CompanyDetails = {
   legalName: string;
   entityType: EntityType;
-  incorporationState: string;
+  /** Two-letter state code; null until the client tells us. */
+  incorporationState: string | null;
   /** Normalised to NN-NNNNNNN. */
   ein: string;
   addressLine1: string;
@@ -559,9 +585,11 @@ export type CompanyDetails = {
   zip: string;
   website: string | null;
   signatoryName: string;
-  signatoryTitle: string;
+  /** Null until given; chased by reminders. */
+  signatoryTitle: string | null;
   signatoryEmail: string;
-  billingEmail: string;
+  /** Where invoices go; null until given (invoices then go to the portal users). */
+  billingEmail: string | null;
   /** Not sanctioned, not owned or controlled by anyone who is. */
   confirmsSanctions: true;
   /** Employees hired through Ensaar will not habitually conclude contracts in the customer's name. */
@@ -575,7 +603,11 @@ export function normalizeEin(value: string): string | null {
   return `${digits.slice(0, 2)}-${digits.slice(2)}`;
 }
 
-/** What the customer completes in the portal. */
+/**
+ * What the customer completes in the portal, or Ensaar enters for them. The
+ * signatory's title, the billing email and the state of formation may follow
+ * later: they are chased by reminders and never block signing.
+ */
 export function validateCompany(input: unknown): Result<CompanyDetails> {
   const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
   const errors: Errors = {};
@@ -597,7 +629,7 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
 
   if (legalName.length < 2) errors.legalName = 'Enter the company’s legal name, exactly as registered.';
   if (!ENTITY_TYPES.some(([key]) => key === entityType)) errors.entityType = 'Choose the type of entity.';
-  if (!US_STATE_CODES.has(incorporationState)) errors.incorporationState = 'Choose the state of incorporation.';
+  if (incorporationState && !US_STATE_CODES.has(incorporationState)) errors.incorporationState = 'Choose the state of incorporation, or leave it blank for now.';
   if (!ein) errors.ein = 'Enter the 9-digit EIN, for example 12-3456789.';
   if (addressLine1.length < 3) errors.addressLine1 = 'Enter the registered street address.';
   if (city.length < 2) errors.city = 'Enter the city.';
@@ -613,9 +645,9 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
     }
   }
   if (signatoryName.length < 2) errors.signatoryName = 'Enter the name of the person signing.';
-  if (signatoryTitle.length < 2) errors.signatoryTitle = 'Enter their title, for example CEO.';
+  if (signatoryTitle && signatoryTitle.length < 2) errors.signatoryTitle = 'Enter their title, for example CEO, or leave it blank for now.';
   if (!isEmail(signatoryEmail)) errors.signatoryEmail = 'Enter a valid email address.';
-  if (!isEmail(billingEmail)) errors.billingEmail = 'Enter a valid email address for invoices.';
+  if (billingEmail && !isEmail(billingEmail)) errors.billingEmail = 'Enter a valid email address for invoices, or leave it blank for now.';
   if (body.confirmsSanctions !== true) errors.confirmsSanctions = 'This confirmation is required.';
   if (body.confirmsNoContracting !== true) errors.confirmsNoContracting = 'This confirmation is required.';
 
@@ -625,7 +657,7 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
     value: {
       legalName,
       entityType: entityType as EntityType,
-      incorporationState,
+      incorporationState: incorporationState || null,
       ein: ein!,
       addressLine1,
       addressLine2: addressLine2 || null,
@@ -634,9 +666,9 @@ export function validateCompany(input: unknown): Result<CompanyDetails> {
       zip,
       website: website || null,
       signatoryName,
-      signatoryTitle,
+      signatoryTitle: signatoryTitle || null,
       signatoryEmail,
-      billingEmail,
+      billingEmail: billingEmail || null,
       confirmsSanctions: true,
       confirmsNoContracting: true,
     },

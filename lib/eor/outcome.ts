@@ -1,5 +1,6 @@
 /** What a store operation returns: the value, or why it was refused and with which HTTP status. */
-export type Refusal = { ok: false; status: number; error: string; changed?: boolean };
+/** `changed`: the text moved under the user. `missing`: a needed document has not arrived (staff may confirm and go on). */
+export type Refusal = { ok: false; status: number; error: string; changed?: boolean; missing?: boolean };
 export type Outcome<T> = { ok: true; value: T } | Refusal;
 
 export const refuse = (status: number, error: string, extra: Partial<Refusal> = {}): Refusal => ({ ok: false, status, error, ...extra });

@@ -13,6 +13,7 @@ type Employee = {
   companyName?: string;
   status: EmployeeStatus;
   employeeName: string;
+  businessName?: string | null;
   jobTitle: string;
   workState: string;
   salaryInr: number;
@@ -214,7 +215,7 @@ export function EmployeesTable({ companyId, reloadKey, onChanged }: { companyId?
                       <Link href={`/basecamp/employees/${e.id}`} className="font-medium text-ink-primary hover:underline">
                         {e.employeeName}
                       </Link>
-                      <span className="block text-xs text-ink-secondary">{e.jobTitle}</span>
+                      <span className="block text-xs text-ink-secondary">{e.businessName ? `${e.businessName} · ` : ''}{e.jobTitle}</span>
                     </td>
                     {!companyId && (
                       <td className="px-3 py-2.5">

@@ -45,7 +45,8 @@ export function PortalBilling({ say }: { say: Say }) {
               <li key={invoice.id} className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <span className="min-w-0">
                   <span className="block font-medium text-ink-primary">
-                    {invoice.number} · {formatUsdExact(invoice.amountUsd)}
+                    {invoice.number} · {formatUsdExact(invoice.amountUsd)}{' '}
+                    <a href={`/api/portal/invoices/${invoice.id}/pdf`} target="_blank" rel="noopener" className="ml-1 text-xs font-normal text-ink-secondary underline hover:text-ink-primary">Download PDF</a>
                   </span>
                   <span className="block text-xs text-ink-secondary">
                     {formatPeriod(invoice.period)}

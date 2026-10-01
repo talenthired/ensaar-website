@@ -46,7 +46,8 @@ export async function POST(request: NextRequest, context: Context) {
   const valid: EmployeeInput[] = [];
   const rowErrors: Array<{ row: number; errors: Errors }> = [];
   rows.forEach((row, index) => {
-    const result = validateEmployee(row);
+    // Staff may record a start that has already happened (someone already working when entered).
+    const result = validateEmployee(row, { allowPastStart: true });
     if (result.ok) valid.push(result.value);
     else rowErrors.push({ row: index + 1, errors: result.errors });
   });

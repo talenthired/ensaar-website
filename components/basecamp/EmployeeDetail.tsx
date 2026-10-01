@@ -109,6 +109,7 @@ export function EmployeeDetail({ id }: { id: string }) {
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-semibold text-ink-primary">{e.employeeName}</h1>
+              {e.businessName && <span className="text-sm text-ink-secondary">works as {e.businessName}</span>}
               <Badge tone={STATUS_TONE[e.status] ?? 'neutral'}>{EMPLOYEE_STATUS_LABELS[e.status]}</Badge>
             </div>
             <p className="mt-1 text-sm text-ink-secondary">
@@ -288,6 +289,7 @@ export function EmployeeDetail({ id }: { id: string }) {
 function EditOffer({ employee, errors, setErrors, busy, onSubmit }: { employee: EorEmployee; errors: Errors; setErrors: (e: Errors) => void; busy: boolean; onSubmit: (patch: Record<string, string>) => void }) {
   const [form, setForm] = useState({
     employeeName: employee.employeeName,
+    businessName: employee.businessName ?? '',
     employeeEmail: employee.employeeEmail ?? '',
     jobTitle: employee.jobTitle,
     salaryInr: String(employee.salaryInr),
@@ -306,13 +308,13 @@ function EditOffer({ employee, errors, setErrors, busy, onSubmit }: { employee: 
       className="space-y-3 rounded-xl border border-line-subtle bg-bg-primary p-4"
       onSubmit={(ev) => {
         ev.preventDefault();
-        const check = validateEmployee(form);
+        const check = validateEmployee(form, { allowPastStart: true });
         if (!check.ok) return setErrors(check.errors);
         onSubmit(form);
       }}
     >
       <div className="grid gap-3 sm:grid-cols-3">
-        {([['employeeName', 'Full name'], ['employeeEmail', 'Email'], ['jobTitle', 'Job title'], ['salaryInr', 'Annual salary (INR)'], ['startDate', 'Start date']] as const).map(([k, label]) => (
+        {([['employeeName', 'Legal name (as on PAN)'], ['businessName', 'Business name (optional)'], ['employeeEmail', 'Email'], ['jobTitle', 'Job title'], ['salaryInr', 'Annual salary (INR)'], ['startDate', 'Start date']] as const).map(([k, label]) => (
           <label key={k} className="block text-sm">
             <span className="mb-1 block text-ink-secondary">{label}</span>
             <input className={inputClass} type={k === 'startDate' ? 'date' : 'text'} value={form[k]} aria-invalid={Boolean(errors[k])} onChange={(ev) => set(k, ev.target.value)} />

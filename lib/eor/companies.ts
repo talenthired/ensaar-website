@@ -15,9 +15,10 @@ import {
   DOCUMENT_KINDS,
   MAX_DOCUMENTS,
   isCompanyEditable,
+  US_STATES,
+  canAddLateDocument,
   missingRequiredDocuments,
   signatureBlockers,
-  unacceptedRequiredDocuments,
   type CompanyDetails,
   type CompanyInvite,
   type CompanyStatus,
@@ -453,7 +454,10 @@ export async function addCompanyDocument(input: {
   return requireDatabase().begin(async (tx) => {
     const company = await lockCompany(tx, input.companyId);
     if (!company) return refuse(404, 'No such client.');
-    if (!isCompanyEditable(company.status)) return refuse(409, 'The agreement is signed, so documents can no longer be changed here.');
+    if (company.status === 'cancelled') return refuse(409, 'This client is cancelled.');
+    if (!isCompanyEditable(company.status) && !canAddLateDocument(input.kind, await listCompanyDocuments(input.companyId, tx))) {
+      return refuse(409, 'The agreement is signed, so documents can only be added here when Ensaar still needs them. To change one, write to Ensaar.');
+    }
     const [{ count }] = await tx<{ count: number }[]>`SELECT COUNT(*)::int AS count FROM ensaar_eor_company_documents WHERE company_id = ${input.companyId}`;
     if (count >= MAX_DOCUMENTS) return refuse(409, 'That is the most documents a company can hold. Remove one first.');
     const rows = await tx<DocRow[]>`
@@ -495,7 +499,12 @@ export async function reviewCompanyDocument(
   return requireDatabase().begin(async (tx) => {
     const company = await lockCompany(tx, companyId);
     if (!company) return refuse(404, 'No such client.');
-    if (company.status === 'active' || company.status === 'cancelled') return refuse(409, 'The documents of an active or cancelled client are closed.');
+    if (company.status === 'cancelled') return refuse(409, 'The documents of a cancelled client are closed.');
+    if (company.status === 'active') {
+      // Once active, only a document that arrived late (still pending) can be decided.
+      const [current] = await tx<{ review_status: string }[]>`SELECT review_status FROM ensaar_eor_company_documents WHERE id = ${documentId} AND company_id = ${companyId}`;
+      if (current?.review_status !== 'pending') return refuse(409, 'This document was already decided before the client went live.');
+    }
     if (decision === 'rejected' && !note?.trim()) return refuse(400, 'Give the customer a reason, so they know what to upload instead.');
     const rows = await tx<DocRow[]>`
       UPDATE ensaar_eor_company_documents SET review_status = ${decision}, review_note = ${note?.trim() || null},
@@ -556,7 +565,7 @@ export async function sendForSignature(companyId: string): Promise<Outcome<{ lin
     const company = await lockCompany(tx, companyId);
     if (!company) return refuse(404, 'No such client.');
     if (!isCompanyEditable(company.status)) return refuse(409, 'The agreement has already been signed.');
-    const blockers = signatureBlockers(company.company, await listCompanyDocuments(companyId, tx));
+    const blockers = signatureBlockers(company.company);
     if (blockers.length || !company.company) return refuse(409, `Still needed before anyone can sign: ${blockers.join(', ')}.`);
     if (!(await getTemplateApproval(AGREEMENT_VERSION, tx))) {
       return refuse(423, 'Customers cannot sign yet: record the legal sign-off for this agreement version first (see Clients).');
@@ -587,8 +596,6 @@ export async function signMaster(
     if (details.signatoryEmail.toLowerCase() !== signer.email.toLowerCase()) {
       return refuse(403, `Only ${details.signatoryName} (${details.signatoryEmail}) can sign for ${details.legalName}.`);
     }
-    const missing = missingRequiredDocuments(await listCompanyDocuments(companyId, tx));
-    if (missing.length) return refuse(400, `Upload these first: ${missing.map((d) => d.label).join(', ')}.`);
     if (!(await getTemplateApproval(AGREEMENT_VERSION, tx))) {
       return refuse(423, 'The agreement is being finalised by our legal team. We will email you as soon as it is ready to sign.');
     }
@@ -610,7 +617,7 @@ export async function signMaster(
       to: await staffRecipients(tx),
       relatedId: companyId,
       dedupeKey: `eor.master.signed.staff:${companyId}:${hash}`,
-      ...masterSignedStaffEmail({ companyName: details.legalName, signer: `${signer.name} (${details.signatoryTitle})`, companyId }),
+      ...masterSignedStaffEmail({ companyName: details.legalName, signer: details.signatoryTitle ? `${signer.name} (${details.signatoryTitle})` : signer.name, companyId }),
     });
     await enqueue(tx, {
       kind: 'eor.master.signed.customer',
@@ -670,17 +677,24 @@ export async function requestCompanyChanges(companyId: string, note: string, act
   });
 }
 
-/** Countersign the master agreement: every required document accepted, a named person signing for Ensaar. */
-export async function approveCompany(companyId: string, countersignedBy: string): Promise<Outcome<EorCompany>> {
+/**
+ * Countersign the master agreement, a named person signing for Ensaar. Every
+ * uploaded document must have been reviewed. A needed document that has not
+ * arrived yet (say the Certificate of Organization) does not block, but only
+ * with `confirmMissing`: the reminders keep asking for it.
+ */
+export async function approveCompany(companyId: string, countersignedBy: string, options: { confirmMissing?: boolean } = {}): Promise<Outcome<EorCompany>> {
   return requireDatabase().begin(async (tx) => {
     const company = await lockCompany(tx, companyId);
     if (!company) return refuse(404, 'No such client.');
     if (company.status !== 'signed') return refuse(409, 'Only a signed agreement can be countersigned.');
     const documents = await listCompanyDocuments(companyId, tx);
+    const unreviewed = documents.filter((d) => d.reviewStatus === 'pending');
+    if (unreviewed.length) return refuse(409, `Accept or reject each uploaded document first: ${unreviewed.map((d) => d.filename).join(', ')}.`);
     const missing = missingRequiredDocuments(documents);
-    if (missing.length) return refuse(409, `A required document is missing: ${missing.map((d) => d.label).join(', ')}. Request changes instead.`);
-    const unaccepted = unacceptedRequiredDocuments(documents);
-    if (unaccepted.length) return refuse(409, `Accept each required document first: ${unaccepted.map((d) => d.label).join(', ')}.`);
+    if (missing.length && !options.confirmMissing) {
+      return refuse(409, `Still to come: ${missing.map((d) => d.label).join(', ')}. Countersign anyway? The client keeps getting reminders until it arrives.`, { missing: true });
+    }
     const rows = await tx<Row[]>`
       UPDATE ensaar_eor_companies SET status = 'active', countersigned_by = ${countersignedBy}, countersigned_at = NOW(), updated_at = NOW()
       WHERE id = ${companyId} RETURNING ${tx(COMPANY_COLUMNS)}
@@ -708,6 +722,36 @@ export async function approveCompany(companyId: string, countersignedBy: string)
       ...companyApprovedEmail({ companyName: displayName(active) }),
     });
     return ok(active);
+  });
+}
+
+/**
+ * Fill in company details that were left for later (the signatory's title, the
+ * billing email, the state of formation), by the client or by Ensaar, at any
+ * time. Only empty fields are filled: anything already given, and anything the
+ * agreement was signed on, stays as it is.
+ */
+export async function completeCompanyDetails(companyId: string, input: unknown): Promise<Outcome<EorCompany>> {
+  const body = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+  const str = (k: string, max: number) => (typeof body[k] === 'string' ? (body[k] as string).trim().slice(0, max) : '');
+  const signatoryTitle = str('signatoryTitle', 120);
+  const billingEmail = str('billingEmail', 254).toLowerCase();
+  const incorporationState = str('incorporationState', 2).toUpperCase();
+  if (signatoryTitle && signatoryTitle.length < 2) return refuse(400, 'Enter the title in full, for example CEO.');
+  if (billingEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billingEmail)) return refuse(400, 'Enter a valid billing email address.');
+  if (incorporationState && !US_STATES.some(([code]) => code === incorporationState)) return refuse(400, 'Choose the state the company was formed in.');
+  if (!signatoryTitle && !billingEmail && !incorporationState) return refuse(400, 'Nothing to save.');
+  return requireDatabase().begin(async (tx) => {
+    const company = await lockCompany(tx, companyId);
+    if (!company?.company || company.status === 'cancelled') return refuse(404, 'No such client.');
+    const next = {
+      ...company.company,
+      signatoryTitle: company.company.signatoryTitle ?? (signatoryTitle || null),
+      billingEmail: company.company.billingEmail ?? (billingEmail || null),
+      incorporationState: company.company.incorporationState ?? (incorporationState || null),
+    };
+    const rows = await tx<Row[]>`UPDATE ensaar_eor_companies SET company = ${tx.json(next as never)}, updated_at = NOW() WHERE id = ${companyId} RETURNING ${tx(COMPANY_COLUMNS)}`;
+    return ok(toCompany(rows[0]!));
   });
 }
 

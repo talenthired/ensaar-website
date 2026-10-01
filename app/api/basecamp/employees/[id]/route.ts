@@ -18,6 +18,8 @@ import { HOLIDAYS_PER_YEAR, choicesAllowed } from '@/lib/eor/holidays';
 import { decideHolidayPlan, holidayView, isDocumentKind, issueEmployeeDocument, listEmployeeDocuments, taxView } from '@/lib/eor/team';
 import { inviteEmployee } from '@/lib/eor/team-auth';
 import { holidayYear } from '@/lib/eor/years';
+import { remindEmployeeNow } from '@/lib/eor/reminders';
+import { employeeRecordsView } from '@/lib/eor/employee-records';
 import { requireDatabase } from '@/lib/db/client';
 import { emailConfigured } from '@/lib/notify/outbox';
 
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest, context: Context) {
   const employee = await getEmployee(id);
   if (!employee) return NextResponse.json({ error: 'No such employee.' }, { status: 404 });
   const year = holidayYear(request.nextUrl.searchParams.get('year'));
-  const [company, scheduleText, voided, messages, documents, tax, holidays] = await Promise.all([
+  const [company, scheduleText, voided, messages, documents, tax, holidays, records] = await Promise.all([
     getCompany(employee.companyId),
     getScheduleText(id),
     listVoidedSignatures(employee.companyId, id),
@@ -41,6 +43,7 @@ export async function GET(request: NextRequest, context: Context) {
     listEmployeeDocuments(id),
     taxView(employee),
     holidayView(employee.companyId, year),
+    employeeRecordsView(employee, 'staff'),
   ]);
   return NextResponse.json({
     employee,
@@ -49,6 +52,7 @@ export async function GET(request: NextRequest, context: Context) {
     voided,
     messages: messages.filter((m) => m.kind.startsWith('eor.schedules')).slice(0, 10),
     documents,
+    records,
     tax,
     holidays: { ...holidays, allowed: choicesAllowed(holidays.catalogue), perYear: HOLIDAYS_PER_YEAR },
     emailConfigured: emailConfigured(),
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest, context: Context) {
 
   switch (action) {
     case 'update': {
-      const input = validateEmployee({ ...employee, ...(body.employee as Record<string, unknown>) });
+      const input = validateEmployee({ ...employee, ...(body.employee as Record<string, unknown>) }, { allowPastStart: true });
       if (!input.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: input.errors }, { status: 400 });
       return done(await updateEmployee(id, input.value, actor), 'eor.employee.update', { status: employee.status });
     }
@@ -112,6 +116,8 @@ export async function POST(request: NextRequest, context: Context) {
       const issued = await issueEmployeeDocument(id, body.kind, { name: gate.session.name ?? '', label: actor });
       if (!issued.ok) return NextResponse.json({ error: issued.error }, { status: issued.status });
       await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.document.issue', target: id, metadata: { kind: body.kind, hash: issued.value.document.hash } });
+      // What the employee still needs to give Ensaar is asked for alongside (once a day at most).
+      await remindEmployeeNow(id).catch((error) => console.error('Outstanding reminder failed', error));
       await deliverSoon();
       // The link is returned so staff can pass it on directly if email is not working.
       return NextResponse.json({ document: issued.value.document, link: issued.value.link, emailConfigured: emailConfigured() });
@@ -121,6 +127,7 @@ export async function POST(request: NextRequest, context: Context) {
       if (['draft', 'cancelled'].includes(employee.status)) return NextResponse.json({ error: 'Send the schedule to the client first; the employee portal opens once there is an offer.' }, { status: 409 });
       const link = await requireDatabase().begin((tx) => inviteEmployee(tx, employee, 'You can now sign in to the Ensaar employee portal.'));
       await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.invite', target: id });
+      await remindEmployeeNow(id).catch((error) => console.error('Outstanding reminder failed', error));
       await deliverSoon();
       return NextResponse.json({ link, emailConfigured: emailConfigured() });
     }

@@ -22,7 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Notice, buttonClass, inputClass, primaryButtonClass } from '@/components/eor/ui';
 
-const EMPTY = { employeeName: '', employeeEmail: '', jobTitle: '', salaryInr: '', startDate: '', workState: '', pricing: 'fee', monthlyFeeUsd: '', loadedCostUsd: '', depositRequired: '', notes: '' };
+const EMPTY = { employeeName: '', businessName: '', employeeEmail: '', jobTitle: '', salaryInr: '', startDate: '', workState: '', pricing: 'fee', monthlyFeeUsd: '', loadedCostUsd: '', depositRequired: '', notes: '' };
 
 /** What each pricing option means for the customer, shown where the option is chosen. */
 export const PRICING_HINTS: Record<Pricing, string> = {
@@ -108,7 +108,7 @@ function OneEmployee({ companyId, onAdded }: { companyId: string; onAdded: (m: s
 
   async function submit(send: boolean) {
     setError(null);
-    const check = validateEmployee(form);
+    const check = validateEmployee(form, { allowPastStart: true });
     if (!check.ok) return setErrors(check.errors);
     setErrors({});
     setBusy(send ? 'send' : 'draft');
@@ -145,7 +145,8 @@ function OneEmployee({ companyId, onAdded }: { companyId: string; onAdded: (m: s
       }}
     >
       <div className="grid gap-4 sm:grid-cols-3">
-        {field('employeeName', 'Full name')}
+        {field('employeeName', 'Legal name', {}, 'Exactly as on their PAN.')}
+        {field('businessName', 'Business name', {}, 'Optional. The name they work under with the client.')}
         {field('employeeEmail', 'Email', { type: 'email' }, 'Optional.')}
         {field('jobTitle', 'Job title')}
         {field(
@@ -154,7 +155,7 @@ function OneEmployee({ companyId, onAdded }: { companyId: string; onAdded: (m: s
           { inputMode: 'numeric', placeholder: '1800000' },
           salary ? `${formatInr(salary)} a year${form.pricing === 'loaded' ? '. For payroll only: not shown to the customer.' : ''}` : 'Cost to company, before employer contributions.',
         )}
-        {field('startDate', 'Start date', { type: 'date', min: todayInIndia() })}
+        {field('startDate', 'Start date', { type: 'date' }, form.startDate && form.startDate < todayInIndia() ? 'In the past: Ensaar confirms the backdated start when countersigning.' : undefined)}
         <label className="block text-sm">
           <span className="mb-1 block text-ink-secondary">Works from</span>
           <select className={inputClass} value={form.workState} aria-invalid={Boolean(errors.workState)} onChange={(e) => set('workState', e.target.value)}>
@@ -203,7 +204,7 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
     if (parsed.error) return setError(parsed.error);
     if (parsed.rows.length > 500) return setError(`That file has ${parsed.rows.length} rows; import at most 500 at a time.`);
     setUnknown(parsed.unknownHeaders);
-    setRows(parsed.rows.map((raw) => ({ raw: raw as Record<string, string>, result: validateEmployee(raw) })));
+    setRows(parsed.rows.map((raw) => ({ raw: raw as Record<string, string>, result: validateEmployee(raw, { allowPastStart: true }) })));
   }
 
   const invalid = rows?.filter((r) => !r.result.ok).length ?? 0;
@@ -268,7 +269,7 @@ function CsvImport({ companyId, onAdded }: { companyId: string; onAdded: (m: str
                 {rows.map((r, i) => (
                   <tr key={i} className={r.result.ok ? '' : 'bg-red-50/60'}>
                     <td className="px-2 py-1.5 text-ink-secondary">{i + 1}</td>
-                    <td className="px-2 py-1.5">{r.raw.employeeName}</td>
+                    <td className="px-2 py-1.5">{r.raw.employeeName}{r.raw.businessName ? <span className="block text-xs text-ink-secondary">{r.raw.businessName}</span> : null}</td>
                     <td className="px-2 py-1.5">{r.raw.jobTitle}</td>
                     <td className="px-2 py-1.5">{r.result.ok ? formatInr(r.result.value.salaryInr) : r.raw.salaryInr}</td>
                     <td className="px-2 py-1.5">{r.result.ok ? formatDay(r.result.value.startDate) : r.raw.startDate}</td>

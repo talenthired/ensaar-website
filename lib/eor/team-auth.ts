@@ -9,7 +9,7 @@ import { enqueue } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
 import { teamInviteEmail, teamLoginEmail } from './email';
 import { getEmployee, type EorEmployee } from './employees';
-import { INVITE_LINK_TTL_DAYS, LOGIN_LINK_TTL_MINUTES, PORTAL_SESSION_DAYS } from './onboarding';
+import { INVITE_LINK_TTL_DAYS, knownAs, LOGIN_LINK_TTL_MINUTES, PORTAL_SESSION_DAYS } from './onboarding';
 
 /*
  * Sign-in for the employee portal (/team), the same way as the client portal:
@@ -45,7 +45,7 @@ async function createTeamLink(tx: Executor, employeeId: string, purpose: 'invite
  */
 export async function inviteEmployee(
   tx: Executor,
-  employee: Pick<EorEmployee, 'id' | 'employeeName' | 'employeeEmail' | 'companyName'>,
+  employee: Pick<EorEmployee, 'id' | 'employeeName' | 'businessName' | 'employeeEmail' | 'companyName'>,
   reason: string,
 ): Promise<string | null> {
   if (!employee.employeeEmail) return null;
@@ -54,7 +54,7 @@ export async function inviteEmployee(
     kind: 'team.invite',
     to: [employee.employeeEmail],
     relatedId: employee.id,
-    ...teamInviteEmail({ name: employee.employeeName, companyName: employee.companyName ?? null, reason, link }),
+    ...teamInviteEmail({ name: knownAs(employee), companyName: employee.companyName ?? null, reason, link }),
   });
   return link;
 }
@@ -63,15 +63,15 @@ export async function inviteEmployee(
 export async function requestTeamLogin(email: string): Promise<number> {
   if (!hasDatabase()) return 0;
   const sql = db();
-  const rows = await sql<{ id: string; employee_name: string }[]>`
-    SELECT id, employee_name FROM ensaar_eor_employees
+  const rows = await sql<{ id: string; employee_name: string; business_name: string | null }[]>`
+    SELECT id, employee_name, business_name FROM ensaar_eor_employees
     WHERE lower(employee_email) = ${email.trim().toLowerCase()} AND status IN ${sql(CAN_SIGN_IN)}
     ORDER BY created_at DESC LIMIT 5
   `;
   for (const row of rows) {
     await sql.begin(async (tx) => {
       const link = await createTeamLink(tx, row.id, 'login');
-      await enqueue(tx, { kind: 'team.login', to: [email], relatedId: row.id, ...teamLoginEmail({ name: row.employee_name, link }) });
+      await enqueue(tx, { kind: 'team.login', to: [email], relatedId: row.id, ...teamLoginEmail({ name: row.business_name || row.employee_name, link }) });
     });
   }
   return rows.length;

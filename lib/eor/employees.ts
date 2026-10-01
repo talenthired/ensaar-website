@@ -18,6 +18,7 @@ import { schedulesCountersignedEmail, schedulesReadyEmail, schedulesSignedCustom
 import {
   employeeSteps,
   isEmployeeStatus,
+  knownAs,
   masterSigned,
   todayInIndia,
   type EmployeeCase,
@@ -71,6 +72,7 @@ type Row = {
   company_name?: string;
   status: string;
   employee_name: string;
+  business_name: string | null;
   employee_email: string | null;
   job_title: string;
   salary_inr: string | number;
@@ -99,7 +101,7 @@ type Row = {
 };
 
 const COLUMNS = [
-  'id', 'company_id', 'status', 'employee_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
+  'id', 'company_id', 'status', 'employee_name', 'business_name', 'employee_email', 'job_title', 'salary_inr', 'start_date', 'work_state',
   'pricing', 'monthly_fee_usd', 'loaded_cost_usd', 'deposit_required', 'notes', 'schedule_number', 'schedule_version', 'schedule_hash', 'signed_name', 'signed_email',
   'signed_at', 'signed_ip', 'countersigned_by', 'countersigned_at', 'employee_case', 'exit_date', 'exit_reason',
   'created_by', 'created_at', 'updated_at',
@@ -114,6 +116,7 @@ function toEmployee(r: Row): EorEmployee {
     ...(r.company_name !== undefined ? { companyName: r.company_name } : {}),
     status: r.status as EmployeeStatus,
     employeeName: r.employee_name,
+    businessName: r.business_name,
     employeeEmail: r.employee_email,
     jobTitle: r.job_title,
     salaryInr: Number(r.salary_inr),
@@ -173,7 +176,7 @@ export async function listEmployees(input: {
   const scope = sql`
     ${input.companyId ? sql`AND e.company_id = ${input.companyId}` : sql``}
     ${input.hideDrafts ? sql`AND e.status <> 'draft'` : sql``}
-    ${like ? sql`AND (e.employee_name ILIKE ${like} OR e.job_title ILIKE ${like} OR e.employee_email ILIKE ${like}
+    ${like ? sql`AND (e.employee_name ILIKE ${like} OR e.business_name ILIKE ${like} OR e.job_title ILIKE ${like} OR e.employee_email ILIKE ${like}
                  ${input.companyId ? sql`` : sql`OR c.company_name ILIKE ${like} OR c.company->>'legalName' ILIKE ${like}`})` : sql``}
   `;
   const byFilter =
@@ -282,9 +285,9 @@ export async function addEmployees(
     const out: EorEmployee[] = [];
     for (const e of inputs) {
       const rows = await tx<Row[]>`
-        INSERT INTO ensaar_eor_employees (id, company_id, employee_name, employee_email, job_title, salary_inr, start_date,
+        INSERT INTO ensaar_eor_employees (id, company_id, employee_name, business_name, employee_email, job_title, salary_inr, start_date,
                                           work_state, pricing, monthly_fee_usd, loaded_cost_usd, deposit_required, notes, created_by)
-        VALUES (${randomUUID()}, ${companyId}, ${e.employeeName}, ${e.employeeEmail}, ${e.jobTitle}, ${e.salaryInr},
+        VALUES (${randomUUID()}, ${companyId}, ${e.employeeName}, ${e.businessName}, ${e.employeeEmail}, ${e.jobTitle}, ${e.salaryInr},
                 ${e.startDate}, ${e.workState}, ${e.pricing}, ${e.monthlyFeeUsd}, ${e.loadedCostUsd}, ${e.depositRequired}, ${e.notes}, ${actor})
         RETURNING ${tx(COLUMNS)}
       `;
@@ -393,7 +396,7 @@ export async function signSchedules(
       to: await staffRecipients(tx),
       relatedId: companyId,
       dedupeKey: `eor.schedules.signed.staff:${batchKey}`,
-      ...schedulesSignedStaffEmail({ companyName: details.legalName, signer: `${signer.name} (${details.signatoryTitle})`, count: signed.length, companyId }),
+      ...schedulesSignedStaffEmail({ companyName: details.legalName, signer: details.signatoryTitle ? `${signer.name} (${details.signatoryTitle})` : signer.name, count: signed.length, companyId }),
     });
     await enqueue(tx, {
       kind: 'eor.schedules.signed.customer',
@@ -401,7 +404,7 @@ export async function signSchedules(
       relatedId: companyId,
       dedupeKey: `eor.schedules.signed.customer:${batchKey}`,
       attachments: [{ filename: `Ensaar-Schedules-signed-${signed.length}.txt`, content: bundle, contentType: 'text/plain' }],
-      ...schedulesSignedCustomerEmail({ name: signer.name, companyName: details.legalName, employees: signed.map((e) => e.employeeName) }),
+      ...schedulesSignedCustomerEmail({ name: signer.name, companyName: details.legalName, employees: signed.map((e) => knownAs(e)) }),
     });
     return ok(signed);
   });
@@ -507,7 +510,7 @@ export async function updateEmployee(id: string, input: EmployeeInput, actor: st
     const sent = locked.status !== 'draft';
     const s = sent ? scheduleFor(company, input, locked.scheduleNumber!) : null;
     const rows = await tx<Row[]>`
-      UPDATE ensaar_eor_employees SET employee_name = ${input.employeeName}, employee_email = ${input.employeeEmail},
+      UPDATE ensaar_eor_employees SET employee_name = ${input.employeeName}, business_name = ${input.businessName}, employee_email = ${input.employeeEmail},
         job_title = ${input.jobTitle}, salary_inr = ${input.salaryInr}, start_date = ${input.startDate}, work_state = ${input.workState},
         pricing = ${input.pricing}, monthly_fee_usd = ${input.monthlyFeeUsd}, loaded_cost_usd = ${input.loadedCostUsd}, deposit_required = ${input.depositRequired}, notes = ${input.notes},
         status = ${sent ? 'awaiting_signature' : 'draft'},
@@ -527,8 +530,8 @@ export async function updateEmployee(id: string, input: EmployeeInput, actor: st
           companyName: displayName(company),
           employees: [updated],
           reason: wasSigned
-            ? `Ensaar updated ${updated.employeeName}'s terms after you signed, so the earlier signature no longer applies. Please review and sign the updated schedule:`
-            : `Ensaar updated ${updated.employeeName}'s schedule. Please review and sign the updated version:`,
+            ? `Ensaar updated ${knownAs(updated)}'s terms after you signed, so the earlier signature no longer applies. Please review and sign the updated schedule:`
+            : `Ensaar updated ${knownAs(updated)}'s schedule. Please review and sign the updated version:`,
         }),
       });
     }

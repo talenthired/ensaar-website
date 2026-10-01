@@ -51,7 +51,7 @@ export function CompanyDetailsForm({ view, editable, onSaved, say, onEditing }: 
           EIN {c.ein} · {[c.addressLine1, c.addressLine2, c.city, `${c.state} ${c.zip}`].filter(Boolean).join(', ')}
         </p>
         <p className="text-ink-secondary">
-          Signatory: {c.signatoryName}, {c.signatoryTitle} ({c.signatoryEmail}) · Invoices to {c.billingEmail}
+          Signatory: {c.signatoryName}{c.signatoryTitle ? `, ${c.signatoryTitle}` : ''} ({c.signatoryEmail}) · Invoices to {c.billingEmail ?? 'the portal users, until a billing email is given'}
         </p>
         {editable && (
           <button type="button" onClick={() => setEditing(true)} className="mt-3 text-sm font-medium underline">
@@ -117,11 +117,11 @@ export function CompanyDocuments({ view, editable, onChanged, say }: { view: Com
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p className="text-sm font-medium text-ink-primary">
-                  {kind.label} {kind.required && <span className="ml-1 text-xs font-normal text-ink-secondary">Required</span>}
+                  {kind.label} {kind.required && <span className="ml-1 text-xs font-normal text-ink-secondary">Needed before first payroll</span>}
                 </p>
                 <p className="text-xs text-ink-secondary">{kind.hint}</p>
               </div>
-              {editable && <UploadButton label={kind.label} busy={busy === `upload:${kind.kind}`} disabled={busy !== null} onFile={(file) => void upload(kind.kind, file)} />}
+              {view.lateUploads.includes(kind.kind) && <UploadButton label={kind.label} busy={busy === `upload:${kind.kind}`} disabled={busy !== null} onFile={(file) => void upload(kind.kind, file)} />}
             </div>
             {files.length > 0 && (
               <ul className="mt-3 space-y-2">

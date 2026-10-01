@@ -17,7 +17,8 @@ import { siteConfig } from '@/lib/utils';
  * so it is never delivered days later with a link that has since been rotated.
  */
 
-export type Attachment = { filename: string; content: string; contentType?: string };
+/** `content` is text, or base64 when `encoding` says so (a PDF, say). */
+export type Attachment = { filename: string; content: string; contentType?: string; encoding?: 'base64' };
 
 export type OutboxMessage = {
   kind: string;
@@ -109,7 +110,7 @@ async function send(row: Row): Promise<{ ok: true } | { ok: false; error: string
         html: row.html_body,
         attachments: row.attachments?.map((a) => ({
           filename: a.filename,
-          content: Buffer.from(a.content, 'utf8').toString('base64'),
+          content: a.encoding === 'base64' ? a.content : Buffer.from(a.content, 'utf8').toString('base64'),
           content_type: a.contentType,
         })),
       }),
@@ -149,7 +150,9 @@ export async function deliverDue(limit = 10): Promise<{ sent: number; failed: nu
         SELECT id, kind, to_addresses, subject, text_body, html_body, attachments, attempts
         FROM ensaar_outbox
         WHERE status IN ('pending', 'failed') AND attempts < ${MAX_ATTEMPTS} AND next_attempt_at <= NOW()
-        ORDER BY created_at
+        -- Scheduled reminders go after everything else: a burst of them must never hold up
+        -- a sign-in link (which expires) or a signing request someone is waiting for.
+        ORDER BY (kind LIKE '%.scheduled.%'), created_at
         LIMIT 1
         FOR UPDATE SKIP LOCKED
       `;
@@ -288,7 +291,15 @@ const NOTICE = {
  * Outlook and Gmail render reliably. `paragraphs`, facts and notices are plain
  * text (escaped here), so no caller can inject markup by accident.
  */
-export function renderEmail(input: EmailContent): { text: string; html: string } {
+export function renderEmail(content: EmailContent): { text: string; html: string } {
+  // A sentence ending on a name like "Acme Inc." would otherwise end "Inc.." (an ellipsis is left alone).
+  const tidy = (s: string) => s.replace(/(^|[^.])\.\.(?!\.)/g, '$1.');
+  const input: EmailContent = {
+    ...content,
+    heading: tidy(content.heading),
+    paragraphs: content.paragraphs.map(tidy),
+    notice: content.notice && { ...content.notice, text: tidy(content.notice.text) },
+  };
   const site = siteConfig.url.replace(/\/+$/, '');
   const footer = input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`;
   const text = [

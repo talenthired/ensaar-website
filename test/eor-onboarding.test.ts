@@ -14,7 +14,6 @@ import {
   signatureMatches,
   sniffDocumentType,
   todayInIndia,
-  unacceptedRequiredDocuments,
   validateCompany,
   validateCompanyInvite,
   validateDocumentBytes,
@@ -232,10 +231,10 @@ describe('validateCompany', () => {
 });
 
 describe('documents', () => {
-  it('requires the formation certificate and the EIN confirmation', () => {
-    expect(missingRequiredDocuments([]).map((d) => d.kind)).toEqual(['formation', 'ein']);
-    expect(missingRequiredDocuments(['formation', 'other'])).toHaveLength(1);
-    expect(missingRequiredDocuments(['formation', 'ein'])).toHaveLength(0);
+  it('needs the formation certificate; the EIN confirmation is optional', () => {
+    expect(missingRequiredDocuments([]).map((d) => d.kind)).toEqual(['formation']);
+    expect(missingRequiredDocuments(['ein', 'other'])).toHaveLength(1);
+    expect(missingRequiredDocuments(['formation'])).toHaveLength(0);
   });
 
   it('identifies files by content, not by name', () => {
@@ -395,49 +394,20 @@ describe('document review rules (EOR-02, GAP-01)', () => {
     expect(missingRequiredDocuments(docs).map((d) => d.kind)).toEqual(['formation']);
   });
 
-  it('requires staff to accept every required kind before approval', () => {
-    expect(
-      unacceptedRequiredDocuments([
-        { kind: 'formation', reviewStatus: 'accepted' },
-        { kind: 'ein', reviewStatus: 'pending' },
-      ]).map((d) => d.kind),
-    ).toEqual(['ein']);
-    expect(
-      unacceptedRequiredDocuments([
-        { kind: 'formation', reviewStatus: 'accepted' },
-        { kind: 'ein', reviewStatus: 'accepted' },
-      ]),
-    ).toHaveLength(0);
-  });
 });
 
 describe('assisted onboarding: Ensaar enters, the customer signs', () => {
   const details = validateCompany(company);
 
-  it('is not ready for signature until the details and both required documents are in', () => {
-    expect(signatureBlockers(null, [])).toEqual([
-      'the company details',
-      'Certificate of incorporation or formation',
-      'EIN confirmation',
-    ]);
-    expect(details.ok && signatureBlockers(details.value, [{ kind: 'formation', reviewStatus: 'pending' }])).toEqual(['EIN confirmation']);
-    expect(
-      details.ok &&
-        signatureBlockers(details.value, [
-          { kind: 'formation', reviewStatus: 'pending' },
-          { kind: 'ein', reviewStatus: 'accepted' },
-        ]),
-    ).toEqual([]);
+  it('is ready for signature once the details are in; documents can follow', () => {
+    expect(signatureBlockers(null)).toEqual(['the company details']);
+    expect(details.ok && signatureBlockers(details.value)).toEqual([]);
   });
 
-  it('does not count a rejected document, whoever uploaded it', () => {
-    expect(
-      details.ok &&
-        signatureBlockers(details.value, [
-          { kind: 'formation', reviewStatus: 'rejected' },
-          { kind: 'ein', reviewStatus: 'accepted' },
-        ]),
-    ).toEqual(['Certificate of incorporation or formation']);
+  it('still counts the formation document as needed, and a rejected one as missing', () => {
+    expect(missingRequiredDocuments([]).map((d) => d.kind)).toEqual(['formation']);
+    expect(missingRequiredDocuments([{ kind: 'formation', reviewStatus: 'rejected' }]).map((d) => d.kind)).toEqual(['formation']);
+    expect(missingRequiredDocuments([{ kind: 'formation', reviewStatus: 'pending' }])).toEqual([]);
   });
 
   it('tells the signatory when Ensaar entered the details they are about to vouch for', () => {

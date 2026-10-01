@@ -13,6 +13,12 @@ import { cn } from '@/lib/utils';
 export type PortalDoc = { id: string; kind: 'offer' | 'agreement'; status: 'sent' | 'signed' | 'void'; issuedBy: string | null; issuedAt: string; signedAt: string | null; signedName: string | null; voidReason: string | null };
 export type PortalData = {
   documents: PortalDoc[];
+  records: {
+    bank: { holderName: string; accountNumber: string; ifsc: string; updatedAt: string } | null;
+    files: Array<{ id: string; kind: 'bank_proof' | 'relieving_letter'; filename: string; uploadedAt: string }>;
+    noPreviousEmployer: boolean;
+    outstanding: { received: string[]; needed: Array<{ key: string; label: string; detail: string }> };
+  };
   tax: { taxYear: string; regime: Regime; declarations: TaxDeclarations; updatedAt: string | null; comparison: { new: TaxEstimate; old: TaxEstimate; lower: Regime; saving: number } };
   holidays: { year: number; chosen: Holiday[]; catalogue: Holiday[]; allowed: number; plan: { status: HolidayPlanStatus; note: string | null; proposedName: string | null; decidedBy: string | null; decidedRole: 'client' | 'ensaar' | null; submittedAt: string | null } };
   emailConfigured: boolean;
@@ -125,6 +131,24 @@ export function EmployeePortalPanel({
               ))}
             </ul>
           </details>
+        )}
+      </div>
+
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Bank and records</h3>
+        <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+          <div><dt className="text-xs text-ink-secondary">Salary account</dt><dd>{data.records.bank ? `${data.records.bank.holderName} · ${data.records.bank.accountNumber} · ${data.records.bank.ifsc}` : 'Not given yet'}</dd></div>
+          <div><dt className="text-xs text-ink-secondary">Relieving letter</dt><dd>{data.records.files.some((f) => f.kind === 'relieving_letter') ? 'Received' : data.records.noPreviousEmployer ? 'First job: none due' : 'Not given yet'}</dd></div>
+        </dl>
+        {data.records.files.length > 0 && (
+          <ul className="mt-2 space-y-1 text-sm">
+            {data.records.files.map((f) => (
+              <li key={f.id}><a className="underline" href={`/api/basecamp/employee-files/${f.id}`} target="_blank" rel="noopener">{f.kind === 'bank_proof' ? 'Bank proof' : 'Relieving letter'}: {f.filename}</a> <span className="text-xs text-ink-secondary">{formatDay(f.uploadedAt)}</span></li>
+            ))}
+          </ul>
+        )}
+        {data.records.outstanding.needed.length > 0 && (
+          <p className="mt-2 text-xs text-amber-700">Still needed (reminded Mondays and Thursdays): {data.records.outstanding.needed.map((n) => n.label).join(', ')}.</p>
         )}
       </div>
 

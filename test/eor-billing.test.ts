@@ -60,7 +60,7 @@ describe('deposit, notice, dismissal and revisions in the agreement', () => {
 
   it('each Schedule A says whether a deposit is required, and the checklist asks for it only then', () => {
     const employee = (deposit: boolean) => ({
-      employeeName: 'Ravi Kumar', employeeEmail: null, jobTitle: 'Engineer', salaryInr: 4_800_000, startDate: '2026-11-02', workState: 'Karnataka',
+      employeeName: 'Ravi Kumar', businessName: null, employeeEmail: null, jobTitle: 'Engineer', salaryInr: 4_800_000, startDate: '2026-11-02', workState: 'Karnataka',
       pricing: 'fee' as const, monthlyFeeUsd: 249, loadedCostUsd: null, depositRequired: deposit, notes: null,
     });
     const schedule = (deposit: boolean) => agreementToText(buildSchedule({ number: 1, companyName: 'X', company: null, masterHash: null, employee: employee(deposit) }));
@@ -199,7 +199,7 @@ describe('billing emails', () => {
   });
 
   it('issued and paid emails carry the invoice facts', () => {
-    expect(invoiceIssuedEmail({ companyName: 'Pristinno Tech Inc.', invoice }).text).toContain('payable by bank transfer within 7 days');
+    expect(invoiceIssuedEmail({ companyName: 'Pristinno Tech Inc.', invoice }).text).toContain('payable within 7 days by international wire');
     expect(invoicePaidEmail({ companyName: 'Pristinno Tech Inc.', invoice, paidOn: '2026-10-20' }).text).toContain('Received: October 20, 2026');
   });
 });

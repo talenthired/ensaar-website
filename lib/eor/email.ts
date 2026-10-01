@@ -12,7 +12,13 @@ import {
   type Invoice,
   type ReminderStage,
 } from './billing';
-import { formatDay, INVITE_LINK_TTL_DAYS, LOGIN_LINK_TTL_MINUTES } from './onboarding';
+import { formatDay, INVITE_LINK_TTL_DAYS, knownAs, LOGIN_LINK_TTL_MINUTES } from './onboarding';
+import { itemCount, type Outstanding } from './outstanding';
+import { INVOICE_ISSUER, PAYMENT_METHOD_LINE, invoiceSettings } from './invoice-format';
+
+type Named = { employeeName: string; businessName?: string | null };
+/** How the client sees an employee where it matters which person is meant: business name, then the legal name. */
+const withLegalName = (e: Named) => (e.businessName ? `${e.businessName} (legal name ${e.employeeName})` : e.employeeName);
 
 function siteUrl() {
   return siteConfig.url.replace(/\/+$/, '');
@@ -96,14 +102,14 @@ export function loginEmail(input: { name: string | null; companyName: string; li
 export function schedulesReadyEmail(input: {
   name: string | null;
   companyName: string;
-  employees: Array<{ employeeName: string; jobTitle: string; startDate: string }>;
+  employees: Array<Named & { jobTitle: string; startDate: string }>;
   reason?: string;
 }): Mail {
   const n = input.employees.length;
-  const listed = input.employees.slice(0, 20).map((e) => `- ${e.employeeName}, ${e.jobTitle}, starting ${formatDay(e.startDate)}`);
+  const listed = input.employees.slice(0, 20).map((e) => `- ${withLegalName(e)}, ${e.jobTitle}, starting ${formatDay(e.startDate)}`);
   if (n > 20) listed.push(`- and ${n - 20} more`);
   return {
-    subject: `${n === 1 ? `${input.employees[0]!.employeeName} is` : `${n} employees are`} ready for your signature`,
+    subject: `${n === 1 ? `${knownAs(input.employees[0]!)} is` : `${n} employees are`} ready for your signature`,
     ...renderEmail({
       eyebrow: 'Ensaar client portal',
       heading: `Hi ${firstName(input.name)}, ${n === 1 ? 'a Schedule A needs' : `${n} Schedule As need`} your signature`,
@@ -210,15 +216,15 @@ export function schedulesSignedCustomerEmail(input: { name: string; companyName:
   };
 }
 
-export function schedulesCountersignedEmail(input: { companyName: string; employees: Array<{ employeeName: string; startDate: string }> }): Mail {
+export function schedulesCountersignedEmail(input: { companyName: string; employees: Array<Named & { startDate: string }> }): Mail {
   const n = input.employees.length;
   return {
-    subject: `Countersigned: ${n === 1 ? input.employees[0]!.employeeName : `${n} employees`} for ${input.companyName}`,
+    subject: `Countersigned: ${n === 1 ? knownAs(input.employees[0]!) : `${n} employees`} for ${input.companyName}`,
     ...renderEmail({
       eyebrow: 'Ensaar client portal',
       heading: `${n === 1 ? 'Onboarding has started' : `Onboarding has started for ${n} employees`}`,
       paragraphs: [
-        input.employees.slice(0, 20).map((e) => `- ${e.employeeName}, starting ${formatDay(e.startDate)}`).join('\n'),
+        input.employees.slice(0, 20).map((e) => `- ${knownAs(e)}, starting ${formatDay(e.startDate)}`).join('\n'),
         'The executed schedules are attached. You can follow each onboarding step in the portal.',
       ],
       action: { label: 'Open the portal', href: portalUrl('?tab=employees') },
@@ -241,7 +247,19 @@ const invoiceFacts = (invoice: InvoiceMail, extra: Array<{ label: string; value:
 const billingAction = { label: 'View your invoices', href: portalUrl('?tab=billing') };
 // Why the date matters, without ever saying an employee's pay waits for the customer: Ensaar owes wages on time regardless.
 const payrollLine = 'Your payment funds the salaries and statutory dues of your employees in India, which is why the due date matters.';
-const billingFooter = () => `Already paid? Thank you: reply with the transfer reference and we will match it. Questions about this invoice? Write to ${supportAddress()}.`;
+const billingFooter = () => `Already paid? Thank you: reply with the transfer reference and we will match it. Questions about this invoice? Write to ${INVOICE_ISSUER.accountsEmail}.`;
+/** Where to send the money, when the bank details are configured (they always are once an invoice exists). */
+const payTo = (): Array<{ label: string; value: string }> => {
+  const settings = invoiceSettings();
+  if (!settings.ok) return [];
+  const { bank } = settings.value;
+  return [
+    { label: 'Pay to', value: `${bank.accountName}, ${bank.bankName}` },
+    { label: 'Account', value: bank.accountNumber },
+    { label: 'SWIFT', value: bank.swift },
+    { label: 'IFSC', value: bank.ifsc },
+  ];
+};
 
 export function invoiceIssuedEmail(input: { companyName: string; invoice: InvoiceMail }): Mail {
   const { invoice } = input;
@@ -251,10 +269,10 @@ export function invoiceIssuedEmail(input: { companyName: string; invoice: Invoic
       eyebrow: 'Billing',
       heading: `Your ${formatPeriod(invoice.period)} invoice`,
       paragraphs: [
-        `Ensaar has issued invoice ${invoice.number} to ${input.companyName}, dated ${formatDay(invoice.issuedOn)}. It is payable by bank transfer within ${PAYMENT_DAYS} days, to the account shown on the invoice.`,
+        `Ensaar has issued invoice ${invoice.number} to ${input.companyName}, dated ${formatDay(invoice.issuedOn)}. The invoice is attached. It is payable within ${PAYMENT_DAYS} days by international wire to the account below. ${PAYMENT_METHOD_LINE.split('. ')[1]}`,
         payrollLine,
       ],
-      facts: invoiceFacts(invoice),
+      facts: [...invoiceFacts(invoice), ...payTo()],
       action: billingAction,
       footer: billingFooter(),
     }),
@@ -275,13 +293,16 @@ export function invoiceReminderEmail(input: { companyName: string; invoice: Invo
         heading: `Invoice ${invoice.number} is overdue`,
         notice: { tone: 'danger', text: `${amount} was due on ${formatDay(invoice.dueOn)} and is now ${days} late. Interest is accruing, and continued non-payment puts your service with Ensaar at risk.` },
         paragraphs: [
-          `We have not received ${input.companyName}'s payment of invoice ${invoice.number}. Please arrange the bank transfer today, to the account shown on the invoice.`,
+          `We have not received ${input.companyName}'s payment of invoice ${invoice.number}. Please arrange the international wire today, to the account below.`,
           `Under the agreement, an overdue amount carries interest at ${LATE_INTEREST_PERCENT_PER_MONTH}% per month, calculated daily, which is added to your next invoice. While an invoice is overdue Ensaar may decline to take on new employees and may end the arrangement, and the costs of doing so, including notice pay, are payable by ${input.companyName}.`,
         ],
-        facts: invoiceFacts(invoice, [
-          { label: 'Days overdue', value: String(stage.daysLate) },
-          { label: 'Interest accrued so far', value: formatUsdExact(interest) },
-        ]),
+        facts: [
+          ...invoiceFacts(invoice, [
+            { label: 'Days overdue', value: String(stage.daysLate) },
+            { label: 'Interest accrued so far', value: formatUsdExact(interest) },
+          ]),
+          ...payTo(),
+        ],
         action: billingAction,
         footer: billingFooter(),
       }),
@@ -296,10 +317,10 @@ export function invoiceReminderEmail(input: { companyName: string; invoice: Invo
       heading: `Invoice ${invoice.number} is due ${when}`,
       notice: { tone: stage.kind === 'due' ? 'warning' : 'info', text: `${amount} is due ${stage.kind === 'due' ? 'today' : `on ${formatDay(invoice.dueOn)}`}. Paying by the due date avoids interest.` },
       paragraphs: [
-        `A reminder that ${input.companyName}'s invoice ${invoice.number} is payable by bank transfer, to the account shown on the invoice.`,
+        `A reminder that ${input.companyName}'s invoice ${invoice.number} is payable by international wire, to the account below.`,
         `${payrollLine} An amount paid late also carries interest at ${LATE_INTEREST_PERCENT_PER_MONTH}% per month.`,
       ],
-      facts: invoiceFacts(invoice),
+      facts: [...invoiceFacts(invoice), ...payTo()],
       action: billingAction,
       footer: billingFooter(),
     }),
@@ -355,7 +376,7 @@ export function teamInviteEmail(input: { name: string; companyName: string | nul
       heading: `Hi ${firstName(input.name)}, welcome to Ensaar`,
       paragraphs: [
         input.reason,
-        `Ensaar is your employer${input.companyName ? ` for your work with ${input.companyName}` : ''}. In the employee portal you sign your offer letter and employment agreement, choose your tax regime and declare investments, and choose your holidays for the year.`,
+        `Ensaar is your employer${input.companyName ? ` for your work with ${input.companyName}` : ''}. In the employee portal you sign your offer letter and employment agreement, choose your tax regime and declare investments, and see your team's holiday calendar for the year.`,
       ],
       action: { label: 'Open the employee portal', href: input.link },
       footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${teamUrlFor()} with this email address. Questions? Write to ${supportAddress()}.`,
@@ -403,7 +424,7 @@ export function employeeDocumentSignedStaffEmail(input: { name: string; kind: ke
   };
 }
 
-/** To the client's portal users: an employee chose holidays, approve them. */
+/** To the client's portal users: an employee proposed the team's holiday calendar, approve it. */
 export function holidaysSubmittedEmail(input: { companyName: string; employeeName: string; year: number; holidays: string[] }): Mail {
   return {
     subject: `Your team's ${input.year} holiday calendar: approval needed`,
@@ -434,6 +455,57 @@ export function holidaysDecidedEmail(input: { companyName: string; year: number;
           : `${who} asked for changes to the ${input.year} holiday calendar you proposed. Change it in the portal and submit it again.`,
       ],
       action: { label: 'See the calendar', href: teamUrlFor('?tab=holidays') },
+    }),
+  };
+}
+
+// --- Items still outstanding: reminded every Monday and Thursday until they arrive -----------------
+
+const reminderCadence = 'We will remind you every Monday and Thursday until these are in.';
+
+/** To the client's signatory and portal users: what Ensaar still needs, while onboarding carries on. */
+export function companyOutstandingEmail(input: { name: string | null; companyName: string; received: string[]; needed: Outstanding[] }): Mail {
+  const n = input.needed.length;
+  return {
+    subject: `${input.companyName}: ${itemCount(n)} still needed by Ensaar`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `Hi ${firstName(input.name)}, ${n === 1 ? 'one item is' : n === 2 ? 'two items are' : 'a few items are'} still outstanding`,
+      paragraphs: [
+        `Thank you for choosing Ensaar. You can keep going with onboarding while ${n === 1 ? 'this is' : 'these are'} outstanding. We need ${n === 1 ? 'it' : 'them'} before we run ${input.companyName}'s first payroll.`,
+        input.needed.map((item) => `- ${item.detail}`).join('\n'),
+        'If something will take longer, reply to this email and tell us when to expect it.',
+      ],
+      facts: [
+        ...(input.received.length ? [{ label: 'Received', value: input.received.join(', ') }] : []),
+        { label: 'Still needed', value: input.needed.map((item) => item.label).join(', ') },
+      ],
+      action: { label: n === 1 ? 'Add it in the portal' : 'Add them in the portal', href: portalUrl('?tab=documents') },
+      footer: `${reminderCadence} Questions? Write to ${supportAddress()}.`,
+    }),
+  };
+}
+
+/** To the employee: what Ensaar still needs to pay them, by the name they go by. */
+export function employeeOutstandingEmail(input: { name: string; received: string[]; needed: Outstanding[] }): Mail {
+  const n = input.needed.length;
+  const received = input.received.filter((r) => r === 'PAN' || r === 'Aadhaar');
+  return {
+    subject: `${firstName(input.name)}, ${itemCount(n)} still needed for your onboarding`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      heading: `Hi ${firstName(input.name)}, ${n === 1 ? 'one item is' : n === 2 ? 'two items are' : 'a few items are'} still outstanding`,
+      paragraphs: [
+        `${received.length === 2 ? 'We have your PAN and Aadhaar. ' : ''}To pay your salary on time, Ensaar still needs:`,
+        input.needed.map((item) => `- ${item.detail}`).join('\n'),
+        'If something will take longer, reply to this email and tell us when to expect it.',
+      ],
+      facts: [
+        ...(input.received.length ? [{ label: 'Received', value: input.received.join(', ') }] : []),
+        { label: 'Still needed', value: input.needed.map((item) => item.label).join(', ') },
+      ],
+      action: { label: n === 1 ? 'Add it in the employee portal' : 'Add them in the employee portal', href: teamUrlFor('?tab=details') },
+      footer: `${reminderCadence} Questions? Write to ${supportAddress()}.`,
     }),
   };
 }

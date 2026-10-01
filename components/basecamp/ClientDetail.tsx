@@ -25,6 +25,9 @@ import { Badge, Notice, STATUS_TONE, Tabs, UploadButton, buttonClass, inputClass
 import { cn } from '@/lib/utils';
 import { AddEmployees } from './AddEmployees';
 import { ClientInvoices } from './ClientInvoices';
+import { ClientOutstanding } from './ClientOutstanding';
+import type { OutstandingList } from '@/lib/eor/outstanding';
+import type { OwnershipDeclaration } from '@/lib/eor/ownership-store';
 import { EmployeesTable } from './EmployeesTable';
 
 type Detail = {
@@ -35,6 +38,8 @@ type Detail = {
   voided: VoidedSignature[];
   messages: OutboxEntry[];
   readyToSign: boolean;
+  outstanding: OutstandingList;
+  ownership: OwnershipDeclaration | null;
   master: { draft: AgreementDocument; text: string };
   emailConfigured: boolean;
   viewer: { email: string | null; bootstrap: boolean; role: string };
@@ -96,7 +101,16 @@ export function ClientDetail({ id }: { id: string }) {
     try {
       const response = await fetch(`/api/basecamp/clients/${id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
       const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json.error || 'Unable to do that.');
+      if (!response.ok) {
+        // A needed document is still to come: staff may countersign anyway, on the record.
+        if (json.missing && payload.action === 'approve' && !payload.confirmMissing) {
+          if (window.confirm(`${json.error}\n\nCountersign now? This is recorded in the audit log.`)) {
+            setBusy(null);
+            return act({ ...payload, confirmMissing: true }, label, success);
+          }
+        }
+        throw new Error(json.error || 'Unable to do that.');
+      }
       if (success) setOk(success);
       await load();
       return json;
@@ -174,7 +188,7 @@ export function ClientDetail({ id }: { id: string }) {
   const tab = tabState.tab;
   // Until the agreement is signed, staff can enter details and documents for the customer.
   const editable = isCompanyEditable(company.status);
-  const blockers = signatureBlockers(company.company, documents);
+  const blockers = signatureBlockers(company.company);
   const signatory = company.company ? `${company.company.signatoryName} (${company.company.signatoryEmail})` : null;
   const canSend = editable && blockers.length === 0 && signatory !== null;
   const sendHint = !canSend || company.status === 'changes_requested'
@@ -328,6 +342,7 @@ export function ClientDetail({ id }: { id: string }) {
 
       {tab === 'company' && (
         <div className="grid gap-6 lg:grid-cols-2">
+          {company.company && <ClientOutstanding outstanding={detail.outstanding} ownership={detail.ownership} named={named} act={act} />}
           <section className={cn('rounded-xl border border-line-subtle bg-bg-primary p-5', panel === 'details' && 'lg:col-span-2')}>
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-semibold text-ink-primary">
@@ -359,12 +374,12 @@ export function ClientDetail({ id }: { id: string }) {
             ) : company.company ? (
               <dl className="mt-3 grid gap-3 sm:grid-cols-2">
                 <Row label="Legal name" value={company.company.legalName} />
-                <Row label="Entity" value={`${entityTypeLabel(company.company.entityType)}, ${usStateName(company.company.incorporationState)}`} />
+                <Row label="Entity" value={`${entityTypeLabel(company.company.entityType)}, ${company.company.incorporationState ? usStateName(company.company.incorporationState) : 'state of formation not given yet'}`} />
                 <Row label="EIN" value={company.company.ein} />
                 <Row label="Website" value={company.company.website} />
                 <Row label="Registered address" value={[company.company.addressLine1, company.company.addressLine2, company.company.city, `${company.company.state} ${company.company.zip}`].filter(Boolean).join(', ')} />
-                <Row label="Billing email" value={company.company.billingEmail} />
-                <Row label="Signatory" value={`${company.company.signatoryName}, ${company.company.signatoryTitle} (${company.company.signatoryEmail})`} />
+                <Row label="Billing email" value={company.company.billingEmail ?? 'Not given yet (invoices go to the portal users)'} />
+                <Row label="Signatory" value={`${company.company.signatoryName}${company.company.signatoryTitle ? `, ${company.company.signatoryTitle}` : ''} (${company.company.signatoryEmail})`} />
                 <Row label="Declarations" value="Not sanctioned · employees will not conclude contracts" />
               </dl>
             ) : (

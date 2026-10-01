@@ -11,7 +11,15 @@ import {
   type EorCompany,
 } from './companies';
 import { getScheduleText, type EorEmployee } from './employees';
-import { employeeSteps, missingRequiredDocuments } from './onboarding';
+import { DOCUMENT_KINDS, canAddLateDocument, employeeSteps, isCompanyEditable, knownAs, missingRequiredDocuments } from './onboarding';
+import { companyOutstanding } from './outstanding';
+import { getOwnership } from './ownership-store';
+
+/** The document kinds the client may upload right now. */
+function editableOrLate(company: EorCompany, documents: Array<{ kind: string; reviewStatus: 'pending' | 'accepted' | 'rejected' }>): string[] {
+  if (company.status === 'cancelled') return [];
+  return DOCUMENT_KINDS.filter((d) => isCompanyEditable(company.status) || canAddLateDocument(d.kind, documents)).map((d) => d.kind);
+}
 import type { PortalContext } from './portal-auth';
 
 /*
@@ -21,10 +29,11 @@ import type { PortalContext } from './portal-auth';
  */
 
 export async function companyView(company: EorCompany, ctx: PortalContext) {
-  const [documents, approval, counts] = await Promise.all([
+  const [documents, approval, counts, ownership] = await Promise.all([
     listCompanyDocuments(company.id),
     getTemplateApproval(AGREEMENT_VERSION),
     employeeCounts(company.id),
+    getOwnership(company.id),
   ]);
   const signed = Boolean(company.signedAt);
   const draft = masterDraft(company);
@@ -50,6 +59,11 @@ export async function companyView(company: EorCompany, ctx: PortalContext) {
       reviewNote: d.reviewStatus === 'rejected' ? d.reviewNote : null,
     })),
     missingDocuments: missingRequiredDocuments(documents).map((d) => d.kind),
+    // What is still to come; nothing here blocks signing. Reminded twice a week.
+    outstanding: companyOutstanding({ details: company.company, documents, ownershipDeclared: Boolean(ownership) }),
+    // A document Ensaar still needs can be added even after signing.
+    lateUploads: editableOrLate(company, documents),
+    ownership: ownership && { owners: ownership.owners, noLargeOwner: ownership.noLargeOwner, controller: ownership.controller, declaredName: ownership.declaredName, declaredAt: ownership.declaredAt },
     // Nobody can sign a version without a recorded legal review.
     readyToSign: Boolean(approval),
     master: {
@@ -77,7 +91,9 @@ export function employeeListItem(e: EorEmployee) {
   return {
     id: e.id,
     status: e.status,
-    employeeName: e.employeeName,
+    // The client sees the name the employee works under; the legal name is shown beside it.
+    employeeName: knownAs(e),
+    legalName: e.businessName ? e.employeeName : null,
     jobTitle: e.jobTitle,
     workState: e.workState,
     pricing: e.pricing,

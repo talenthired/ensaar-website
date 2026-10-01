@@ -9,7 +9,7 @@ import { employeeDocumentSignedEmail, employeeDocumentSignedStaffEmail, holidays
 import { getEmployee, type EorEmployee } from './employees';
 import { buildEmploymentAgreement, buildOfferLetter, employmentDocToText, type EmploymentDocument, type SignatureEvidence } from './employment-docs';
 import { checkHolidayChoice, holidayCatalogue, holidayId, type Holiday, type HolidayCountry, type HolidayPlanStatus } from './holidays';
-import { signatureMatches, todayInIndia } from './onboarding';
+import { formatDay, knownAs, signatureMatches, todayInIndia } from './onboarding';
 import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
 import { EMPTY_DECLARATIONS, TAX_RULES, compareRegimes, readDeclarations, type Regime, type TaxDeclarations } from './tax';
@@ -156,7 +156,8 @@ export async function signEmployeeDocument(
     if (row.status === 'signed') return refuse(409, 'You have already signed this document.');
     if (row.status === 'void') return refuse(409, 'Ensaar has replaced this document. Reload to see the current one.', { changed: true });
     if (row.hash !== shownHash) return refuse(409, 'The document changed since you opened it. Please read it again.', { changed: true });
-    if (!signatureMatches(signer.name, employee.employeeName)) return refuse(400, `Type your full name, ${employee.employeeName}, to sign.`);
+    // A signature is in the legal name, as on the PAN, whatever name they work under.
+    if (!signatureMatches(signer.name, employee.employeeName)) return refuse(400, `Type your full legal name, ${employee.employeeName}, to sign.`);
     const rows = await tx<DocRow[]>`
       UPDATE ensaar_employee_documents SET status = 'signed', signed_name = ${signer.name}, signed_email = ${employee.employeeEmail},
         signed_at = NOW(), signed_ip = ${signer.ip}, signed_user_agent = ${signer.userAgent}
@@ -170,13 +171,13 @@ export async function signEmployeeDocument(
       relatedId: employee.id,
       dedupeKey: `team.document.signed:${documentId}`,
       attachments: [{ filename: `Ensaar-${row.kind === 'offer' ? 'Offer-letter' : 'Employment-agreement'}-signed.txt`, content: `${row.text}\n\nSigned electronically by ${signer.name} <${employee.employeeEmail}> at ${signed.signedAt} (UTC).\nDocument fingerprint (SHA-256): ${row.hash}`, contentType: 'text/plain' }],
-      ...employeeDocumentSignedEmail({ name: employee.employeeName, kind: row.kind }),
+      ...employeeDocumentSignedEmail({ name: knownAs(employee), kind: row.kind }),
     });
     await enqueue(tx, {
       kind: 'team.document.signed.staff',
       to: await staffRecipients(tx),
       relatedId: employee.companyId,
-      ...employeeDocumentSignedStaffEmail({ name: employee.employeeName, kind: row.kind, employeeId: employee.id, companyName }),
+      ...employeeDocumentSignedStaffEmail({ name: employee.businessName ? `${employee.employeeName} (${employee.businessName})` : employee.employeeName, kind: row.kind, employeeId: employee.id, companyName }),
     });
     // Both documents signed: the checklist step is done.
     const [{ n }] = await tx<{ n: number }[]>`
@@ -329,7 +330,7 @@ export async function saveHolidayPlan(employee: EorEmployee, year: number, chose
     const status: HolidayPlanStatus = submit ? 'submitted' : 'draft';
     const rows = await tx<PlanRow[]>`
       INSERT INTO ensaar_company_holidays (id, company_id, year, chosen, status, proposed_by, proposed_name, submitted_at)
-      VALUES (${randomUUID()}, ${employee.companyId}, ${year}, ${tx.json(check.ids as never)}, ${status}, ${employee.id}, ${employee.employeeName}, ${submit ? new Date() : null})
+      VALUES (${randomUUID()}, ${employee.companyId}, ${year}, ${tx.json(check.ids as never)}, ${status}, ${employee.id}, ${knownAs(employee)}, ${submit ? new Date() : null})
       ON CONFLICT (company_id, year) DO UPDATE SET chosen = EXCLUDED.chosen, status = EXCLUDED.status, proposed_by = EXCLUDED.proposed_by,
         proposed_name = EXCLUDED.proposed_name, submitted_at = EXCLUDED.submitted_at,
         decided_by = NULL, decided_role = NULL, decided_at = NULL, note = NULL, updated_at = NOW()
@@ -343,9 +344,9 @@ export async function saveHolidayPlan(employee: EorEmployee, year: number, chose
         relatedId: employee.companyId,
         ...holidaysSubmittedEmail({
           companyName: employee.companyName ?? 'your company',
-          employeeName: employee.employeeName,
+          employeeName: knownAs(employee),
           year,
-          holidays: check.ids.map((id) => byId.get(id)!).map((h) => `${h.name}, ${h.date}${h.country === 'IN' ? '' : ' (United States)'}`),
+          holidays: check.ids.map((id) => byId.get(id)!).map((h) => `${h.name}, ${formatDay(h.date)}${h.country === 'IN' ? '' : ' (United States)'}`),
         }),
       });
     }

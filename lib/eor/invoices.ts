@@ -18,16 +18,18 @@ import {
   type InvoiceStatus,
   type ReminderStage,
 } from './billing';
-import { displayName, lockCompany, type EorCompany } from './companies';
+import { displayName, getCompany, lockCompany, type EorCompany } from './companies';
+import { invoiceSettings } from './invoice-format';
+import { invoicePdf } from './invoice-pdf';
 import { invoiceIssuedEmail, invoiceOverdueStaffEmail, invoicePaidEmail, invoiceReminderEmail } from './email';
 import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
+import { runOutstandingReminders } from './reminders';
 
 /*
- * Invoices recorded against a client so that payment is reminded and chased.
- * Ensaar raises the invoice itself in accounting and sends it; this records
- * what is owed and by when, emails the customer before and after the due date,
- * and stops the moment staff mark it paid.
+ * Invoices issued to a client: recorded here, generated as a PDF in Ensaar's
+ * invoice format and emailed with it, reminded before and after the due date,
+ * and stopped the moment staff mark it paid.
  */
 
 type Executor = postgres.Sql | postgres.TransactionSql;
@@ -74,6 +76,18 @@ export async function listInvoices(companyId: string): Promise<Invoice[]> {
   return rows.map(toInvoice);
 }
 
+/** One invoice as a PDF, for download (staff, or the client it belongs to). */
+export async function invoicePdfFor(companyId: string, invoiceId: string): Promise<Outcome<{ filename: string; bytes: Uint8Array }>> {
+  const settings = invoiceSettings();
+  if (!settings.ok) return refuse(409, `Invoicing is not set up: ${settings.missing.join('; ')}.`);
+  const sql = db();
+  const [row] = await sql<Row[]>`SELECT ${select(sql)} FROM ensaar_eor_invoices WHERE id = ${invoiceId} AND company_id = ${companyId}`;
+  const company = row && (await getCompany(companyId));
+  if (!row || !company) return refuse(404, 'No such invoice.');
+  const invoice = toInvoice(row);
+  return ok({ filename: `Ensaar-Invoice-${invoice.number}.pdf`, bytes: await invoicePdf({ invoice, customer: { name: displayName(company), details: company.company }, settings: settings.value }) });
+}
+
 /** What staff and the customer both see beside an invoice: how late it is and the interest that has accrued. */
 export function invoiceState(invoice: Invoice, today = billingNow().today) {
   const late = daysOverdue(invoice, today);
@@ -106,6 +120,9 @@ export async function createInvoice(companyId: string, input: InvoiceInput, acto
     const company = await lockCompany(tx, companyId);
     if (!company) return refuse(404, 'No such client.');
     if (company.status !== 'active') return refuse(409, 'Invoices are for active clients: countersign the agreement first.');
+    // Never issue an invoice with no bank details or an expired LUT on it.
+    const settings = invoiceSettings();
+    if (!settings.ok) return refuse(409, `Set up invoicing first. Missing: ${settings.missing.join('; ')}.`);
     const [clash] = await tx`SELECT 1 FROM ensaar_eor_invoices WHERE lower(number) = ${input.number.toLowerCase()}`;
     if (clash) return refuse(409, `Invoice ${input.number} is already recorded.`);
     const rows = await tx<Row[]>`
@@ -114,11 +131,13 @@ export async function createInvoice(companyId: string, input: InvoiceInput, acto
       RETURNING ${select(tx)}
     `;
     const invoice = toInvoice(rows[0]!);
+    const pdf = await invoicePdf({ invoice, customer: { name: displayName(company), details: company.company }, settings: settings.value });
     await enqueue(tx, {
       kind: 'invoice.issued',
       to: await billingRecipients(tx, company),
       relatedId: companyId,
       dedupeKey: `invoice:${invoice.id}:issued`,
+      attachments: [{ filename: `Ensaar-Invoice-${invoice.number}.pdf`, content: Buffer.from(pdf).toString('base64'), contentType: 'application/pdf', encoding: 'base64' }],
       ...invoiceIssuedEmail({ companyName: displayName(company), invoice }),
     });
     return ok(invoice);
@@ -238,8 +257,9 @@ export async function runInvoiceReminders(now = new Date()): Promise<{ queued: n
   return { queued };
 }
 
-/** One pass of the background job: queue reminders, then deliver whatever is due (which also retries failures). */
+/** One pass of the background job: queue reminders (invoices, then outstanding details), then deliver whatever is due (which also retries failures). */
 export async function billingTick(): Promise<void> {
   await runInvoiceReminders();
+  await runOutstandingReminders();
   await deliverDue(25);
 }

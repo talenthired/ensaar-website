@@ -70,7 +70,7 @@ export type AgreementDocument = {
 function customerParty(companyName: string, company: CompanyDetails | null): string {
   const name = company?.legalName || companyName;
   const description = company
-    ? `a ${entityTypeLabel(company.entityType).toLowerCase()} organised under the laws of ${usStateName(company.incorporationState)}, with its registered address at ${[company.addressLine1, company.addressLine2, company.city, `${company.state} ${company.zip}`].filter(Boolean).join(', ')}, United States (EIN ${company.ein})`
+    ? `a ${entityTypeLabel(company.entityType).toLowerCase()} organised ${company.incorporationState ? `under the laws of ${usStateName(company.incorporationState)}` : 'in the United States'}, with its registered address at ${[company.addressLine1, company.addressLine2, company.city, `${company.state} ${company.zip}`].filter(Boolean).join(', ')}, United States (EIN ${company.ein})`
     : 'a company organised in the United States (entity details to be completed during onboarding)';
   return `${name}, ${description} (the "Customer").`;
 }
@@ -208,7 +208,8 @@ export function buildSchedule(input: {
       },
     ],
     schedule: [
-      { label: 'Employee', value: employee.employeeName },
+      // The legal name, as on the employee's PAN and Aadhaar, with the name the Customer knows them by.
+      { label: 'Employee', value: employee.businessName ? `${employee.employeeName} (business name: ${employee.businessName})` : employee.employeeName },
       { label: 'Job title', value: employee.jobTitle },
       { label: 'Place of work', value: `${employee.workState}, India` },
       { label: 'Start date', value: formatDay(employee.startDate) },

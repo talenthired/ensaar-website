@@ -10,6 +10,7 @@ import { CompanyDetailsForm, CompanyDocuments, MasterAgreement, type Say } from 
 import { PortalBar, SignIn } from './PortalChrome';
 import { PortalBilling } from './PortalBilling';
 import { PortalHolidays } from './PortalHolidays';
+import { OwnershipDeclaration, StillNeeded } from './PortalOutstanding';
 import { PortalEmployees } from './PortalEmployees';
 
 function Step({ n, title, done, children, subtitle }: { n: number; title: string; done: boolean; subtitle: string; children: React.ReactNode }) {
@@ -84,8 +85,8 @@ export function PortalApp() {
     ? 'The agreement is being finalised by our legal team. We will email you as soon as it is ready to sign.'
     : editingDetails
       ? 'Save or discard your company details first, then review the agreement.'
-      : !detailsDone || !docsDone
-        ? `Finish ${[!detailsDone && 'the company details', !docsDone && 'the required documents'].filter(Boolean).join(' and ')} to sign.`
+      : !detailsDone
+        ? 'Finish the company details to sign. Documents can follow.'
         : null;
 
   return (
@@ -118,6 +119,7 @@ export function PortalApp() {
 
         {tab === 'overview' && (
           <div className="space-y-6">
+            <StillNeeded view={view} onSaved={setView} onOpenDocuments={() => setTab({ tab: 'documents' })} say={say} />
             <div className="grid gap-3 sm:grid-cols-4">
               {[
                 ['Active', view.counts.active],
@@ -149,7 +151,7 @@ export function PortalApp() {
                 <Step n={1} title="Company details" done={detailsDone && !editingDetails} subtitle="Who we are contracting with, and who signs.">
                   <CompanyDetailsForm view={view} editable={editable} onSaved={setView} say={say} onEditing={setEditingDetails} />
                 </Step>
-                <Step n={2} title="Documents" done={docsDone} subtitle="PDF, PNG or JPEG, up to 10 MB each. Two are required.">
+                <Step n={2} title="Documents" done={docsDone} subtitle="PDF, PNG or JPEG, up to 10 MB each. If you do not have one yet, sign anyway and upload it later.">
                   <CompanyDocuments view={view} editable={editable} onChanged={load} say={say} />
                 </Step>
                 <Step
@@ -185,9 +187,11 @@ export function PortalApp() {
         {tab === 'documents' && (
           <section className="space-y-3">
             <p className="text-sm text-ink-secondary">
-              {editable ? 'Upload or replace your company documents.' : 'Your company documents, as reviewed by Ensaar. To change one now, write to Ensaar.'}
+              {editable ? 'Upload or replace your company documents.' : 'Your company documents, as reviewed by Ensaar. You can add one Ensaar still needs; to change one, write to Ensaar.'}
             </p>
             <CompanyDocuments view={view} editable={editable} onChanged={load} say={say} />
+            <h2 className="pt-4 text-sm font-semibold text-ink-primary">Beneficial ownership</h2>
+            <OwnershipDeclaration view={view} onSaved={setView} say={say} />
           </section>
         )}
       </main>

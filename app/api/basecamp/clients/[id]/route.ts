@@ -7,6 +7,7 @@ import { agreementToText } from '@/lib/eor/agreement';
 import {
   addContact,
   approveCompany,
+  completeCompanyDetails,
   cancelCompany,
   employeeCounts,
   getCompany,
@@ -24,6 +25,9 @@ import {
 import { rebuildPendingSchedules } from '@/lib/eor/employees';
 import { validateCompany, validateCompanyInvite } from '@/lib/eor/onboarding';
 import type { Outcome } from '@/lib/eor/outcome';
+import { remindCompanyNow } from '@/lib/eor/reminders';
+import { companyOutstanding } from '@/lib/eor/outstanding';
+import { getOwnership } from '@/lib/eor/ownership-store';
 import { deactivatePortalUser, listPortalUsers, reinvitePortalUser } from '@/lib/eor/portal-auth';
 
 export const runtime = 'nodejs';
@@ -37,7 +41,7 @@ export async function GET(request: NextRequest, context: Context) {
   const { id } = await context.params;
   const company = await getCompany(id).catch(() => null);
   if (!company) return NextResponse.json({ error: 'No such client.' }, { status: 404 });
-  const [counts, documents, contacts, voided, messages, approval, signedText] = await Promise.all([
+  const [counts, documents, contacts, voided, messages, approval, signedText, ownership] = await Promise.all([
     employeeCounts(id),
     listCompanyDocuments(id),
     listPortalUsers(id),
@@ -45,6 +49,7 @@ export async function GET(request: NextRequest, context: Context) {
     listMessages(id),
     getTemplateApproval(),
     company.signedAt ? getSignedMasterText(id) : Promise.resolve(null),
+    getOwnership(id),
   ]);
   const draft = masterDraft(company);
   return NextResponse.json({
@@ -55,6 +60,8 @@ export async function GET(request: NextRequest, context: Context) {
     voided,
     messages,
     readyToSign: Boolean(approval),
+    outstanding: companyOutstanding({ details: company.company, documents, ownershipDeclared: Boolean(ownership) }),
+    ownership,
     master: { draft, text: signedText ?? agreementToText(draft) },
     emailConfigured: emailConfigured(),
     viewer: { email: gate.session.email, bootstrap: gate.session.bootstrap, role: gate.session.role },
@@ -71,13 +78,13 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['approve', 'request_changes', 'review_document', 'update_invite', 'save_details', 'send_for_signature'].includes(action)) {
+  if (['approve', 'request_changes', 'review_document', 'update_invite', 'save_details', 'send_for_signature', 'complete_details'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
 
   const done = async (outcome: Outcome<unknown>, auditAction: string, metadata?: Record<string, unknown>) => {
-    if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: outcome.status });
+    if (!outcome.ok) return NextResponse.json({ error: outcome.error, ...(outcome.missing ? { missing: true } : {}) }, { status: outcome.status });
     await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: auditAction, target: id, metadata });
     await deliverSoon();
     return NextResponse.json({ ok: true });
@@ -96,10 +103,15 @@ export async function POST(request: NextRequest, context: Context) {
         if (!details.ok) return NextResponse.json({ error: 'Please check the highlighted fields.', errors: details.errors }, { status: 400 });
         return done(await saveCompanyDetails(id, details.value, rebuildPendingSchedules, actor), 'eor.company.details', { forCustomer: true });
       }
+      // Details left for later (title, billing email, state), filled in by Ensaar when the client sends them.
+      case 'complete_details':
+        return done(await completeCompanyDetails(id, body.details), 'eor.company.details.complete');
       case 'send_for_signature': {
         const sent = await sendForSignature(id);
         if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: sent.status });
         await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.master.send', target: id, metadata: { to: sent.value.email } });
+        // Anything still to come is asked for now, alongside the agreement; then twice a week.
+        await remindCompanyNow(id).catch((error) => console.error('Outstanding reminder failed', error));
         await deliverSoon();
         // The link is returned so staff can pass it on directly if email is not working.
         return NextResponse.json({ ...sent.value, emailConfigured: emailConfigured() });
@@ -138,7 +150,7 @@ export async function POST(request: NextRequest, context: Context) {
         return done(await requestCompanyChanges(id, note, actor), 'eor.company.changes');
       }
       case 'approve':
-        return done(await approveCompany(id, actor), 'eor.company.approve');
+        return done(await approveCompany(id, actor, { confirmMissing: body.confirmMissing === true }), 'eor.company.approve', { confirmMissing: body.confirmMissing === true });
       case 'cancel':
         return done(await cancelCompany(id), 'eor.company.cancel');
       default:

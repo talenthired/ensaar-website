@@ -583,3 +583,48 @@ CREATE TABLE IF NOT EXISTS ensaar_company_holidays (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ensaar_company_holidays_unique_idx ON ensaar_company_holidays (company_id, year);
+
+-- The name an employee works under with the client, when it differs from the
+-- legal name on their PAN and Aadhaar. Shown to the client and used to greet them.
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS business_name TEXT;
+-- The employee says they have no previous employer, so no relieving letter is due.
+ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS no_previous_employer BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Who owns or controls a client company (25% or more), declared and signed in
+-- the client portal. Frozen text and fingerprint, like the agreement.
+CREATE TABLE IF NOT EXISTS ensaar_eor_ownership (
+  company_id     TEXT PRIMARY KEY REFERENCES ensaar_eor_companies (id) ON DELETE CASCADE,
+  owners         JSONB NOT NULL DEFAULT '[]'::jsonb,
+  -- Nobody owns or controls 25% or more; then the controller is named instead.
+  no_large_owner BOOLEAN NOT NULL DEFAULT FALSE,
+  controller     JSONB,
+  declared_name  TEXT NOT NULL,
+  declared_email TEXT NOT NULL,
+  declared_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  text           TEXT NOT NULL,
+  hash           TEXT NOT NULL
+);
+
+-- The account an employee's salary is paid into.
+CREATE TABLE IF NOT EXISTS ensaar_employee_bank (
+  employee_id    TEXT PRIMARY KEY REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  holder_name    TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  ifsc           TEXT NOT NULL,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Files an employee gives Ensaar: proof of the bank account, a relieving letter.
+CREATE TABLE IF NOT EXISTS ensaar_employee_files (
+  id           TEXT PRIMARY KEY,
+  employee_id  TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  -- bank_proof | relieving_letter
+  kind         TEXT NOT NULL,
+  filename     TEXT NOT NULL,
+  content_type TEXT NOT NULL,
+  size_bytes   INTEGER NOT NULL,
+  content      BYTEA NOT NULL,
+  uploaded_by  TEXT,
+  uploaded_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_employee_files_idx ON ensaar_employee_files (employee_id, kind);

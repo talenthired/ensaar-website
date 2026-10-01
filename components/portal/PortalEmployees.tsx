@@ -142,7 +142,10 @@ export function PortalEmployees({ view, say, onSigned }: { view: CompanyView; sa
                 )}
                 <button type="button" onClick={() => setOpen(open === e.id ? null : e.id)} aria-expanded={open === e.id} className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-ink-primary">{e.employeeName}</span>
+                    <span className="block truncate text-sm font-medium text-ink-primary">
+                      {e.employeeName}
+                      {e.legalName && <span className="font-normal text-ink-secondary"> · legal name {e.legalName}</span>}
+                    </span>
                     <span className="block truncate text-xs text-ink-secondary">
                       {e.jobTitle} · {e.workState} · starts {formatDay(e.startDate)}
                     </span>

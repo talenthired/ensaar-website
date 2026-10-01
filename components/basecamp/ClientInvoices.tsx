@@ -117,7 +117,10 @@ export function ClientInvoices({ companyId, active, named, onMessage }: { compan
               {data.invoices.map((invoice) => (
                 <tr key={invoice.id} className={cn(invoice.status === 'void' && 'text-ink-secondary line-through decoration-ink-secondary/40')}>
                   <td className="px-4 py-3">
-                    <span className="block font-medium text-ink-primary">{invoice.number}</span>
+                    <span className="block font-medium text-ink-primary">
+                      {invoice.number}{" "}
+                      <a href={`/api/basecamp/clients/${companyId}/invoices/${invoice.id}/pdf`} target="_blank" rel="noopener" className="text-xs font-normal text-ink-secondary underline hover:text-ink-primary">PDF</a>
+                    </span>
                     <span className="block text-xs text-ink-secondary">
                       {formatPeriod(invoice.period)}
                       {invoice.summary ? ` · ${invoice.summary}` : ''}

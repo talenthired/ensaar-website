@@ -12,11 +12,13 @@ import { REGIMES, compareRegimes, readDeclarations, type Regime, type TaxDeclara
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Badge, Notice, Tabs, buttonClass, inputClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
+import { YourDetails, type Records } from './YourDetails';
 
 type DocSummary = { id: string; kind: 'offer' | 'agreement'; status: 'sent' | 'signed' | 'void'; hash: string; issuedAt: string; signedAt: string | null };
 type Me = {
-  employee: { name: string; email: string; jobTitle: string; companyName: string | null; startDate: string; workState: string; status: string };
+  employee: { name: string; knownAs: string; email: string; jobTitle: string; companyName: string | null; startDate: string; workState: string; status: string };
   documents: DocSummary[];
+  records: Records;
   pay: { salaryInr: number; breakup: { lines: SalaryLine[]; gross: SalaryLine } };
   tax: { taxYear: string; regime: Regime; declarations: TaxDeclarations; updatedAt: string | null; fields: Array<{ key: keyof TaxDeclarations; label: string; hint: string; kind: 'amount' | 'flag' }> };
   holidays: {
@@ -179,7 +181,7 @@ export function TeamApp() {
       />
       <main className="container-page space-y-6 pt-8 pb-16">
         <div>
-          <h1 className="text-2xl font-semibold text-ink-primary">Hi {e.name.split(/\s+/)[0]}</h1>
+          <h1 className="text-2xl font-semibold text-ink-primary">Hi {e.knownAs.split(/\s+/)[0]}</h1>
           <p className="mt-1 text-sm text-ink-secondary">
             {e.jobTitle}
             {e.companyName ? ` for ${e.companyName}` : ''}, employed by Ensaar · starts {formatDay(e.startDate)} · {e.workState}, India
@@ -191,11 +193,13 @@ export function TeamApp() {
           onChange={(tab) => setQuery({ tab })}
           tabs={[
             { key: 'documents', label: 'Documents', count: toSign },
+            { key: 'details', label: 'Your details', count: me.records.outstanding.needed.length },
             { key: 'tax', label: 'Pay and tax' },
             { key: 'holidays', label: 'Holidays' },
           ]}
         />
         {query.tab === 'documents' && <Documents me={me} say={say} onChanged={load} />}
+        {query.tab === 'details' && <YourDetails records={me.records} legalName={e.name} say={say} onChanged={(records) => setMe({ ...me, records })} />}
         {query.tab === 'tax' && <PayAndTax me={me} say={say} onSaved={load} />}
         {query.tab === 'holidays' && <Holidays me={me} say={say} onChanged={load} onYear={(year) => setQuery({ year: String(year) })} />}
       </main>
@@ -292,7 +296,7 @@ function SignDocument({ doc, name, say, onSigned }: { doc: DocSummary; name: str
         }}
       >
         <label className="block text-sm">
-          <span className="mb-1 block font-medium text-ink-primary">Type {name} to sign</span>
+          <span className="mb-1 block font-medium text-ink-primary">Type your legal name, {name}, to sign</span>
           <input id="sign-name" className={cn(inputClass, 'font-serif text-lg italic')} value={typed} onChange={(e) => setTyped(e.target.value)} placeholder={name} autoComplete="off" />
         </label>
         <label className="flex items-start gap-3 text-sm text-ink-primary">
