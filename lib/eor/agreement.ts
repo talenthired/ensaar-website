@@ -46,7 +46,7 @@ export const ENSAAR_ADDRESS = [siteConfig.address.street, siteConfig.address.cit
 
 export const ENSAAR_PARTY = {
   legalName: siteConfig.legalName,
-  description: `a private limited company incorporated in India, with its principal place of business at ${ENSAAR_ADDRESS} (GSTIN ${siteConfig.gstin})`,
+  description: `a private limited company incorporated in India, with its principal place of business at ${ENSAAR_ADDRESS} (CIN ${siteConfig.cin})`,
 };
 
 export const PROBATION_MONTHS = 3;

@@ -218,9 +218,10 @@ describe('the email layout', () => {
     expect(mail.html).toContain('src="https://ensaar.com/ensaar-logo.png"');
     expect(mail.html).toContain('alt="Ensaar Global"');
     expect(mail.html).toContain('Ensaar Global Private Limited');
-    expect(mail.html).toContain('GSTIN 36AAECE2158G1ZS');
+    expect(mail.html).toContain('CIN U74900TG2016PTC103814');
+    expect(mail.html).not.toContain('GSTIN');
     expect(mail.html).toContain('mailto:support@ensaar.com');
-    expect(mail.text).toContain('Ensaar Global Private Limited, Second Floor, H.No 16-11-20/G/204, Bhavani Apartments, Saleem Nagar, Malakpet, Hyderabad, Telangana 500036, India. GSTIN 36AAECE2158G1ZS');
+    expect(mail.text).toContain('Ensaar Global Private Limited, Second Floor, H.No 16-11-20/G/204, Bhavani Apartments, Saleem Nagar, Malakpet, Hyderabad, Telangana 500036, India. CIN U74900TG2016PTC103814');
   });
 
   it('escapes everything a caller passes in', () => {

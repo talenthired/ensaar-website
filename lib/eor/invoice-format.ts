@@ -21,7 +21,10 @@ export const INVOICE_ISSUER = {
   addressLines: ['H NO 16-11-20/G/204, BHAVANI APARTMENTS,', 'SECOND FLOOR, SALEEM NAGAR', 'MALAKPET, HYDERABAD – 500036', 'TELANGANA, INDIA'],
   /** The PAN is the middle of the GSTIN, so it is public already. */
   pan: siteConfig.gstin.slice(2, 12),
+  /** GST law requires the GSTIN on a tax invoice, including an export under LUT. */
   gstin: siteConfig.gstin,
+  /** Company law requires the CIN on invoices and other business documents. */
+  cin: siteConfig.cin,
   /** Long-term staffing (payroll) services: what an Employer of Record supplies. */
   sac: '998515',
   accountsEmail: 'accounts@ensaar.com',

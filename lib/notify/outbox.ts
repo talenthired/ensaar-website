@@ -311,7 +311,7 @@ export function renderEmail(content: EmailContent): { text: string; html: string
     ...(input.action ? [`${input.action.label}: ${input.action.href}`, ''] : []),
     footer,
     '',
-    `${siteConfig.legalName}, ${companyAddress()}. GSTIN ${siteConfig.gstin}`,
+    `${siteConfig.legalName}, ${companyAddress()}. CIN ${siteConfig.cin}`,
   ].join('\n');
 
   const notice = input.notice && NOTICE[input.notice.tone];
@@ -357,7 +357,7 @@ export function renderEmail(content: EmailContent): { text: string; html: string
       </td></tr>
       <tr><td style="background:${BRAND.navy};padding:22px 36px">
         <p style="margin:0 0 4px;font:600 13px ${FONT};color:#ffffff">${escapeHtml(siteConfig.legalName)}</p>
-        <p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(companyAddress())} &nbsp;&middot;&nbsp; GSTIN ${escapeHtml(siteConfig.gstin)}</p>
+        <p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(companyAddress())} &nbsp;&middot;&nbsp; CIN ${escapeHtml(siteConfig.cin)}</p>
         <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1"><a href="mailto:${escapeHtml(supportAddress())}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(supportAddress())}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
       </td></tr>
     </table>

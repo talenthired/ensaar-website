@@ -416,7 +416,7 @@ export function renderEmploymentDocumentHtml(doc: EmploymentDocument, options: {
   <div class="signatures">${signatures.map((s) => `<div><div class="party">${escape(s.party)}</div>${s.lines.map((l) => `<p>${escape(l)}</p>`).join('')}</div>`).join('')}</div>
   ${doc.annexures.map((a) => `<div class="annexure"><h3 class="annex">${escape(a.title)}</h3>${a.sections.map(sectionHtml).join('\n')}</div>`).join('\n')}
   ${ev ? `<p class="fingerprint">Document fingerprint (SHA-256): ${escape(ev.hash)}</p>` : ''}
-  <footer>${escape(ENSAAR_PARTY.legalName)} &middot; ${escape(ENSAAR_ADDRESS)} &middot; GSTIN ${escape(siteConfig.gstin)} &middot; ${escape(siteConfig.email)}</footer>
+  <footer>${escape(ENSAAR_PARTY.legalName)} &middot; ${escape(ENSAAR_ADDRESS)} &middot; CIN ${escape(siteConfig.cin)} &middot; ${escape(siteConfig.email)}</footer>
 </div>
 </body></html>`;
 }

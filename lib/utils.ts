@@ -9,6 +9,9 @@ export const siteConfig = {
   name: 'Ensaar Global',
   // As on the GST registration certificate (Form GST REG-06, issued 5 August 2019).
   legalName: 'Ensaar Global Private Limited',
+  /** Corporate Identity Number: shown wherever Ensaar identifies itself (Companies Act, s.12). */
+  cin: 'U74900TG2016PTC103814',
+  /** GST registration: on invoices only, where GST law requires it. */
   gstin: '36AAECE2158G1ZS',
   /** Principal place of business, as registered for GST. */
   address: {

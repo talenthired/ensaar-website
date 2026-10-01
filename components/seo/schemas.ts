@@ -36,7 +36,7 @@ export function organizationSchema() {
           }
         : { '@type': 'PostalAddress', addressLocality: location.city, addressRegion: location.state, addressCountry: siteConfig.countryCode },
     ),
-    taxID: siteConfig.gstin,
+    identifier: { '@type': 'PropertyValue', propertyID: 'CIN', value: siteConfig.cin },
     geo: {
       '@type': 'GeoCoordinates',
       latitude: 17.4474,

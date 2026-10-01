@@ -84,7 +84,7 @@ export async function invoicePdf(input: {
     y -= 10.5;
   }
   y -= 5;
-  for (const l of [`PAN – ${INVOICE_ISSUER.pan}`, `GSTIN – ${INVOICE_ISSUER.gstin}`, `SAC Code – ${INVOICE_ISSUER.sac}`, `LUT ARN – ${settings.lut.arn} (FY ${settings.lut.financialYear})`]) {
+  for (const l of [`PAN – ${INVOICE_ISSUER.pan}`, `CIN – ${INVOICE_ISSUER.cin}`, `GSTIN – ${INVOICE_ISSUER.gstin}`, `SAC Code – ${INVOICE_ISSUER.sac}`, `LUT ARN – ${settings.lut.arn} (FY ${settings.lut.financialYear})`]) {
     text(l, MARGIN, y, 9, bold);
     y -= 12;
   }
