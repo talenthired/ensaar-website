@@ -12,7 +12,7 @@ import {
   sendForSignature,
   updateEmployee,
 } from '@/lib/eor/employees';
-import { validateEmployee } from '@/lib/eor/onboarding';
+import { employeeContactable, validateEmployee } from '@/lib/eor/onboarding';
 import type { Outcome } from '@/lib/eor/outcome';
 import { HOLIDAYS_PER_YEAR, choicesAllowed } from '@/lib/eor/holidays';
 import { decideHolidayPlan, holidayView, isDocumentKind, issueEmployeeDocument, listEmployeeDocuments, taxView } from '@/lib/eor/team';
@@ -124,7 +124,9 @@ export async function POST(request: NextRequest, context: Context) {
     }
     case 'invite_employee': {
       if (!employee.employeeEmail) return NextResponse.json({ error: "Add the employee's email address first." }, { status: 409 });
-      if (['draft', 'cancelled'].includes(employee.status)) return NextResponse.json({ error: 'Send the schedule to the client first; the employee portal opens once there is an offer.' }, { status: 409 });
+      if (!employeeContactable(employee.status)) {
+        return NextResponse.json({ error: 'Not yet: the client has to sign the agreement and this Schedule A first. Until then the employee hears nothing from Ensaar.' }, { status: 409 });
+      }
       const link = await requireDatabase().begin((tx) => inviteEmployee(tx, employee, 'You can now sign in to the Ensaar employee portal.'));
       await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.invite', target: id });
       await remindEmployeeNow(id).catch((error) => console.error('Outstanding reminder failed', error));

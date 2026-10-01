@@ -9,7 +9,7 @@ import { employeeDocumentSignedEmail, employeeDocumentSignedStaffEmail, holidays
 import { getEmployee, type EorEmployee } from './employees';
 import { buildEmploymentAgreement, buildOfferLetter, employmentDocToText, type EmploymentDocument, type SignatureEvidence } from './employment-docs';
 import { checkHolidayChoice, holidayCatalogue, holidayId, type Holiday, type HolidayCountry, type HolidayPlanStatus } from './holidays';
-import { formatDay, knownAs, signatureMatches, todayInIndia } from './onboarding';
+import { employeeContactable, formatDay, knownAs, signatureMatches, todayInIndia } from './onboarding';
 import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
 import { EMPTY_DECLARATIONS, TAX_RULES, compareRegimes, readDeclarations, type Regime, type TaxDeclarations } from './tax';
@@ -99,6 +99,9 @@ export async function issueEmployeeDocument(
   const employee = await getEmployee(employeeId);
   if (!employee) return refuse(404, 'No such employee.');
   if (['cancelled', 'exited'].includes(employee.status)) return refuse(409, 'This employee has left or was cancelled.');
+  if (!employeeContactable(employee.status)) {
+    return refuse(409, `Not yet: ${employee.companyName ?? 'the client'} has to sign the agreement and ${knownAs(employee)}'s Schedule A first. Until then the employee hears nothing from Ensaar.`);
+  }
   if (!employee.employeeEmail) return refuse(409, "Add the employee's email address first (edit the offer): they sign in to the portal with it.");
   const company = await getCompany(employee.companyId);
   if (!company) return refuse(404, 'No such client.');

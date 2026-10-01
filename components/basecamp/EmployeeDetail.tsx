@@ -9,6 +9,7 @@ import type { VoidedSignature } from '@/lib/eor/companies';
 import type { OutboxEntry } from '@/lib/notify/outbox';
 import {
   EMPLOYEE_STATUS_LABELS,
+  employeeContactable,
   employeeSteps,
   INDIA_STATES,
   pricingLabel,
@@ -187,7 +188,7 @@ export function EmployeeDetail({ id }: { id: string }) {
       <EmployeePortalPanel
         employeeId={e.id}
         hasEmail={Boolean(e.employeeEmail)}
-        canInvite={!['draft', 'cancelled'].includes(e.status)}
+        canInvite={employeeContactable(e.status)}
         named={named}
         data={detail}
         act={act}

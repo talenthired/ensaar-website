@@ -27,7 +27,8 @@ export const teamUrl = (path = '') => `${site()}/team${path}`;
 const teamAuthLink = (token: string) => `${site()}/team/auth#${token}`;
 
 /** Employees who may sign in: offered a job and not cancelled. Leavers keep access to their documents. */
-const CAN_SIGN_IN = ['awaiting_signature', 'signed', 'onboarding', 'active', 'exited'];
+/** The hire is agreed (see EMPLOYEE_CONTACTABLE), or they have left and keep access to their documents. */
+const CAN_SIGN_IN = ['signed', 'onboarding', 'active', 'exited'];
 
 async function createTeamLink(tx: Executor, employeeId: string, purpose: 'invite' | 'login'): Promise<string> {
   const token = randomBytes(32).toString('base64url');

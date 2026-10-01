@@ -222,6 +222,15 @@ export type EmployeeCase = {
 };
 
 /** The checklist for one employee: the deposit step only when their Schedule A asks for a deposit. */
+/**
+ * Ensaar contacts an employee (documents, portal invitation, sign-in links,
+ * reminders) only once the client has signed their Schedule A, which the client
+ * can only do after signing the agreement itself. Before that the employee
+ * hears nothing: the hire is not yet agreed.
+ */
+export const EMPLOYEE_CONTACTABLE: readonly EmployeeStatus[] = ['signed', 'onboarding', 'active'];
+export const employeeContactable = (status: EmployeeStatus) => EMPLOYEE_CONTACTABLE.includes(status);
+
 export function employeeSteps(e: { depositRequired: boolean }) {
   return EMPLOYEE_STEPS.filter((s) => s.key !== 'deposit' || e.depositRequired);
 }
