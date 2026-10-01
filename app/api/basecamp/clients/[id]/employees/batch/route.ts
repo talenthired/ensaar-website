@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
-import { actorName, requireNamed, requireSignatory } from '@/lib/basecamp/actor';
+import { actorName, requireNamed, requireSignatory, signatoryLabel } from '@/lib/basecamp/actor';
 import { deliverSoon } from '@/lib/notify/outbox';
 import { MAX_BATCH, changeEmployee, countersignSchedules, getEmployee, sendForSignature } from '@/lib/eor/employees';
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     const confirmPastStart = body.confirmPastStart === true;
     const unsigned = requireSignatory(gate.session);
     if (unsigned) return unsigned;
-    const result = await countersignSchedules(id, ids, actor, { confirmPastStart });
+    const result = await countersignSchedules(id, ids, signatoryLabel(gate.session), { confirmPastStart });
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
     await writeAudit({
       actorId: gate.session.userId,

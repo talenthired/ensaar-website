@@ -38,3 +38,13 @@ export function requireSignatory(session: BasecampSession): NextResponse | null 
   }
   return null;
 }
+
+/** The signatory's designation (EOR_SIGNATORY_TITLE), printed under their name. */
+export function signatoryTitle(): string {
+  return process.env.EOR_SIGNATORY_TITLE?.trim() || 'Authorised Signatory';
+}
+
+/** How Ensaar's signature reads wherever a client or employee sees it: name and designation, no email. */
+export function signatoryLabel(session: BasecampSession): string {
+  return `${session.name || session.email || 'Ensaar'}, ${signatoryTitle()}`;
+}

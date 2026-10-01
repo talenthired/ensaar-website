@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
-import { actorName, requireNamed, requireSignatory } from '@/lib/basecamp/actor';
+import { actorName, requireNamed, requireSignatory, signatoryLabel, signatoryTitle } from '@/lib/basecamp/actor';
 import { deliverSoon, listMessages } from '@/lib/notify/outbox';
 import { getCompany, listVoidedSignatures } from '@/lib/eor/companies';
 import {
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, context: Context) {
     listMessages(employee.companyId),
     listEmployeeDocuments(id),
     taxView(employee),
-    holidayView(employee.companyId, year),
+    holidayView(employee.companyId, year, 'staff'),
     employeeRecordsView(employee, 'staff'),
   ]);
   return NextResponse.json({
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest, context: Context) {
       const unsigned = requireSignatory(gate.session);
       if (unsigned) return unsigned;
       return done(
-        await countersignSchedules(employee.companyId, [id], actor, { confirmPastStart: body.confirmPastStart === true }),
+        await countersignSchedules(employee.companyId, [id], signatoryLabel(gate.session), { confirmPastStart: body.confirmPastStart === true }),
         'eor.schedules.countersign',
         { count: 1, confirmPastStart: body.confirmPastStart === true },
       );
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest, context: Context) {
       const unsigned = requireSignatory(gate.session);
       if (unsigned) return unsigned;
       if (!isDocumentKind(body.kind)) return NextResponse.json({ error: 'Choose the offer letter or the employment agreement.' }, { status: 400 });
-      const issued = await issueEmployeeDocument(id, body.kind, { name: gate.session.name ?? '', label: actor });
+      const issued = await issueEmployeeDocument(id, body.kind, { name: gate.session.name ?? '', title: signatoryTitle(), label: signatoryLabel(gate.session) });
       if (!issued.ok) return NextResponse.json({ error: issued.error }, { status: issued.status });
       await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.document.issue', target: id, metadata: { kind: body.kind, hash: issued.value.document.hash } });
       // What the employee still needs to give Ensaar is asked for alongside (once a day at most).

@@ -94,7 +94,8 @@ export function indiaNationalHolidays(year: number): Holiday[] {
 export function holidayCatalogue(year: number, clientCountry: HolidayCountry, calendar: Array<Pick<Holiday, 'country' | 'date' | 'name'>>): Holiday[] {
   const loaded = calendar
     .filter((h) => h.date.startsWith(String(year)) && (h.country === 'IN' || h.country === clientCountry))
-    .map((h) => ({ ...h, id: holidayId(h.country, h.date, h.name), mandatory: false }));
+    // Only what a holiday is: never who loaded it, which clients and employees must not see.
+    .map((h) => ({ id: holidayId(h.country, h.date, h.name), country: h.country, date: h.date, name: h.name, mandatory: false }));
   const computed = clientCountry === 'US' ? usFederalHolidays(year) : [];
   const seen = new Set<string>();
   return [...indiaNationalHolidays(year), ...loaded, ...computed]

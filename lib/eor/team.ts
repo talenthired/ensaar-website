@@ -94,7 +94,7 @@ export function evidenceFor(doc: EmployeeDocument): SignatureEvidence {
 export async function issueEmployeeDocument(
   employeeId: string,
   kind: DocumentKind,
-  staff: { name: string; label: string },
+  staff: { name: string; title: string; label: string },
 ): Promise<Outcome<{ document: EmployeeDocument; link: string | null }>> {
   const employee = await getEmployee(employeeId);
   if (!employee) return refuse(404, 'No such employee.');
@@ -109,7 +109,7 @@ export async function issueEmployeeDocument(
     employee,
     customerName: displayName(company),
     issuedOn: todayInIndia(),
-    signatory: { name: staff.name, title: 'Authorised Signatory' },
+    signatory: { name: staff.name, title: staff.title },
     reference: `ENS-${employee.id.slice(0, 8).toUpperCase()}`,
   };
   const document = kind === 'offer' ? buildOfferLetter(input) : buildEmploymentAgreement(input);
@@ -296,9 +296,13 @@ export async function getHolidayPlan(companyId: string, year: number, sql: Execu
   return row ? toPlan(row) : emptyPlan(companyId, year);
 }
 
-/** What the employee portal, Basecamp and the client portal show: the client's calendar with its holidays spelled out. */
-export async function holidayView(companyId: string, year: number) {
-  const [catalogue, plan] = await Promise.all([holidayCatalogueFor(year), getHolidayPlan(companyId, year)]);
+/**
+ * What the employee portal, Basecamp and the client portal show: the client's calendar with its holidays spelled out.
+ * Outside Basecamp, a decision Ensaar made is shown as Ensaar's, never as a staff member's.
+ */
+export async function holidayView(companyId: string, year: number, audience: 'staff' | 'outside' = 'outside') {
+  const [catalogue, stored] = await Promise.all([holidayCatalogueFor(year), getHolidayPlan(companyId, year)]);
+  const plan = audience === 'outside' && stored.decidedRole === 'ensaar' ? { ...stored, decidedBy: 'Ensaar' } : stored;
   const byId = new Map(catalogue.map((h) => [h.id, h]));
   return { year, catalogue, plan, chosen: plan.chosen.map((id) => byId.get(id)).filter((h): h is Holiday => Boolean(h)) };
 }
