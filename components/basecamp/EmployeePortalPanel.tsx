@@ -81,9 +81,9 @@ export function EmployeePortalPanel({
         <p className="flex flex-wrap items-center gap-2 rounded-lg bg-bg-secondary p-2 text-xs text-ink-secondary">
           {link.emailed ? 'Emailed to the employee.' : 'Email is off, so nothing was sent.'}
           <button type="button" className="inline-flex items-center gap-1 underline" onClick={async () => { await navigator.clipboard.writeText(link.url).catch(() => undefined); setLink({ ...link, copied: true }); }}>
-            {link.copied ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />} {link.copied ? 'Copied' : 'Copy their sign-in link'}
+            {link.copied ? <Check className="h-3 w-3" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />} {link.copied ? 'Copied' : 'Copy the portal address'}
           </button>
-          It works once, for the employee only.
+          They sign in there with their email address.
         </p>
       )}
 

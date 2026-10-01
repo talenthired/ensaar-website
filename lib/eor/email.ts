@@ -380,7 +380,7 @@ export function teamInviteEmail(input: { name: string; companyName: string | nul
       ],
       action: { label: 'Open the employee portal', href: input.link },
       contact: hrAddress(),
-      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${teamUrlFor()} with this email address. Questions? Write to ${hrAddress()}.`,
+      footer: `To sign in, open ${teamUrlFor()} and enter this email address: we email you a one-time sign-in link. Questions? Write to ${hrAddress()}.`,
     }),
   };
 }

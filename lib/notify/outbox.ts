@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type postgres from 'postgres';
 import { db, hasDatabase } from '@/lib/db/client';
 import { siteConfig } from '@/lib/utils';
-import { audienceOf, copyFor, type Audience } from './audience';
+import { EMPLOYEE_NOT_COPIED, audienceOf, copyFor, withoutSignInLinks, type Audience } from './audience';
 
 /**
  * Durable outgoing email.
@@ -65,6 +65,12 @@ export function supportAddress(): string {
 
 function fromAddress(): string {
   return process.env.EMAIL_FROM || `Ensaar <hello@${new URL(siteConfig.url).hostname}>`;
+}
+
+/** Who is Cc'd on employee emails: HR, and EMAIL_CC_EMPLOYEE (Ensaar's signatory). */
+export function employeeCc(): string[] {
+  const extra = (process.env.EMAIL_CC_EMPLOYEE ?? '').split(',').map((a) => a.trim().toLowerCase()).filter(Boolean);
+  return [...new Set([hrAddress().toLowerCase(), ...extra])];
 }
 
 /** Where employees write to Ensaar: HR, not client support. */
@@ -133,6 +139,14 @@ async function send(row: Row): Promise<{ ok: true } | { ok: false; error: string
     content: a.encoding === 'base64' ? a.content : Buffer.from(a.content, 'utf8').toString('base64'),
     content_type: a.contentType,
   }));
+  if (audience === 'employee') {
+    // Cc'd in the open to HR and the signatory, so HR's inbox keeps the record; never the sign-in link email.
+    const cc = EMPLOYEE_NOT_COPIED.has(row.kind) ? [] : employeeCc().filter((a) => !row.to_addresses.includes(a));
+    // Belt and braces: whatever is Cc'd never carries a working sign-in link.
+    const text = cc.length ? withoutSignInLinks(row.text_body) : row.text_body;
+    const html = cc.length ? withoutSignInLinks(row.html_body) : row.html_body;
+    return post({ from, to: row.to_addresses, ...(cc.length ? { cc } : {}), reply_to: replyTo, subject: row.subject, text, html, attachments }, row.id);
+  }
   const sent = await post({ from, to: row.to_addresses, reply_to: replyTo, subject: row.subject, text: row.text_body, html: row.html_body, attachments }, row.id);
   if (!sent.ok || audience === 'staff') return sent;
   const admins = (await adminRecipients()).filter((a) => !row.to_addresses.includes(a.toLowerCase()));

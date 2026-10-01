@@ -6,8 +6,9 @@
  *   client:   sent from support@ensaar.com, replies to support@
  *   staff:    Ensaar's own notifications, which already go to the admins
  *
- * Every client and employee email is copied to Ensaar's owners and admins as a
- * separate message, so the recipient never sees who else got it.
+ * Employee emails are Cc'd in the open to HR and Ensaar's signatory (except the
+ * sign-in link email). Client emails are copied to Ensaar's owners and admins as
+ * a separate message, so the client never sees who else got it.
  */
 
 export type Audience = 'employee' | 'client' | 'staff';
@@ -47,6 +48,13 @@ export function audienceOf(kind: string): Audience {
   if (CLIENT_KINDS.has(kind)) return 'client';
   return 'staff';
 }
+
+/**
+ * Employee emails are Cc'd, openly, to HR and Ensaar's signatory, so HR's inbox
+ * keeps a record. The one exception is the sign-in link email: a one-time link
+ * works for whoever opens it, so it goes to the employee alone.
+ */
+export const EMPLOYEE_NOT_COPIED = new Set(['team.login']);
 
 /**
  * A one-time sign-in link works for whoever opens it. Ensaar's copy points to

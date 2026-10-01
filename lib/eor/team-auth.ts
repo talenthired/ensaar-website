@@ -41,8 +41,11 @@ async function createTeamLink(tx: Executor, employeeId: string, purpose: 'invite
 }
 
 /**
- * Email an employee a link into the portal, saying why (documents to sign, a
- * holiday choice to make). Returned so staff can pass it on if email fails.
+ * Tell an employee there is something for them in the portal (documents to
+ * sign, a holiday choice to make). HR and the signatory are copied on it (see
+ * lib/notify/audience.ts), so it carries no one-time link: it sends them to the
+ * portal, where they ask for their own sign-in link, which only they receive.
+ * Returns the portal address, for staff to pass on.
  */
 export async function inviteEmployee(
   tx: Executor,
@@ -50,7 +53,7 @@ export async function inviteEmployee(
   reason: string,
 ): Promise<string | null> {
   if (!employee.employeeEmail) return null;
-  const link = await createTeamLink(tx, employee.id, 'invite');
+  const link = teamUrl();
   await enqueue(tx, {
     kind: 'team.invite',
     to: [employee.employeeEmail],

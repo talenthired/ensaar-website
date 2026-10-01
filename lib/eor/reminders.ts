@@ -32,7 +32,7 @@ type Executor = postgres.Sql | postgres.TransactionSql;
 const CLIENT_CONTACTED = (sql: Executor, companyId: string) =>
   sql`SELECT 1 FROM ensaar_outbox WHERE related_id = ${companyId} AND kind IN ('portal.invite', 'portal.sign_request') LIMIT 1`;
 const EMPLOYEE_INVITED = (sql: Executor, employeeId: string) =>
-  sql`SELECT 1 FROM ensaar_team_login_tokens WHERE employee_id = ${employeeId} AND purpose = 'invite' LIMIT 1`;
+  sql`SELECT 1 FROM ensaar_outbox WHERE related_id = ${employeeId} AND kind = 'team.invite' LIMIT 1`;
 
 /** Employees who are, or are about to be, employed: the ones Ensaar is collecting details from. */
 const REMINDED_EMPLOYEE_STATUSES = ['awaiting_signature', 'signed', 'onboarding', 'active'];
@@ -116,7 +116,7 @@ export async function runOutstandingReminders(now = new Date()): Promise<{ compa
     const ids = await sql<{ id: string }[]>`
       SELECT e.id FROM ensaar_eor_employees e JOIN ensaar_eor_companies c ON c.id = e.company_id
       WHERE e.status = ANY(${REMINDED_EMPLOYEE_STATUSES}) AND e.employee_email IS NOT NULL AND c.status <> 'cancelled'
-        AND EXISTS (SELECT 1 FROM ensaar_team_login_tokens t WHERE t.employee_id = e.id AND t.purpose = 'invite')
+        AND EXISTS (SELECT 1 FROM ensaar_outbox o WHERE o.related_id = e.id AND o.kind = 'team.invite')
         AND NOT EXISTS (SELECT 1 FROM ensaar_outbox o WHERE o.dedupe_key = 'outstanding:employee:' || e.id || ':' || ${employeeDate})
       LIMIT 2000
     `;
