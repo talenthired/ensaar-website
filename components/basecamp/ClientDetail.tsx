@@ -171,8 +171,11 @@ export function ClientDetail({ id }: { id: string }) {
     void documentRequest(`delete:${file.id}`, `${file.filename} removed.`, `/api/basecamp/clients/${id}/documents/${file.id}`, { method: 'DELETE' });
   }
 
-  async function sendForSignature(to: string) {
-    if (!window.confirm(`Email ${to} a link to review and sign the agreement?`)) return;
+  async function sendForSignature(to: string, again: boolean) {
+    const question = again
+      ? `Email ${to} a new link to the agreement? The earlier link keeps working until it expires.`
+      : `Email ${to} a link to review and sign the agreement?`;
+    if (!window.confirm(question)) return;
     setSignLink(null);
     const json = await act({ action: 'send_for_signature' }, 'send');
     if (json) setSignLink({ link: String(json.link), email: String(json.email), emailed: Boolean(json.emailConfigured), copied: false });
@@ -191,11 +194,15 @@ export function ClientDetail({ id }: { id: string }) {
   const blockers = signatureBlockers(company.company);
   const signatory = company.company ? `${company.company.signatoryName} (${company.company.signatoryEmail})` : null;
   const canSend = editable && blockers.length === 0 && signatory !== null;
+  // When the agreement last went to the signatory, from the email log (newest first).
+  const lastSent = detail.messages.find((m) => m.kind === 'portal.sign_request');
   const sendHint = !canSend || company.status === 'changes_requested'
     ? null
-    : detail.readyToSign
-      ? `Details and documents are in. Send the agreement to ${company.company?.signatoryName} to sign.`
-      : 'Details and documents are in. Signing opens once the legal sign-off is recorded (see Clients).';
+    : lastSent
+      ? `Agreement sent to ${company.company?.signatoryName} on ${stamp(lastSent.createdAt)}${lastSent.status === 'sent' ? '' : ` (email ${lastSent.status})`}. Waiting for them to sign.`
+      : detail.readyToSign
+        ? `The details are in. Send the agreement to ${company.company?.signatoryName} to sign.`
+        : 'The details are in. Signing opens once the legal sign-off is recorded (see Clients).';
 
   // The single most useful next step for this client, shown in the header.
   const next =
@@ -244,8 +251,8 @@ export function ClientDetail({ id }: { id: string }) {
               </button>
             )}
             {canSend && signatory && (
-              <button type="button" disabled={busy !== null || !named || !detail.readyToSign} onClick={() => void sendForSignature(signatory)} className={primaryButtonClass}>
-                {busy === 'send' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} Send for signature
+              <button type="button" disabled={busy !== null || !named || !detail.readyToSign} onClick={() => void sendForSignature(signatory, Boolean(lastSent))} className={lastSent ? buttonClass : primaryButtonClass}>
+                {busy === 'send' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Send className="h-4 w-4" aria-hidden />} {lastSent ? 'Resend for signature' : 'Send for signature'}
               </button>
             )}
             {open && (
@@ -464,8 +471,10 @@ export function ClientDetail({ id }: { id: string }) {
           <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
             <p className="text-sm text-ink-secondary">
               {company.signedAt
-                ? `Signed by ${company.signedName} (${company.signedTitle}, ${company.signedEmail}) on ${stamp(company.signedAt)}${company.signedIp ? ` from ${company.signedIp}` : ''}. Version ${company.agreementVersion}.${company.countersignedAt ? ` Countersigned by ${company.countersignedBy} on ${stamp(company.countersignedAt)}.` : ''}`
-                : detail.readyToSign
+                ? `Signed by ${company.signedName} (${company.signedTitle ? `${company.signedTitle}, ` : ''}${company.signedEmail}) on ${stamp(company.signedAt)}${company.signedIp ? ` from ${company.signedIp}` : ''}. Version ${company.agreementVersion}.${company.countersignedAt ? ` Countersigned by ${company.countersignedBy} on ${stamp(company.countersignedAt)}.` : ''}`
+                : lastSent
+                  ? `Sent to ${company.company?.signatoryName} on ${stamp(lastSent.createdAt)}. Not signed yet.`
+                  : detail.readyToSign
                   ? 'Draft. The customer has not signed yet.'
                   : 'Draft. Signing is closed until the legal sign-off for this version is recorded (see Clients).'}
             </p>
