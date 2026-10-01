@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type postgres from 'postgres';
 import { db, hasDatabase } from '@/lib/db/client';
 import { siteConfig } from '@/lib/utils';
+import { audienceOf, copyFor, type Audience } from './audience';
 
 /**
  * Durable outgoing email.
@@ -66,6 +67,16 @@ function fromAddress(): string {
   return process.env.EMAIL_FROM || `Ensaar <hello@${new URL(siteConfig.url).hostname}>`;
 }
 
+/** Where employees write to Ensaar: HR, not client support. */
+export function hrAddress(): string {
+  return process.env.EMAIL_HR || siteConfig.hrEmail;
+}
+
+/** Sender and reply-to by audience: employees hear from HR, everyone else from support. */
+function senderFor(audience: Audience): { from: string; replyTo: string } {
+  return audience === 'employee' ? { from: `Ensaar HR <${hrAddress()}>`, replyTo: hrAddress() } : { from: fromAddress(), replyTo: supportAddress() };
+}
+
 /** Queue a message. Pass the transaction the triggering change runs in. */
 export async function enqueue(sql: Executor, message: OutboxMessage): Promise<void> {
   const to = [...new Set(message.to.map((a) => a.trim().toLowerCase()).filter(Boolean))];
@@ -90,40 +101,44 @@ type Row = {
   attempts: number;
 };
 
-async function send(row: Row): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean }> {
+/** One message to Resend. The idempotency key makes a retry after an uncertain response safe. */
+async function post(body: Record<string, unknown>, idempotencyKey: string): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean }> {
   try {
-    // RESEND_API_URL exists only so integration tests can point delivery at a local mock.
     const response = await fetch(process.env.RESEND_API_URL || 'https://api.resend.com/emails', {
       method: 'POST',
-      headers: {
-        authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-        'content-type': 'application/json',
-        // The row id: a retry after an uncertain response cannot send twice.
-        'idempotency-key': row.id,
-      },
-      body: JSON.stringify({
-        from: fromAddress(),
-        to: row.to_addresses,
-        reply_to: supportAddress(),
-        subject: row.subject,
-        text: row.text_body,
-        html: row.html_body,
-        attachments: row.attachments?.map((a) => ({
-          filename: a.filename,
-          content: a.encoding === 'base64' ? a.content : Buffer.from(a.content, 'utf8').toString('base64'),
-          content_type: a.contentType,
-        })),
-      }),
+      headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json', 'idempotency-key': idempotencyKey },
+      body: JSON.stringify(body),
     });
     if (response.ok) return { ok: true };
     const detail = (await response.text().catch(() => '')).slice(0, 300);
-    // 4xx other than rate limiting will not fix itself on retry (bad address,
-    // unverified domain). Keep retrying 429 and 5xx.
     const permanent = response.status >= 400 && response.status < 500 && response.status !== 429;
     return { ok: false, error: `Resend ${response.status}: ${detail}`, permanent };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : 'Network error', permanent: false };
   }
+}
+
+/**
+ * Deliver one message, from the right address for its audience. A client or
+ * employee email is then copied to Ensaar's owners and admins as a separate
+ * message (never Cc, so the recipient does not see who else got it), with any
+ * one-time sign-in link neutralised. If the copy fails the row is retried; the
+ * original is not sent twice, because Resend dedupes on its idempotency key.
+ */
+async function send(row: Row): Promise<{ ok: true } | { ok: false; error: string; permanent: boolean }> {
+  const audience = audienceOf(row.kind);
+  const { from, replyTo } = senderFor(audience);
+  const attachments = row.attachments?.map((a) => ({
+    filename: a.filename,
+    content: a.encoding === 'base64' ? a.content : Buffer.from(a.content, 'utf8').toString('base64'),
+    content_type: a.contentType,
+  }));
+  const sent = await post({ from, to: row.to_addresses, reply_to: replyTo, subject: row.subject, text: row.text_body, html: row.html_body, attachments }, row.id);
+  if (!sent.ok || audience === 'staff') return sent;
+  const admins = (await adminRecipients()).filter((a) => !row.to_addresses.includes(a.toLowerCase()));
+  if (admins.length === 0) return sent;
+  const copy = copyFor({ to: row.to_addresses, subject: row.subject, text: row.text_body, html: row.html_body });
+  return post({ from, to: admins, reply_to: replyTo, subject: copy.subject, text: copy.text, html: copy.html, attachments }, `${row.id}:copy`);
 }
 
 /**
@@ -247,6 +262,12 @@ export async function listUndelivered(limit = 20): Promise<OutboxEntry[]> {
 }
 
 /** Who at Ensaar hears about new leads and signatures: active owners and admins, plus EOR_NOTIFY_EMAIL. */
+/** Ensaar's active owners and admins, who are copied on every client and employee email. */
+export async function adminRecipients(sql: Executor = db()): Promise<string[]> {
+  const rows = await sql<{ email: string }[]>`SELECT email FROM ensaar_users WHERE active = TRUE AND role IN ('owner', 'admin')`.catch(() => [] as { email: string }[]);
+  return [...new Set(rows.map((r) => r.email.toLowerCase()))];
+}
+
 export async function staffRecipients(sql: Executor = db()): Promise<string[]> {
   const extra = (process.env.EOR_NOTIFY_EMAIL ?? '').split(',').map((a) => a.trim()).filter(Boolean);
   const rows = await sql<{ email: string }[]>`
@@ -263,6 +284,8 @@ export const escapeHtml = (value: string) =>
 export type EmailContent = {
   /** Small label beside the logo: which part of Ensaar is writing. */
   eyebrow: string;
+  /** The address the email tells people to write to: support@ for clients (the default), hr@ for employees. */
+  contact?: string;
   heading: string;
   paragraphs: string[];
   /** A highlighted line above the body: a due date approaching, a payment overdue. */
@@ -301,7 +324,8 @@ export function renderEmail(content: EmailContent): { text: string; html: string
     notice: content.notice && { ...content.notice, text: tidy(content.notice.text) },
   };
   const site = siteConfig.url.replace(/\/+$/, '');
-  const footer = input.footer ?? `Questions? Reply to this email or write to ${supportAddress()}.`;
+  const contact = input.contact ?? supportAddress();
+  const footer = input.footer ?? `Questions? Reply to this email or write to ${contact}.`;
   const text = [
     input.heading,
     '',
@@ -358,7 +382,7 @@ export function renderEmail(content: EmailContent): { text: string; html: string
       <tr><td style="background:${BRAND.navy};padding:22px 36px">
         <p style="margin:0 0 4px;font:600 13px ${FONT};color:#ffffff">${escapeHtml(siteConfig.legalName)}</p>
         <p style="margin:0 0 4px;font:400 12px/1.6 ${FONT};color:#a9bad1">${escapeHtml(companyAddress())} &nbsp;&middot;&nbsp; CIN ${escapeHtml(siteConfig.cin)}</p>
-        <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1"><a href="mailto:${escapeHtml(supportAddress())}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(supportAddress())}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
+        <p style="margin:0;font:400 12px/1.6 ${FONT};color:#a9bad1"><a href="mailto:${escapeHtml(contact)}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(contact)}</a> &nbsp;&middot;&nbsp; <a href="${site}" style="color:#a9bad1;text-decoration:underline">${escapeHtml(new URL(site).hostname)}</a></p>
       </td></tr>
     </table>
   </td></tr></table>

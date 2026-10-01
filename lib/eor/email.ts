@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { renderEmail, supportAddress } from '@/lib/notify/outbox';
+import { hrAddress, renderEmail, supportAddress } from '@/lib/notify/outbox';
 import { siteConfig } from '@/lib/utils';
 import {
   LATE_INTEREST_PERCENT_PER_MONTH,
@@ -379,7 +379,8 @@ export function teamInviteEmail(input: { name: string; companyName: string | nul
         `Ensaar is your employer${input.companyName ? ` for your work with ${input.companyName}` : ''}. In the employee portal you sign your offer letter and employment agreement, choose your tax regime and declare investments, and see your team's holiday calendar for the year.`,
       ],
       action: { label: 'Open the employee portal', href: input.link },
-      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${teamUrlFor()} with this email address. Questions? Write to ${supportAddress()}.`,
+      contact: hrAddress(),
+      footer: `The link works once and expires in ${INVITE_LINK_TTL_DAYS} days. After that, sign in at ${teamUrlFor()} with this email address. Questions? Write to ${hrAddress()}.`,
     }),
   };
 }
@@ -389,10 +390,11 @@ export function teamLoginEmail(input: { name: string; link: string }): Mail {
     subject: 'Your Ensaar employee portal sign-in link',
     ...renderEmail({
       eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
       heading: `Hi ${firstName(input.name)}, here is your sign-in link`,
       paragraphs: [`Use this link to sign in to the Ensaar employee portal. It works once and expires in ${LOGIN_LINK_TTL_MINUTES} minutes.`],
       action: { label: 'Sign in', href: input.link },
-      footer: `If you did not ask to sign in, you can ignore this email. Questions? Write to ${supportAddress()}.`,
+      footer: `If you did not ask to sign in, you can ignore this email. Questions? Write to ${hrAddress()}.`,
     }),
   };
 }
@@ -405,6 +407,7 @@ export function employeeDocumentSignedEmail(input: { name: string; kind: keyof t
     subject: `Your signed ${DOC_NAMES[input.kind]}`,
     ...renderEmail({
       eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
       heading: `Thank you, ${firstName(input.name)}`,
       paragraphs: [`You signed your ${DOC_NAMES[input.kind]} with Ensaar. A copy of exactly what you signed is attached, and it stays available in the employee portal.`],
       action: { label: 'Open the employee portal', href: teamUrlFor() },
@@ -447,6 +450,7 @@ export function holidaysDecidedEmail(input: { companyName: string; year: number;
     subject: input.approved ? `Your ${input.year} holidays are set` : `The ${input.year} holiday calendar needs a change`,
     ...renderEmail({
       eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
       heading: input.approved ? `Your ${input.year} holidays are set` : `Please change the ${input.year} holiday calendar`,
       notice: input.approved ? undefined : { tone: 'warning', text: input.note ?? 'The calendar was not approved.' },
       paragraphs: [
@@ -494,6 +498,7 @@ export function employeeOutstandingEmail(input: { name: string; received: string
     subject: `${firstName(input.name)}, ${itemCount(n)} still needed for your onboarding`,
     ...renderEmail({
       eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
       heading: `Hi ${firstName(input.name)}, ${n === 1 ? 'one item is' : n === 2 ? 'two items are' : 'a few items are'} still outstanding`,
       paragraphs: [
         `${received.length === 2 ? 'We have your PAN and Aadhaar. ' : ''}To pay your salary on time, Ensaar still needs:`,
@@ -505,7 +510,7 @@ export function employeeOutstandingEmail(input: { name: string; received: string
         { label: 'Still needed', value: input.needed.map((item) => item.label).join(', ') },
       ],
       action: { label: n === 1 ? 'Add it in the employee portal' : 'Add them in the employee portal', href: teamUrlFor('?tab=details') },
-      footer: `${reminderCadence} Questions? Write to ${supportAddress()}.`,
+      footer: `${reminderCadence} Questions? Write to ${hrAddress()}.`,
     }),
   };
 }

@@ -140,7 +140,7 @@ export function buildOfferLetter(input: EmploymentDocInput): EmploymentDocument 
         paragraphs: [
           `Please accept this offer by signing and returning a copy by ${formatDay(acceptBy)}. If we do not hear from you by then, or if you do not join on your start date (unless we agree another date in writing), the offer lapses. Ensaar may also withdraw it if information you have given proves to be incorrect.`,
           'Please keep the terms of this offer, and your pay in particular, confidential.',
-          'This letter, its annexures and your employment agreement together set out the terms of your employment and replace anything discussed or written before. If you have any question, write to support@ensaar.com.',
+          `This letter, its annexures and your employment agreement together set out the terms of your employment and replace anything discussed or written before. If you have any question, write to ${siteConfig.hrEmail}.`,
           'We look forward to welcoming you.',
         ],
       },
@@ -274,7 +274,7 @@ export function buildEmploymentAgreement(input: EmploymentDocInput): EmploymentD
         heading: '11. Your personal data',
         paragraphs: [
           'Ensaar processes your personal data as your employer, under the Digital Personal Data Protection Act, 2023: to verify your identity and background, run payroll and tax, administer benefits and leave, manage your work and conduct, and meet its legal obligations. It shares only what is needed with the Client (to direct your work), with service providers bound to protect it (such as payroll, banking and verification providers), and with authorities where the law requires.',
-          'Ensaar keeps your data for as long as the purpose and the law require. You may ask to see, correct or erase your data, or raise a grievance, by writing to support@ensaar.com. Ensaar and the Client may monitor the use of their systems and devices to keep them secure and to investigate misuse.',
+          `Ensaar keeps your data for as long as the purpose and the law require. You may ask to see, correct or erase your data, or raise a grievance, by writing to ${siteConfig.hrEmail}. Ensaar and the Client may monitor the use of their systems and devices to keep them secure and to investigate misuse.`,
         ],
       },
       {
@@ -416,7 +416,7 @@ export function renderEmploymentDocumentHtml(doc: EmploymentDocument, options: {
   <div class="signatures">${signatures.map((s) => `<div><div class="party">${escape(s.party)}</div>${s.lines.map((l) => `<p>${escape(l)}</p>`).join('')}</div>`).join('')}</div>
   ${doc.annexures.map((a) => `<div class="annexure"><h3 class="annex">${escape(a.title)}</h3>${a.sections.map(sectionHtml).join('\n')}</div>`).join('\n')}
   ${ev ? `<p class="fingerprint">Document fingerprint (SHA-256): ${escape(ev.hash)}</p>` : ''}
-  <footer>${escape(ENSAAR_PARTY.legalName)} &middot; ${escape(ENSAAR_ADDRESS)} &middot; CIN ${escape(siteConfig.cin)} &middot; ${escape(siteConfig.email)}</footer>
+  <footer>${escape(ENSAAR_PARTY.legalName)} &middot; ${escape(ENSAAR_ADDRESS)} &middot; CIN ${escape(siteConfig.cin)} &middot; ${escape(siteConfig.hrEmail)}</footer>
 </div>
 </body></html>`;
 }

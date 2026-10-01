@@ -11,6 +11,8 @@ export const siteConfig = {
   legalName: 'Ensaar Global Private Limited',
   /** Corporate Identity Number: shown wherever Ensaar identifies itself (Companies Act, s.12). */
   cin: 'U74900TG2016PTC103814',
+  /** Where employees write to Ensaar, and what they hear from. */
+  hrEmail: 'hr@ensaar.com',
   /** GST registration: on invoices only, where GST law requires it. */
   gstin: '36AAECE2158G1ZS',
   /** Principal place of business, as registered for GST. */
