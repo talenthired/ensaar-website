@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
-import { actorName, requireNamed } from '@/lib/basecamp/actor';
+import { actorName, requireNamed, requireSignatory } from '@/lib/basecamp/actor';
 import { deliverSoon, emailConfigured, listMessages } from '@/lib/notify/outbox';
 import { agreementToText } from '@/lib/eor/agreement';
 import {
@@ -149,8 +149,11 @@ export async function POST(request: NextRequest, context: Context) {
         if (note.length < 5) return NextResponse.json({ error: 'Tell the customer what needs to change.' }, { status: 400 });
         return done(await requestCompanyChanges(id, note, actor), 'eor.company.changes');
       }
-      case 'approve':
+      case 'approve': {
+        const unsigned = requireSignatory(gate.session);
+        if (unsigned) return unsigned;
         return done(await approveCompany(id, actor, { confirmMissing: body.confirmMissing === true }), 'eor.company.approve', { confirmMissing: body.confirmMissing === true });
+      }
       case 'cancel':
         return done(await cancelCompany(id), 'eor.company.cancel');
       default:

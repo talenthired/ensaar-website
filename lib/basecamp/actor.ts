@@ -18,3 +18,23 @@ export function requireNamed(session: BasecampSession): NextResponse | null {
   }
   return null;
 }
+
+/**
+ * Ensaar's authorised signatory (EOR_SIGNATORY_EMAIL): the one person whose
+ * signature binds Ensaar. When set, only they can countersign a client's
+ * agreement or Schedule A, or issue an employee's offer letter and employment
+ * agreement, so only their name appears on what clients and employees receive.
+ */
+export function signatoryEmail(): string | null {
+  return process.env.EOR_SIGNATORY_EMAIL?.trim().toLowerCase() || null;
+}
+
+export function requireSignatory(session: BasecampSession): NextResponse | null {
+  const named = requireNamed(session);
+  if (named) return named;
+  const signatory = signatoryEmail();
+  if (signatory && session.email?.toLowerCase() !== signatory) {
+    return NextResponse.json({ error: `Only Ensaar's authorised signatory (${signatory}) can sign for Ensaar. Ask them to do this step.` }, { status: 403 });
+  }
+  return null;
+}

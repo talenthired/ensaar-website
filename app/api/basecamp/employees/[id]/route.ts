@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireBasecamp } from '@/lib/basecamp/guard';
 import { writeAudit } from '@/lib/basecamp/audit';
-import { actorName, requireNamed } from '@/lib/basecamp/actor';
+import { actorName, requireNamed, requireSignatory } from '@/lib/basecamp/actor';
 import { deliverSoon, listMessages } from '@/lib/notify/outbox';
 import { getCompany, listVoidedSignatures } from '@/lib/eor/companies';
 import {
@@ -91,12 +91,15 @@ export async function POST(request: NextRequest, context: Context) {
     }
     case 'send':
       return done(await sendForSignature(employee.companyId, [id]), 'eor.schedules.send', { count: 1 });
-    case 'countersign':
+    case 'countersign': {
+      const unsigned = requireSignatory(gate.session);
+      if (unsigned) return unsigned;
       return done(
         await countersignSchedules(employee.companyId, [id], actor, { confirmPastStart: body.confirmPastStart === true }),
         'eor.schedules.countersign',
         { count: 1, confirmPastStart: body.confirmPastStart === true },
       );
+    }
     case 'step':
       return done(await changeEmployee(id, { kind: 'step', step: str(body.step, 40), done: body.done === true }, actor), 'eor.employee.step', {
         step: body.step,
@@ -112,6 +115,8 @@ export async function POST(request: NextRequest, context: Context) {
       return done(await changeEmployee(id, { kind: 'cancel' }, actor), 'eor.employee.cancel');
     // The employee portal: documents to sign, an invitation, and Ensaar deciding a holiday choice.
     case 'issue_document': {
+      const unsigned = requireSignatory(gate.session);
+      if (unsigned) return unsigned;
       if (!isDocumentKind(body.kind)) return NextResponse.json({ error: 'Choose the offer letter or the employment agreement.' }, { status: 400 });
       const issued = await issueEmployeeDocument(id, body.kind, { name: gate.session.name ?? '', label: actor });
       if (!issued.ok) return NextResponse.json({ error: issued.error }, { status: issued.status });
