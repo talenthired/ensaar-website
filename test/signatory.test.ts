@@ -18,3 +18,15 @@ describe("Ensaar's authorised signatory", () => {
     expect(requireSignatory(session('owner@ensaar.com'))).toBe(null);
   });
 });
+
+describe('when an employee can be contacted', () => {
+  it('needs the client to have signed the agreement, and their Schedule A to have been sent', async () => {
+    const { employeeContactable } = await import('@/lib/eor/onboarding');
+    expect(employeeContactable('draft', 'active')).toBe(false);
+    expect(employeeContactable('awaiting_signature', 'onboarding')).toBe(false);
+    expect(employeeContactable('awaiting_signature', 'signed')).toBe(true);
+    expect(employeeContactable('awaiting_signature', 'active')).toBe(true);
+    expect(employeeContactable('onboarding', 'active')).toBe(true);
+    expect(employeeContactable('cancelled', 'active')).toBe(false);
+  });
+});

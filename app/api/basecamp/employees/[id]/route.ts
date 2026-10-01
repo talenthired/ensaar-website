@@ -129,8 +129,8 @@ export async function POST(request: NextRequest, context: Context) {
     }
     case 'invite_employee': {
       if (!employee.employeeEmail) return NextResponse.json({ error: "Add the employee's email address first." }, { status: 409 });
-      if (!employeeContactable(employee.status)) {
-        return NextResponse.json({ error: 'Not yet: the client has to sign the agreement and this Schedule A first. Until then the employee hears nothing from Ensaar.' }, { status: 409 });
+      if (!employeeContactable(employee.status, (await getCompany(employee.companyId))?.status)) {
+        return NextResponse.json({ error: 'Not yet: the client has to sign the agreement, and this Schedule A has to be sent to them, first. Until then the employee hears nothing from Ensaar.' }, { status: 409 });
       }
       const link = await requireDatabase().begin((tx) => inviteEmployee(tx, employee, 'You can now sign in to the Ensaar employee portal.'));
       await writeAudit({ actorId: gate.session.userId, actorEmail: gate.session.email, action: 'eor.employee.invite', target: id });

@@ -224,12 +224,13 @@ export type EmployeeCase = {
 /** The checklist for one employee: the deposit step only when their Schedule A asks for a deposit. */
 /**
  * Ensaar contacts an employee (documents, portal invitation, sign-in links,
- * reminders) only once the client has signed their Schedule A, which the client
- * can only do after signing the agreement itself. Before that the employee
- * hears nothing: the hire is not yet agreed.
+ * reminders) only once the client has signed the agreement itself and Ensaar
+ * has sent the employee's Schedule A to the client. The client's signature on
+ * the Schedule A is not awaited. Before that the employee hears nothing.
  */
-export const EMPLOYEE_CONTACTABLE: readonly EmployeeStatus[] = ['signed', 'onboarding', 'active'];
-export const employeeContactable = (status: EmployeeStatus) => EMPLOYEE_CONTACTABLE.includes(status);
+export const EMPLOYEE_CONTACTABLE: readonly EmployeeStatus[] = ['awaiting_signature', 'signed', 'onboarding', 'active'];
+export const employeeContactable = (status: EmployeeStatus, companyStatus: CompanyStatus | null | undefined) =>
+  EMPLOYEE_CONTACTABLE.includes(status) && Boolean(companyStatus && masterSigned(companyStatus));
 
 export function employeeSteps(e: { depositRequired: boolean }) {
   return EMPLOYEE_STEPS.filter((s) => s.key !== 'deposit' || e.depositRequired);

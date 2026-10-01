@@ -75,7 +75,7 @@ export function EmployeePortalPanel({
           {busy === 'invite' ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <MailPlus className="h-4 w-4" aria-hidden />} Invite to the portal
         </button>
       </div>
-      {!canInvite && <p className="text-xs text-ink-secondary">The employee hears nothing from Ensaar until the client has signed the agreement and this Schedule A. Documents and the portal open then.</p>}
+      {!canInvite && <p className="text-xs text-ink-secondary">The employee hears nothing from Ensaar until the client has signed the agreement and this Schedule A has been sent to them. Documents and the portal open then.</p>}
       {!hasEmail && <p className="text-xs text-amber-700">Add the employee&apos;s email address (edit the offer) to issue documents or invite them: they sign in with it.</p>}
       {link && (
         <p className="flex flex-wrap items-center gap-2 rounded-lg bg-bg-secondary p-2 text-xs text-ink-secondary">

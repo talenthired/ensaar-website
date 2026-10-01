@@ -10,6 +10,7 @@ import type { OutboxEntry } from '@/lib/notify/outbox';
 import {
   EMPLOYEE_STATUS_LABELS,
   employeeContactable,
+  type CompanyStatus,
   employeeSteps,
   INDIA_STATES,
   pricingLabel,
@@ -188,7 +189,7 @@ export function EmployeeDetail({ id }: { id: string }) {
       <EmployeePortalPanel
         employeeId={e.id}
         hasEmail={Boolean(e.employeeEmail)}
-        canInvite={employeeContactable(e.status)}
+        canInvite={employeeContactable(e.status, detail.company?.status as CompanyStatus | undefined)}
         named={named}
         data={detail}
         act={act}

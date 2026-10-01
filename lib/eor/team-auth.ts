@@ -27,8 +27,8 @@ export const teamUrl = (path = '') => `${site()}/team${path}`;
 const teamAuthLink = (token: string) => `${site()}/team/auth#${token}`;
 
 /** Employees who may sign in: offered a job and not cancelled. Leavers keep access to their documents. */
-/** The hire is agreed (see EMPLOYEE_CONTACTABLE), or they have left and keep access to their documents. */
-const CAN_SIGN_IN = ['signed', 'onboarding', 'active', 'exited'];
+/** See EMPLOYEE_CONTACTABLE (with the client's agreement signed, checked in each query), or they have left and keep access to their documents. */
+const CAN_SIGN_IN = ['awaiting_signature', 'signed', 'onboarding', 'active', 'exited'];
 
 async function createTeamLink(tx: Executor, employeeId: string, purpose: 'invite' | 'login'): Promise<string> {
   const token = randomBytes(32).toString('base64url');
@@ -67,6 +67,7 @@ export async function requestTeamLogin(email: string): Promise<number> {
   const rows = await sql<{ id: string; employee_name: string; business_name: string | null }[]>`
     SELECT id, employee_name, business_name FROM ensaar_eor_employees
     WHERE lower(employee_email) = ${email.trim().toLowerCase()} AND status IN ${sql(CAN_SIGN_IN)}
+      AND EXISTS (SELECT 1 FROM ensaar_eor_companies c WHERE c.id = ensaar_eor_employees.company_id AND c.status IN ('signed', 'active'))
     ORDER BY created_at DESC LIMIT 5
   `;
   for (const row of rows) {
@@ -90,6 +91,7 @@ export async function consumeTeamToken(token: string): Promise<{ sessionToken: s
     if (!claimed) return null;
     const [row] = await tx<{ id: string; employee_email: string | null }[]>`
       SELECT id, employee_email FROM ensaar_eor_employees WHERE id = ${claimed.employee_id} AND status IN ${tx(CAN_SIGN_IN)}
+        AND EXISTS (SELECT 1 FROM ensaar_eor_companies c WHERE c.id = ensaar_eor_employees.company_id AND c.status IN ('signed', 'active'))
     `;
     if (!row?.employee_email) return null;
     const sessionToken = randomBytes(32).toString('base64url');
@@ -114,6 +116,7 @@ export async function resolveTeamSession(sessionToken: string | undefined): Prom
   const [row] = await db()<{ employee_id: string }[]>`
     SELECT s.employee_id FROM ensaar_team_sessions s JOIN ensaar_eor_employees e ON e.id = s.employee_id
     WHERE s.token_hash = ${sha256(sessionToken)} AND s.expires_at > NOW() AND e.status IN ${db()(CAN_SIGN_IN)}
+      AND EXISTS (SELECT 1 FROM ensaar_eor_companies c WHERE c.id = e.company_id AND c.status IN ('signed', 'active'))
   `.catch(() => [] as { employee_id: string }[]);
   return row ? getEmployee(row.employee_id) : null;
 }
