@@ -90,8 +90,10 @@ describe('deposit, notice, dismissal and revisions in the agreement', () => {
     expect(text).toContain('Only Ensaar, as employer, may discipline, suspend or dismiss an Employee');
     expect(text).toContain('will not tell an Employee that their employment is ending');
     expect(text).toContain('it will notify Ensaar in writing promptly');
-    expect(text).toContain('an improvement period of at least 30 days');
-    expect(text).toContain('where serious misconduct is proven, Ensaar may dismiss without notice');
+    expect(text).toContain('Ensaar deals with it under its Employee Handbook');
+    expect(text).toContain('gives them a fair chance to respond');
+    expect(text).not.toMatch(/improvement period of at least/);
+    expect(text).toContain('where the employment ends for serious misconduct, the notice and payment in lieu in clause 8 do not apply');
   });
 
   it('can be revised on notice, with a way out for a customer who does not agree', () => {

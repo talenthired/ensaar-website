@@ -39,7 +39,7 @@ import {
  * Bump AGREEMENT_VERSION whenever the wording of either part changes: customers
  * cannot sign a version until an owner records its legal review in Basecamp.
  */
-export const AGREEMENT_VERSION = '2026-10-01.1';
+export const AGREEMENT_VERSION = '2026-10-02.1';
 
 /** Ensaar's full postal address, as registered for GST. */
 export const ENSAAR_ADDRESS = [siteConfig.address.street, siteConfig.address.city, `${siteConfig.address.region} ${siteConfig.address.postalCode}`, siteConfig.address.country].join(', ');
@@ -51,8 +51,6 @@ export const ENSAAR_PARTY = {
 
 export const PROBATION_MONTHS = 3;
 export const NOTICE_DAYS = 30;
-/** The least time an Employee is given to improve before their employment is ended for performance. */
-export const IMPROVEMENT_DAYS = 30;
 /** Charged on the Asset Costs Ensaar incurs (a purchase price it paid, shipping, handling), on top of those costs. */
 export const PROCUREMENT_FEE_PERCENT = 5;
 /** The day of the month by which the Customer tells Ensaar about that month's pay changes. */
@@ -103,7 +101,7 @@ export function buildMasterAgreement(companyName: string, company: CompanyDetail
         heading: '3. What the Customer does',
         paragraphs: [
           'The Customer directs each Employee\'s day-to-day work, sets their tasks and reviews their output, and provides the accounts, tools and training the Employee needs for the work. The Customer will not ask an Employee to do anything unlawful, and will tell Ensaar promptly about any performance, conduct or safety concern so that Ensaar, as employer, can deal with it lawfully. Decisions about pay changes, discipline or ending an employment are made by Ensaar on the Customer\'s instruction, in line with Indian law.',
-          `Only Ensaar, as employer, may discipline, suspend or dismiss an Employee. The Customer will not do so, and will not tell an Employee that their employment is ending. If the Customer has a concern about an Employee's conduct or performance, it will notify Ensaar in writing promptly, with the facts and any evidence. For performance, Ensaar will give the Employee a written warning and an improvement period of at least ${IMPROVEMENT_DAYS} days before ending the employment. For misconduct, Ensaar may remove the Employee from the Customer's work at once and will follow the notice and enquiry that Indian law requires; where serious misconduct is proven, Ensaar may dismiss without notice, and the notice and payment in lieu in clause 8 do not apply. The Customer will co-operate with the process, continues to pay the Monthly Charges until the employment lawfully ends, and indemnifies Ensaar against any claim caused by the Customer acting outside this clause.`,
+          `Only Ensaar, as employer, may discipline, suspend or dismiss an Employee. The Customer will not do so, and will not tell an Employee that their employment is ending. If the Customer has a concern about an Employee's conduct or performance, it will notify Ensaar in writing promptly, with the facts and any evidence. Ensaar deals with it under its Employee Handbook: normally by progressive steps (a verbal warning, a written warning and a final written warning), and, for serious misconduct, by suspension or dismissal without earlier warnings. Ensaar may remove an Employee from the Customer's work at once while it looks into a serious concern. Before ending an employment for conduct or performance, Ensaar tells the Employee in writing what the concern is and gives them a fair chance to respond, as Indian law requires; where the employment ends for serious misconduct, the notice and payment in lieu in clause 8 do not apply. The Customer will co-operate with the process, continues to pay the Monthly Charges until the employment lawfully ends, and indemnifies Ensaar against any claim caused by the Customer acting outside this clause.`,
           `The Customer will tell Ensaar in writing, by the ${PAYROLL_INPUT_DAY}th of each month, about anything that changes that month's pay: an approved bonus, allowance or expense, unpaid leave, or a last working day. Changes received later are included in the following month's payroll. Ensaar may run each month's payroll on the information it holds at that date.`,
           'Before an Employee starts, the Customer will tell Ensaar about any previous or current engagement it has with that individual, whether as an employee, contractor or consultant, and any amount still owed under it. The Customer is responsible for, and indemnifies Ensaar against, any claim arising from such an engagement.',
           'Any promise the Customer makes directly to an Employee, for example about a bonus, equity, a benefit or future employment, is the Customer\'s own commitment. The Customer will tell Ensaar about it in writing, will pay any cost of honouring it through Ensaar where it forms part of the Employee\'s pay, and indemnifies Ensaar against any claim arising from it.',
