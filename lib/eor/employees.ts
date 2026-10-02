@@ -26,6 +26,7 @@ import {
   type EmployeeStatus,
 } from './onboarding';
 import { likePattern, ok, pageArgs, refuse, type Outcome, type Page } from './outcome';
+import { signedPdfAttachment } from './signed-pdf';
 import { companyRecipients } from './portal-auth';
 
 /*
@@ -393,7 +394,7 @@ export async function signSchedules(
     const textById = new Map(texts.map((t) => [t.id, t.schedule_text]));
     const bundle = signed
       .map((e) => evidenceText(textById.get(e.id) ?? '', { name: e.signedName, title: details.signatoryTitle, email: e.signedEmail, at: e.signedAt }, { by: null, at: null }, e.scheduleHash, details.legalName))
-      .join('\n\n----------------------------------------\n\n');
+;
     const batchKey = sha256(signed.map((e) => `${e.id}:${e.scheduleHash}`).join('|'));
     await enqueue(tx, {
       kind: 'eor.schedules.signed.staff',
@@ -407,7 +408,7 @@ export async function signSchedules(
       to: await companyRecipients(tx, companyId),
       relatedId: companyId,
       dedupeKey: `eor.schedules.signed.customer:${batchKey}`,
-      attachments: [{ filename: `Ensaar-Schedules-signed-${signed.length}.txt`, content: bundle, contentType: 'text/plain' }],
+      attachments: [await signedPdfAttachment(`Ensaar-Schedule-A-signed${signed.length > 1 ? `-${signed.length}` : ''}.pdf`, bundle, 'Signed Schedule A')],
       ...schedulesSignedCustomerEmail({ name: signer.name, companyName: details.legalName, employees: signed.map((e) => knownAs(e)) }),
     });
     return ok(signed);
@@ -471,13 +472,12 @@ export async function countersignSchedules(
     const bundle = out
       .map((e) =>
         evidenceText(textById.get(e.id) ?? '', { name: e.signedName, title: company.company?.signatoryTitle ?? null, email: e.signedEmail, at: e.signedAt }, { by: e.countersignedBy, at: e.countersignedAt }, e.scheduleHash, displayName(company)),
-      )
-      .join('\n\n----------------------------------------\n\n');
+      );
     await enqueue(tx, {
       kind: 'eor.schedules.countersigned',
       to: await companyRecipients(tx, companyId),
       relatedId: companyId,
-      attachments: [{ filename: `Ensaar-Schedules-executed-${out.length}.txt`, content: bundle, contentType: 'text/plain' }],
+      attachments: [await signedPdfAttachment(`Ensaar-Schedule-A-executed${out.length > 1 ? `-${out.length}` : ''}.pdf`, bundle, 'Executed Schedule A')],
       ...schedulesCountersignedEmail({ companyName: displayName(company), employees: out }),
     });
     return ok(out);

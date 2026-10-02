@@ -14,6 +14,7 @@ import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
 import { EMPTY_DECLARATIONS, TAX_RULES, compareRegimes, readDeclarations, type Regime, type TaxDeclarations } from './tax';
 import { inviteEmployee } from './team-auth';
+import { signedPdfAttachment } from './signed-pdf';
 
 /*
  * What an employee does for themselves in the employee portal, and what staff
@@ -173,7 +174,13 @@ export async function signEmployeeDocument(
       to: [employee.employeeEmail!],
       relatedId: employee.id,
       dedupeKey: `team.document.signed:${documentId}`,
-      attachments: [{ filename: `Ensaar-${row.kind === 'offer' ? 'Offer-letter' : 'Employment-agreement'}-signed.txt`, content: `${row.text}\n\nSigned electronically by ${signer.name} <${employee.employeeEmail}> at ${signed.signedAt} (UTC).\nDocument fingerprint (SHA-256): ${row.hash}`, contentType: 'text/plain' }],
+      attachments: [
+        await signedPdfAttachment(
+          `Ensaar-${row.kind === 'offer' ? 'Offer-letter' : 'Employment-agreement'}-signed.pdf`,
+          [`${row.text}\n\nSIGNATURES\nSigned electronically by ${signer.name} <${employee.employeeEmail}> at ${signed.signedAt} (UTC), signed in to the Ensaar employee portal as that address.\nIssued for Ensaar by ${row.issued_by ?? 'Ensaar'}.\n\nDocument fingerprint (SHA-256): ${row.hash}`],
+          `Signed ${DOCUMENT_KINDS[row.kind].toLowerCase()}`,
+        ),
+      ],
       ...employeeDocumentSignedEmail({ name: knownAs(employee), kind: row.kind }),
     });
     await enqueue(tx, {

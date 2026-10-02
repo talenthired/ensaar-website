@@ -25,6 +25,7 @@ import {
   type DocumentReview,
 } from './onboarding';
 import { likePattern, ok, pageArgs, refuse, type Outcome, type Page } from './outcome';
+import { signedPdfAttachment } from './signed-pdf';
 import { companyRecipients, ensurePortalUser, requestSignature } from './portal-auth';
 
 /*
@@ -552,7 +553,7 @@ export function evidenceText(text: string, signer: { name: string | null; title:
 }
 
 const attachmentName = (company: EorCompany, what: string) =>
-  `Ensaar-${what}-${displayName(company).replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')}.txt`;
+  `Ensaar-${what}-${displayName(company).replace(/[^\w]+/g, '-').replace(/^-|-$/g, '')}.pdf`;
 
 /**
  * Ask the signatory to review and sign, once details and required documents are
@@ -625,11 +626,11 @@ export async function signMaster(
       relatedId: companyId,
       dedupeKey: `eor.master.signed.customer:${companyId}:${hash}`,
       attachments: [
-        {
-          filename: attachmentName(signed, 'Agreement-signed'),
-          content: evidenceText(text, { name: signer.name, title: details.signatoryTitle, email: signer.email, at: signed.signedAt }, { by: null, at: null }, hash, details.legalName),
-          contentType: 'text/plain',
-        },
+        await signedPdfAttachment(
+          attachmentName(signed, 'Agreement-signed'),
+          [evidenceText(text, { name: signer.name, title: details.signatoryTitle, email: signer.email, at: signed.signedAt }, { by: null, at: null }, hash, details.legalName)],
+          `Signed agreement: ${details.legalName}`,
+        ),
       ],
       ...masterSignedCustomerEmail({ name: signer.name, companyName: details.legalName }),
     });
@@ -707,17 +708,13 @@ export async function approveCompany(companyId: string, countersignedBy: string,
       relatedId: companyId,
       dedupeKey: `eor.company.approved:${companyId}`,
       attachments: [
-        {
-          filename: attachmentName(active, 'Agreement-executed'),
-          content: evidenceText(
+        await signedPdfAttachment(attachmentName(active, 'Agreement-executed'), [evidenceText(
             stored,
             { name: active.signedName, title: active.signedTitle, email: active.signedEmail, at: active.signedAt },
             { by: active.countersignedBy, at: active.countersignedAt },
             active.agreementHash,
             displayName(active),
-          ),
-          contentType: 'text/plain',
-        },
+          )], `Executed agreement: ${displayName(active)}`),
       ],
       ...companyApprovedEmail({ companyName: displayName(active) }),
     });
