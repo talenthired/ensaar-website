@@ -632,3 +632,116 @@ CREATE INDEX IF NOT EXISTS ensaar_employee_files_idx ON ensaar_employee_files (e
 -- The employee's given name, to greet them in their documents ("Dear Lakshmi" for
 -- Pulla Lakshmi), when it is not the first word of the legal name. Null: the first word.
 ALTER TABLE ensaar_eor_employees ADD COLUMN IF NOT EXISTS given_name TEXT;
+
+-- The Employee Handbook as published: each version's text frozen and fingerprinted
+-- once, so every employee acknowledges exactly the same words. Publishing needs the
+-- owner's sign-off recorded in ensaar_eor_template_approvals as 'handbook:<version>'.
+CREATE TABLE IF NOT EXISTS ensaar_policy_versions (
+  version       TEXT PRIMARY KEY,
+  text          TEXT NOT NULL,
+  hash          TEXT NOT NULL,
+  issued_by     TEXT NOT NULL,
+  published_by  TEXT NOT NULL,
+  published_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- An employee's acknowledgement of a handbook version: received, read, will follow it.
+-- Not a contract signature.
+CREATE TABLE IF NOT EXISTS ensaar_policy_acknowledgements (
+  id               TEXT PRIMARY KEY,
+  employee_id      TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  version          TEXT NOT NULL REFERENCES ensaar_policy_versions (version),
+  hash             TEXT NOT NULL,
+  typed_name       TEXT NOT NULL,
+  acknowledged_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ip               TEXT,
+  user_agent       TEXT,
+  UNIQUE (employee_id, version)
+);
+
+-- Consent to work after 8:30 pm India time (from home). Withdrawable; the latest row counts.
+CREATE TABLE IF NOT EXISTS ensaar_night_work_consents (
+  employee_id   TEXT PRIMARY KEY REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  consented     BOOLEAN NOT NULL,
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Leave an employee asks for (or records, for sickness). The client approves
+-- planned leave; Ensaar sees everything and can decide instead. Days are working
+-- days (calendar days for maternity), split into paid (from the paid-leave
+-- balance) and unpaid (loss of pay, for payroll).
+CREATE TABLE IF NOT EXISTS ensaar_leave_requests (
+  id            TEXT PRIMARY KEY,
+  employee_id   TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  -- pto | sick | maternity | paternity | unpaid
+  type          TEXT NOT NULL,
+  from_day      DATE NOT NULL,
+  to_day        DATE NOT NULL,
+  half_start    BOOLEAN NOT NULL DEFAULT FALSE,
+  half_end      BOOLEAN NOT NULL DEFAULT FALSE,
+  days          NUMERIC(6,1) NOT NULL,
+  paid_days     NUMERIC(6,1) NOT NULL,
+  unpaid_days   NUMERIC(6,1) NOT NULL,
+  reason        TEXT,
+  -- pending | approved | declined | cancelled
+  status        TEXT NOT NULL DEFAULT 'pending',
+  decided_by    TEXT,
+  -- client | ensaar
+  decided_as    TEXT,
+  decided_at    TIMESTAMPTZ,
+  note          TEXT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_leave_requests_employee_idx ON ensaar_leave_requests (employee_id, from_day DESC);
+CREATE INDEX IF NOT EXISTS ensaar_leave_requests_pending_idx ON ensaar_leave_requests (status, created_at) WHERE status = 'pending';
+
+-- Changes to a paid-leave balance that are not requests: an opening balance,
+-- encashment at year end, a correction. Always with a reason and who made it.
+CREATE TABLE IF NOT EXISTS ensaar_leave_adjustments (
+  id            TEXT PRIMARY KEY,
+  employee_id   TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  year          INTEGER NOT NULL,
+  days          NUMERIC(6,1) NOT NULL,
+  reason        TEXT NOT NULL,
+  created_by    TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS ensaar_leave_adjustments_idx ON ensaar_leave_adjustments (employee_id, year);
+
+-- Corrective action (Employee Handbook section 14). A case per matter; every step
+-- is an event. Letters to the employee are frozen and fingerprinted like other
+-- documents; notes and client reports stay with Ensaar.
+CREATE TABLE IF NOT EXISTS ensaar_conduct_cases (
+  id               TEXT PRIMARY KEY,
+  employee_id      TEXT NOT NULL REFERENCES ensaar_eor_employees (id) ON DELETE CASCADE,
+  -- performance | attendance | conduct
+  reason           TEXT NOT NULL,
+  -- client | ensaar
+  source           TEXT NOT NULL,
+  summary          TEXT NOT NULL,
+  -- open | closed
+  status           TEXT NOT NULL DEFAULT 'open',
+  -- What the client is told when it is closed (they never see letters or replies).
+  client_outcome   TEXT,
+  opened_by        TEXT NOT NULL,
+  opened_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  closed_by        TEXT,
+  closed_at        TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ensaar_conduct_cases_employee_idx ON ensaar_conduct_cases (employee_id, opened_at DESC);
+
+CREATE TABLE IF NOT EXISTS ensaar_conduct_events (
+  id               TEXT PRIMARY KEY,
+  case_id          TEXT NOT NULL REFERENCES ensaar_conduct_cases (id) ON DELETE CASCADE,
+  -- client_report | note | verbal_warning | written_warning | final_warning | show_cause | suspension | abandonment | termination | closed
+  step             TEXT NOT NULL,
+  text             TEXT NOT NULL,
+  hash             TEXT,
+  issued_by        TEXT NOT NULL,
+  issued_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  response_due     DATE,
+  acknowledged_at  TIMESTAMPTZ,
+  reply_text       TEXT,
+  replied_at       TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS ensaar_conduct_events_case_idx ON ensaar_conduct_events (case_id, issued_at);

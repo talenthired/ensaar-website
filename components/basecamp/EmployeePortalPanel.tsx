@@ -6,6 +6,8 @@ import type { Holiday, HolidayPlanStatus } from '@/lib/eor/holidays';
 import { HOLIDAY_PLAN_LABELS } from '@/lib/eor/holidays';
 import { formatDay, formatInr } from '@/lib/eor/onboarding';
 import type { Regime, TaxDeclarations, TaxEstimate } from '@/lib/eor/tax';
+import { LEAVE_STATUSES, LEAVE_TYPES, type LeaveStatus, type LeaveType } from '@/lib/eor/leave';
+import { CONDUCT_REASONS, CONDUCT_STEPS, NEEDS_REPLY, canTerminate, type ConductReason, type ConductStep, type LetterStep } from '@/lib/eor/conduct';
 import { DECLARATION_FIELDS } from '@/lib/eor/tax';
 import { Badge, buttonClass, inputClass } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
@@ -19,6 +21,19 @@ export type PortalData = {
     noPreviousEmployer: boolean;
     outstanding: { received: string[]; needed: Array<{ key: string; label: string; detail: string }> };
   };
+  leave: {
+    year: number;
+    balance: { earned: number; adjusted: number; taken: number; waiting: number; left: number };
+    encashable: number;
+    requests: Array<{ id: string; type: LeaveType; from: string; to: string; days: number; unpaidDays: number; status: LeaveStatus; decidedBy: string | null; decidedAs: string | null }>;
+    adjustments: Array<{ id: string; year: number; days: number; reason: string; createdBy: string; createdAt: string }>;
+  };
+  conduct: Array<{
+    id: string; reason: ConductReason; source: 'client' | 'ensaar'; summary: string; status: 'open' | 'closed'; clientOutcome: string | null;
+    openedBy: string; openedAt: string; closedAt: string | null;
+    events: Array<{ id: string; step: ConductStep; text: string; issuedBy: string; issuedAt: string; responseDue: string | null; acknowledgedAt: string | null; replyText: string | null; repliedAt: string | null }>;
+  }>;
+  handbook: { current: { version: string } | null; acknowledged: { version: string; at: string } | null; pending: boolean; nightWork: { consented: boolean; at: string } | null };
   tax: { taxYear: string; regime: Regime; declarations: TaxDeclarations; updatedAt: string | null; comparison: { new: TaxEstimate; old: TaxEstimate; lower: Regime; saving: number } };
   holidays: { year: number; chosen: Holiday[]; catalogue: Holiday[]; allowed: number; plan: { status: HolidayPlanStatus; note: string | null; proposedName: string | null; decidedBy: string | null; decidedRole: 'client' | 'ensaar' | null; submittedAt: string | null } };
   emailConfigured: boolean;
@@ -140,6 +155,30 @@ export function EmployeePortalPanel({
         )}
       </div>
 
+      <LeaveSection leave={data.leave} named={named} act={act} />
+
+      <ConductSection cases={data.conduct} named={named} act={act} />
+
+      <div>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Handbook and consents</h3>
+        <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-xs text-ink-secondary">Employee Handbook</dt>
+            <dd>
+              {!data.handbook.current
+                ? 'Not published yet'
+                : data.handbook.pending
+                  ? `Version ${data.handbook.current.version} not acknowledged yet`
+                  : `Version ${data.handbook.acknowledged!.version} acknowledged ${formatDay(data.handbook.acknowledged!.at)}`}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-ink-secondary">Work after 8:30 pm</dt>
+            <dd>{data.handbook.nightWork ? `${data.handbook.nightWork.consented ? 'Consented' : 'Withdrew consent'} ${formatDay(data.handbook.nightWork.at)}` : 'Not given'}</dd>
+          </div>
+        </dl>
+      </div>
+
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Bank and records</h3>
         <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2">
@@ -249,5 +288,233 @@ function GreetingField({ legalName, givenName, named, act }: { legalName: string
         <button type="button" className={cn(buttonClass, 'px-3 py-1.5')} onClick={() => setEditing(false)}>Cancel</button>
       </span>
     </form>
+  );
+}
+
+/** Paid leave for the year, the requests behind it, and adjustments (opening balance, encashment, correction). */
+function LeaveSection({ leave, named, act }: { leave: PortalData['leave']; named: boolean; act: (payload: Record<string, unknown>, label: string, success?: string) => Promise<Record<string, unknown> | null> }) {
+  const [form, setForm] = useState<{ days: string; reason: string } | null>(null);
+  const b = leave.balance;
+  const inYear = leave.requests.filter((r) => r.from.startsWith(String(leave.year)));
+  return (
+    <div>
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Leave in {leave.year}</h3>
+      <p className="mt-2 text-sm text-ink-primary">
+        {b.left} days of paid leave left: earned {b.earned}
+        {b.adjusted ? `, adjusted ${b.adjusted > 0 ? '+' : ''}${b.adjusted}` : ''}, taken {b.taken}, waiting {b.waiting}. Encashable at year end: {leave.encashable}.
+      </p>
+      {inYear.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm">
+          {inYear.slice(0, 8).map((r) => (
+            <li key={r.id} className="flex flex-wrap items-center gap-2 text-ink-secondary">
+              <span className="text-ink-primary">{LEAVE_TYPES[r.type]}</span>
+              {r.from === r.to ? formatDay(r.from) : `${formatDay(r.from)} to ${formatDay(r.to)}`} · {r.days}d{r.unpaidDays && r.type !== 'unpaid' ? ` (${r.unpaidDays} unpaid)` : ''}
+              <Badge tone={r.status === 'approved' ? 'good' : r.status === 'pending' ? 'attention' : 'neutral'}>
+                {r.decidedAs === 'auto' ? 'Recorded' : LEAVE_STATUSES[r.status]}
+                {r.decidedBy && r.decidedAs !== 'auto' ? ` by ${r.decidedBy}` : ''}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+      {leave.adjustments.filter((a) => a.year === leave.year).map((a) => (
+        <p key={a.id} className="mt-1 text-xs text-ink-secondary">
+          Adjusted {a.days > 0 ? '+' : ''}{a.days} days: {a.reason} ({a.createdBy}, {formatDay(a.createdAt)})
+        </p>
+      ))}
+      {named && !form && (
+        <button type="button" className="mt-2 text-xs text-ink-secondary underline hover:text-ink-primary" onClick={() => setForm({ days: '', reason: '' })}>
+          Adjust the balance
+        </button>
+      )}
+      {form && (
+        <form
+          className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await act({ action: 'leave_adjust', year: leave.year, days: Number(form.days), reason: form.reason }, 'leave_adjust', 'Balance adjusted.')) setForm(null);
+          }}
+        >
+          <input className={cn(inputClass, 'sm:w-28')} aria-label="Days" placeholder="Days, e.g. -5" value={form.days} onChange={(e) => setForm({ ...form, days: e.target.value })} />
+          <input className={inputClass} aria-label="Reason" placeholder="Reason, e.g. Encashed at year end" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
+          <span className="flex gap-2">
+            <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Save</button>
+            <button type="button" className={cn(buttonClass, 'px-3 py-1.5')} onClick={() => setForm(null)}>Cancel</button>
+          </span>
+        </form>
+      )}
+    </div>
+  );
+}
+
+type Act = (payload: Record<string, unknown>, label: string, success?: string) => Promise<Record<string, unknown> | null>;
+const LETTERS: LetterStep[] = ['written_warning', 'final_warning', 'show_cause', 'suspension', 'abandonment', 'termination'];
+
+/**
+ * Corrective action (handbook section 14): cases, notes and verbal warnings on
+ * file, and letters issued in the signatory's name. Only Ensaar acts.
+ */
+function ConductSection({ cases, named, act }: { cases: PortalData['conduct']; named: boolean; act: Act }) {
+  const [opening, setOpening] = useState<{ reason: ConductReason; summary: string } | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const allEvents = cases.flatMap((c) => c.events);
+  const termination = canTerminate(allEvents.map((e) => ({ step: e.step, issuedAt: e.issuedAt, responseDue: e.responseDue, repliedAt: e.repliedAt })), today);
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-secondary">Conduct and performance</h3>
+        {named && !opening && (
+          <button type="button" className="text-xs text-ink-secondary underline hover:text-ink-primary" onClick={() => setOpening({ reason: 'performance', summary: '' })}>
+            Open a case
+          </button>
+        )}
+      </div>
+      {cases.length === 0 && !opening && <p className="mt-2 text-sm text-ink-secondary">Nothing on file.</p>}
+      {opening && (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await act({ action: 'conduct_open', ...opening }, 'conduct_open', 'Case opened.')) setOpening(null);
+          }}
+        >
+          <select className={inputClass} value={opening.reason} onChange={(e) => setOpening({ ...opening, reason: e.target.value as ConductReason })} aria-label="About">
+            {(Object.keys(CONDUCT_REASONS) as ConductReason[]).map((r) => <option key={r} value={r}>{CONDUCT_REASONS[r]}</option>)}
+          </select>
+          <input className={inputClass} placeholder="What the case is about (staff only)" value={opening.summary} onChange={(e) => setOpening({ ...opening, summary: e.target.value })} />
+          <span className="flex gap-2">
+            <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Open</button>
+            <button type="button" className={cn(buttonClass, 'px-3 py-1.5')} onClick={() => setOpening(null)}>Cancel</button>
+          </span>
+        </form>
+      )}
+      <ul className="mt-2 space-y-3">
+        {cases.map((c) => (
+          <CaseCard key={c.id} item={c} named={named} act={act} termination={termination} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** A letter's first line of substance (past its title, date, addressee and role), to summarise it. */
+const firstLine = (text: string, fallback: string) =>
+  text.split('\n').find((l) => l.trim() && !/^[A-Z ,-]+$/.test(l) && !/^(Date|To|Role):/.test(l))?.slice(0, 120) ?? fallback;
+
+function CaseCard({ item, named, act, termination }: { item: PortalData['conduct'][number]; named: boolean; act: Act; termination: { ok: true } | { ok: false; reason: string } }) {
+  const [mode, setMode] = useState<'note' | 'letter' | 'close' | null>(null);
+  const [note, setNote] = useState({ step: 'note' as 'note' | 'verbal_warning', text: '' });
+  const [letter, setLetter] = useState({ step: 'written_warning' as LetterStep, details: '', expectation: '', dueDate: '', lastDay: '', basis: 'notice' });
+  const [close, setClose] = useState({ clientOutcome: '', note: '' });
+  const warning = letter.step === 'written_warning' || letter.step === 'final_warning';
+  return (
+    <li className="rounded-lg border border-line-subtle p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-medium text-ink-primary">{CONDUCT_REASONS[item.reason]}</span>
+        <Badge tone={item.status === 'open' ? 'attention' : 'neutral'}>{item.status === 'open' ? 'Open' : `Closed ${formatDay(item.closedAt!)}`}</Badge>
+        <span className="text-xs text-ink-secondary">{item.source === 'client' ? 'Raised by the client' : `Opened by ${item.openedBy}`}, {formatDay(item.openedAt)}</span>
+      </div>
+      <p className="mt-1 text-ink-secondary">{item.summary}</p>
+      <ol className="mt-2 space-y-2 border-l border-line-subtle pl-3">
+        {item.events.map((e) => (
+          <li key={e.id}>
+            <p className="text-xs text-ink-secondary">
+              {CONDUCT_STEPS[e.step].label} · {formatDay(e.issuedAt)} · {e.issuedBy}
+              {e.responseDue ? ` · reply by ${formatDay(e.responseDue)}` : ''}
+            </p>
+            <details>
+              <summary className="cursor-pointer text-ink-primary">{firstLine(e.text, CONDUCT_STEPS[e.step].label)}</summary>
+              <p className="mt-1 whitespace-pre-line text-ink-secondary">{e.text}</p>
+            </details>
+            {CONDUCT_STEPS[e.step].letter && (
+              <p className="text-xs text-ink-secondary">
+                {e.repliedAt ? `Replied ${formatDay(e.repliedAt)}` : e.acknowledgedAt ? `Acknowledged ${formatDay(e.acknowledgedAt)}` : 'Not yet opened by the employee'}
+              </p>
+            )}
+            {e.replyText && <p className="mt-1 whitespace-pre-line rounded bg-bg-secondary p-2 text-ink-primary">Reply: {e.replyText}</p>}
+          </li>
+        ))}
+      </ol>
+      {item.clientOutcome && <p className="mt-2 text-xs text-ink-secondary">The client was told: {item.clientOutcome}</p>}
+      {named && item.status === 'open' && (
+        <div className="mt-3 flex flex-wrap gap-3 text-xs">
+          <button type="button" className="text-ink-secondary underline hover:text-ink-primary" onClick={() => setMode(mode === 'note' ? null : 'note')}>Add a note or verbal warning</button>
+          <button type="button" className="text-ink-secondary underline hover:text-ink-primary" onClick={() => setMode(mode === 'letter' ? null : 'letter')}>Issue a letter</button>
+          <button type="button" className="text-ink-secondary underline hover:text-ink-primary" onClick={() => setMode(mode === 'close' ? null : 'close')}>Close the case</button>
+        </div>
+      )}
+      {mode === 'note' && (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await act({ action: 'conduct_note', caseId: item.id, ...note }, 'conduct_note', 'Added to the file.')) setMode(null);
+          }}
+        >
+          <select className={inputClass} value={note.step} onChange={(e) => setNote({ ...note, step: e.target.value as 'note' | 'verbal_warning' })} aria-label="Kind">
+            <option value="note">Note (staff only)</option>
+            <option value="verbal_warning">Verbal warning given (noted on file)</option>
+          </select>
+          <textarea className="min-h-20 w-full rounded-lg border border-line-subtle bg-bg-primary p-2 text-sm" placeholder="What was said or decided" value={note.text} onChange={(e) => setNote({ ...note, text: e.target.value })} />
+          <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Save</button>
+        </form>
+      )}
+      {mode === 'letter' && (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await act({ action: 'conduct_letter', caseId: item.id, ...letter }, 'conduct_letter', 'Letter issued and emailed to the employee from HR.')) setMode(null);
+          }}
+        >
+          <select className={inputClass} value={letter.step} onChange={(e) => setLetter({ ...letter, step: e.target.value as LetterStep })} aria-label="Letter">
+            {LETTERS.map((l) => <option key={l} value={l}>{CONDUCT_STEPS[l].label}</option>)}
+          </select>
+          {letter.step === 'termination' && !termination.ok && <p className="text-xs text-red-600">{termination.reason}</p>}
+          <textarea
+            className="min-h-24 w-full rounded-lg border border-line-subtle bg-bg-primary p-2 text-sm"
+            placeholder={letter.step === 'termination' ? 'The reasons, as the employee will read them' : 'What happened, as the employee will read it'}
+            value={letter.details}
+            onChange={(e) => setLetter({ ...letter, details: e.target.value })}
+          />
+          {warning && <input className={inputClass} placeholder="What needs to change" value={letter.expectation} onChange={(e) => setLetter({ ...letter, expectation: e.target.value })} />}
+          {(warning || NEEDS_REPLY.includes(letter.step)) && (
+            <label className="block text-xs text-ink-secondary">
+              {warning ? 'Review on or after (optional)' : 'Reply by (default: 3 working days)'}
+              <input type="date" className={inputClass} value={letter.dueDate} onChange={(e) => setLetter({ ...letter, dueDate: e.target.value })} />
+            </label>
+          )}
+          {letter.step === 'termination' && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <select className={inputClass} value={letter.basis} onChange={(e) => setLetter({ ...letter, basis: e.target.value })} aria-label="Basis">
+                <option value="notice">With notice</option>
+                <option value="pay_in_lieu">Pay in place of notice</option>
+                <option value="serious_misconduct">Serious misconduct, without notice</option>
+              </select>
+              <input type="date" className={inputClass} aria-label="Last working day" value={letter.lastDay} onChange={(e) => setLetter({ ...letter, lastDay: e.target.value })} />
+            </div>
+          )}
+          <p className="text-xs text-ink-secondary">
+            Issued in the authorised signatory&apos;s name, emailed from HR with a PDF, and shown in the employee&apos;s portal. Record the exit separately if employment ends.
+          </p>
+          <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Issue letter</button>
+        </form>
+      )}
+      {mode === 'close' && (
+        <form
+          className="mt-2 space-y-2"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (await act({ action: 'conduct_close', caseId: item.id, ...close }, 'conduct_close', 'Case closed.')) setMode(null);
+          }}
+        >
+          <input className={inputClass} placeholder="Outcome (staff only)" value={close.note} onChange={(e) => setClose({ ...close, note: e.target.value })} />
+          {item.source === 'client' && (
+            <input className={inputClass} placeholder="What the client is told (optional, e.g. Addressed with the employee)" value={close.clientOutcome} onChange={(e) => setClose({ ...close, clientOutcome: e.target.value })} />
+          )}
+          <button type="submit" className={cn(buttonClass, 'px-3 py-1.5')}>Close case</button>
+        </form>
+      )}
+    </li>
   );
 }

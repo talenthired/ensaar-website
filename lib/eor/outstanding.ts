@@ -89,8 +89,17 @@ export function employeeOutstanding(input: {
   hasRelievingLetter: boolean;
   noPreviousEmployer: boolean;
   identityVerified: boolean;
+  /** The handbook version waiting for their acknowledgement, if any. */
+  handbookPending?: string | null;
 }): OutstandingList {
   const needed: Outstanding[] = [];
+  if (input.handbookPending) {
+    needed.push({
+      key: 'handbook',
+      label: 'Employee Handbook',
+      detail: 'Read the Ensaar Employee Handbook and acknowledge it in the employee portal (Handbook tab). It takes about ten minutes.',
+    });
+  }
   if (!input.hasBankDetails) {
     needed.push({
       key: 'bank',
@@ -106,8 +115,7 @@ export function employeeOutstanding(input: {
   const received = [
     ...(input.identityVerified ? ['PAN', 'Aadhaar'] : []),
     ...(input.hasBankDetails && input.hasBankProof ? ['Bank account'] : []),
-    ...(input.hasRelievingLetter ? ['Relieving letter'] : []),
-  ];
+    ...(input.hasRelievingLetter ? ['Relieving letter'] : []),  ];
   return { received, needed };
 }
 

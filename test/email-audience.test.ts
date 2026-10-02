@@ -26,7 +26,7 @@ describe('who an email is for', () => {
   });
 
   it('classifies every email kind in the code', () => {
-    const staffOnly = new Set(['eor.master.signed.staff', 'eor.schedules.signed.staff', 'team.document.signed.staff', 'invoice.overdue.staff', 'lead.new']);
+    const staffOnly = new Set(['eor.master.signed.staff', 'eor.schedules.signed.staff', 'team.document.signed.staff', 'invoice.overdue.staff', 'lead.new', 'basecamp.leave.stale', 'basecamp.conduct.concern', 'basecamp.conduct.reply']);
     const unclassified = kindsInCode().filter((k) => audienceOf(k) === 'staff' && !staffOnly.has(k));
     expect(unclassified).toEqual([]);
   });

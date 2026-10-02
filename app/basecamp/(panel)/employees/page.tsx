@@ -18,9 +18,17 @@ export default function BasecampEmployeesPage() {
           Everyone Ensaar employs or is about to, across all clients. Open a client to add employees or act on several at once.
         </p>
         </div>
-        <Link href="/basecamp/holidays" className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line-subtle bg-bg-primary px-3.5 py-2 text-sm text-ink-primary hover:bg-bg-tertiary">
-          Holiday calendar
-        </Link>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Link href="/basecamp/leave" className="inline-flex items-center gap-2 rounded-lg border border-line-subtle bg-bg-primary px-3.5 py-2 text-sm text-ink-primary hover:bg-bg-tertiary">
+            Leave
+          </Link>
+          <Link href="/basecamp/handbook" className="inline-flex items-center gap-2 rounded-lg border border-line-subtle bg-bg-primary px-3.5 py-2 text-sm text-ink-primary hover:bg-bg-tertiary">
+            Employee Handbook
+          </Link>
+          <Link href="/basecamp/holidays" className="inline-flex items-center gap-2 rounded-lg border border-line-subtle bg-bg-primary px-3.5 py-2 text-sm text-ink-primary hover:bg-bg-tertiary">
+            Holiday calendar
+          </Link>
+        </div>
       </header>
       <EmployeesTable />
     </div>

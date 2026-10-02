@@ -6,6 +6,7 @@ import { db, hasDatabase, requireDatabase } from '@/lib/db/client';
 import type { EorEmployee } from './employees';
 import { ok, refuse, type Outcome } from './outcome';
 import { employeeOutstanding, type OutstandingList } from './outstanding';
+import { handbookStatus } from './policies';
 
 /*
  * What an employee gives Ensaar so they can be paid: the salary bank account,
@@ -113,10 +114,11 @@ export async function setNoPreviousEmployer(employeeId: string, none: boolean): 
 
 /** What this employee still owes Ensaar, from what is stored. */
 export async function employeeOutstandingFor(employee: Pick<EorEmployee, 'id' | 'employeeName' | 'employeeCase'>, sql: Executor = db()): Promise<OutstandingList> {
-  const [bank, files, flag] = await Promise.all([
+  const [bank, files, flag, handbook] = await Promise.all([
     getBank(employee.id, sql),
     listEmployeeFiles(employee.id, sql),
     sql<{ no_previous_employer: boolean }[]>`SELECT no_previous_employer FROM ensaar_eor_employees WHERE id = ${employee.id}`,
+    handbookStatus(employee.id, sql),
   ]);
   return employeeOutstanding({
     legalName: employee.employeeName,
@@ -125,6 +127,7 @@ export async function employeeOutstandingFor(employee: Pick<EorEmployee, 'id' | 
     hasRelievingLetter: files.some((f) => f.kind === 'relieving_letter'),
     noPreviousEmployer: Boolean(flag[0]?.no_previous_employer),
     identityVerified: Boolean(employee.employeeCase?.steps.identity),
+    handbookPending: handbook.pending ? handbook.current!.version : null,
   });
 }
 

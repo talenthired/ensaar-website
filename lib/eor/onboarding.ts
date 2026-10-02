@@ -207,6 +207,7 @@ export const EMPLOYEE_STEPS = [
   { key: 'deposit', label: 'Deposit received from the customer' },
   { key: 'contract_issued', label: 'Offer letter and employment agreement issued to the employee' },
   { key: 'contract_signed', label: 'Employee signed the offer letter and employment agreement' },
+  { key: 'handbook', label: 'Employee acknowledged the Employee Handbook' },
   { key: 'identity', label: 'Identity, PAN and right to work verified' },
   { key: 'bank_tax', label: 'Bank and tax details collected' },
   { key: 'uan', label: 'Provident fund (UAN) linked, once Ensaar offers provident fund' },

@@ -514,3 +514,148 @@ export function employeeOutstandingEmail(input: { name: string; received: string
     }),
   };
 }
+
+// --- The Employee Handbook ------------------------------------------------------------------
+
+/** A handbook version is out: read it and acknowledge it in the portal. */
+export function handbookPublishedEmail(input: { name: string; version: string; first: boolean; changes: string }): Mail {
+  return {
+    subject: input.first ? 'The Ensaar Employee Handbook: please read and acknowledge' : `The Ensaar Employee Handbook has been updated (version ${input.version})`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
+      heading: input.first ? `Hi ${firstName(input.name)}, here is the Ensaar Employee Handbook` : `Hi ${firstName(input.name)}, the handbook has been updated`,
+      paragraphs: input.first
+        ? [
+            'The handbook explains how working at Ensaar works day to day: hours, leave, holidays, pay, conduct, and what happens if something goes wrong. It sits alongside your employment agreement.',
+            'Please read it in the employee portal and acknowledge it there. It takes about ten minutes to read.',
+          ]
+        : [`What changed: ${input.changes}`, 'Please read the new version in the employee portal and acknowledge it there.'],
+      action: { label: 'Read the handbook', href: teamUrlFor('?tab=handbook') },
+    }),
+  };
+}
+
+/** The employee's copy of the handbook they acknowledged, with the PDF attached. */
+export function handbookAcknowledgedEmail(input: { name: string; version: string }): Mail {
+  return {
+    subject: 'Your copy of the Ensaar Employee Handbook',
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
+      heading: `Thank you, ${firstName(input.name)}`,
+      paragraphs: [`You acknowledged the Ensaar Employee Handbook, version ${input.version}. A copy is attached for your records, and the current version is always in the employee portal.`],
+      action: { label: 'Open the employee portal', href: teamUrlFor('?tab=handbook') },
+    }),
+  };
+}
+
+// --- Leave ----------------------------------------------------------------------------------
+
+type LeaveMail = { employeeName: string; typeLabel: string; from: string; to: string; days: number };
+const leaveSpan = (l: LeaveMail) => (l.from === l.to ? formatDay(l.from) : `${formatDay(l.from)} to ${formatDay(l.to)}`);
+const dayCount = (n: number) => `${n} working day${n === 1 ? '' : 's'}`;
+
+/** To the client: an employee asks for leave; approve or decline in the portal. */
+export function leaveRequestedEmail(input: LeaveMail & { reason: string | null }): Mail {
+  return {
+    subject: `${input.employeeName} asks for leave: ${leaveSpan(input)}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `${input.employeeName} would like time off`,
+      paragraphs: [`${input.employeeName} has asked for ${input.typeLabel.toLowerCase()}, ${leaveSpan(input)} (${dayCount(input.days)}). Please approve or decline it in the portal.`],
+      facts: input.reason ? [{ label: 'Reason given', value: input.reason }] : undefined,
+      action: { label: 'Review leave', href: portalUrl('?tab=leave') },
+    }),
+  };
+}
+
+/** To the client: an employee is off sick (recorded, not asked for). */
+export function leaveRecordedEmail(input: LeaveMail): Mail {
+  return {
+    subject: `${input.employeeName} is on sick leave: ${leaveSpan(input)}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar client portal',
+      heading: `${input.employeeName} is on sick leave`,
+      paragraphs: [`${input.employeeName} is off sick ${leaveSpan(input)} (${dayCount(input.days)}). Sick leave is recorded rather than approved; nothing is needed from you.`],
+      action: { label: 'See upcoming leave', href: portalUrl('?tab=leave') },
+    }),
+  };
+}
+
+/** To the employee: their leave was approved or declined. */
+export function leaveDecidedEmail(input: LeaveMail & { approved: boolean; decidedBy: string; note: string | null }): Mail {
+  return {
+    subject: `Your leave ${input.approved ? 'is approved' : 'was declined'}: ${leaveSpan(input)}`,
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
+      heading: input.approved ? `Your ${input.typeLabel.toLowerCase()} is approved` : `Your ${input.typeLabel.toLowerCase()} was declined`,
+      paragraphs: [
+        `${input.decidedBy} ${input.approved ? 'approved' : 'declined'} your ${input.typeLabel.toLowerCase()}, ${leaveSpan(input)} (${dayCount(input.days)}).`,
+        ...(input.note ? [`Their note: ${input.note}`] : []),
+        ...(input.approved ? [] : [`If you would like to talk about it, write to ${hrAddress()}.`]),
+      ],
+      action: { label: 'See your leave', href: teamUrlFor('?tab=leave') },
+    }),
+  };
+}
+
+/** To Ensaar staff: a leave request has waited three days for the client. */
+export function leaveStaleStaffEmail(input: { employeeName: string; companyName: string; from: string }): Mail {
+  return {
+    subject: `Leave waiting 3 days: ${input.employeeName} (${input.companyName})`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: leave',
+      heading: `${input.employeeName}'s leave is still waiting`,
+      paragraphs: [`${input.companyName} has not decided ${input.employeeName}'s leave from ${formatDay(input.from)}, asked for three days ago. Nudge the client, or decide it in Basecamp.`],
+      action: { label: 'Open leave in Basecamp', href: `${siteUrl()}/basecamp/leave` },
+    }),
+  };
+}
+
+// --- Corrective action ----------------------------------------------------------------------
+
+/** To the employee: a letter from Ensaar HR, attached and in the portal. The subject stays neutral. */
+export function conductLetterEmail(input: { name: string; title: string; replyBy: string | null }): Mail {
+  return {
+    subject: 'A letter from Ensaar HR',
+    ...renderEmail({
+      eyebrow: 'Ensaar employee portal',
+      contact: hrAddress(),
+      heading: `Hi ${firstName(input.name)}, Ensaar has sent you a letter`,
+      paragraphs: [
+        `Ensaar has issued you a letter: ${input.title.toLowerCase()}. It is attached, and it is in the Letters tab of the employee portal, where you can acknowledge it${input.replyBy ? ' and reply' : ' and reply if you want to'}.`,
+        ...(input.replyBy ? [`Please reply by ${formatDay(input.replyBy)}.`] : []),
+        `If you want to talk about it, write to ${hrAddress()}.`,
+      ],
+      action: { label: 'Open the employee portal', href: teamUrlFor('?tab=letters') },
+    }),
+  };
+}
+
+/** To Ensaar staff: a client raised a concern about an employee. */
+export function conductConcernStaffEmail(input: { employeeName: string; companyName: string; employeeId: string }): Mail {
+  return {
+    subject: `Concern raised by ${input.companyName} about ${input.employeeName}`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: employees',
+      heading: `${input.companyName} raised a concern`,
+      paragraphs: [`${input.companyName} raised a concern about ${input.employeeName} in the client portal. Only Ensaar acts on it: read it and decide the next step.`],
+      action: { label: 'Open in Basecamp', href: `${siteUrl()}/basecamp/employees/${input.employeeId}` },
+    }),
+  };
+}
+
+/** To Ensaar staff: the employee replied to a letter. */
+export function conductReplyStaffEmail(input: { employeeName: string; title: string; employeeId: string }): Mail {
+  return {
+    subject: `${input.employeeName} replied: ${input.title.toLowerCase()}`,
+    ...renderEmail({
+      eyebrow: 'Basecamp: employees',
+      heading: `${input.employeeName} replied`,
+      paragraphs: [`${input.employeeName} replied to the ${input.title.toLowerCase()}. Read it before deciding the next step.`],
+      action: { label: 'Open in Basecamp', href: `${siteUrl()}/basecamp/employees/${input.employeeId}` },
+    }),
+  };
+}

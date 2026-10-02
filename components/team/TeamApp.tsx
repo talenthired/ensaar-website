@@ -12,6 +12,9 @@ import { REGIMES, compareRegimes, readDeclarations, type Regime, type TaxDeclara
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { Badge, Notice, Tabs, buttonClass, inputClass, primaryButtonClass, useQueryState } from '@/components/eor/ui';
 import { cn } from '@/lib/utils';
+import { Handbook, type HandbookStatus } from './Handbook';
+import { Leave } from './Leave';
+import { Letters } from './Letters';
 import { YourDetails, type Records } from './YourDetails';
 
 type DocSummary = { id: string; kind: 'offer' | 'agreement'; status: 'sent' | 'signed' | 'void'; hash: string; issuedAt: string; signedAt: string | null };
@@ -19,6 +22,8 @@ type Me = {
   employee: { name: string; knownAs: string; email: string; jobTitle: string; companyName: string | null; startDate: string; workState: string; status: string };
   documents: DocSummary[];
   records: Records;
+  handbook: HandbookStatus;
+  letters: { unread: number; total: number };
   pay: { salaryInr: number; breakup: { lines: SalaryLine[]; gross: SalaryLine } };
   tax: { taxYear: string; regime: Regime; declarations: TaxDeclarations; updatedAt: string | null; fields: Array<{ key: keyof TaxDeclarations; label: string; hint: string; kind: 'amount' | 'flag' }> };
   holidays: {
@@ -194,12 +199,18 @@ export function TeamApp() {
           tabs={[
             { key: 'documents', label: 'Documents', count: toSign },
             { key: 'details', label: 'Your details', count: me.records.outstanding.needed.length },
+            { key: 'leave', label: 'Leave' },
+            { key: 'handbook', label: 'Handbook', count: me.handbook.pending ? 1 : 0 },
+            ...(me.letters.total ? [{ key: 'letters', label: 'Letters', count: me.letters.unread }] : []),
             { key: 'tax', label: 'Pay and tax' },
             { key: 'holidays', label: 'Holidays' },
           ]}
         />
         {query.tab === 'documents' && <Documents me={me} say={say} onChanged={load} />}
         {query.tab === 'details' && <YourDetails records={me.records} legalName={e.name} say={say} onChanged={(records) => setMe({ ...me, records })} />}
+        {query.tab === 'leave' && <Leave say={say} holidays={me.holidays.plan.status === 'approved' ? me.holidays.chosen.map((h) => h.date) : []} />}
+        {query.tab === 'letters' && <Letters say={say} onChanged={load} />}
+        {query.tab === 'handbook' && <Handbook name={e.name} say={say} onChanged={load} />}
         {query.tab === 'tax' && <PayAndTax me={me} say={say} onSaved={load} />}
         {query.tab === 'holidays' && <Holidays me={me} say={say} onChanged={load} onYear={(year) => setQuery({ year: String(year) })} />}
       </main>

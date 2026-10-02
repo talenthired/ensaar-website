@@ -189,19 +189,28 @@ export async function signedPdf(documents: string[], title: string): Promise<Uin
           break;
         case 'table': {
           const cols = Math.max(...b.rows.map((r) => r.length));
-          const first = Math.min(WIDTH * 0.46, WIDTH - (cols - 1) * 90);
+          // Amounts are right-aligned in narrow columns; a table of words gets a wide second column.
+          const numeric = (cell: string) => /^[-–\s₹$€£\d.,%()]*\d[-–\s₹$€£\d.,%()]*$/.test(cell);
+          const wordy = b.rows.slice(1).some((row) => row.slice(1).some((cell) => cell && !numeric(cell)));
+          const first = wordy ? WIDTH * 0.34 : Math.min(WIDTH * 0.46, WIDTH - (cols - 1) * 90);
           const rest = cols > 1 ? (WIDTH - first) / (cols - 1) : 0;
           b.rows.forEach((row, r) => {
-            const f = r === 0 || r === b.rows.length - 1 ? fontBold : font;
-            const h = 18;
+            // The header, and a closing total row (gross, total, take-home), are bold.
+            const total = r === b.rows.length - 1 && r > 1 && /^(gross|total|net|estimated)/i.test(row[0] ?? '');
+            const f = r === 0 || total ? fontBold : font;
+            const cells = row.map((cell, c) => {
+              const w = c === 0 ? first - 12 : rest - 6;
+              return { lines: wrap(cell, f, 9, w), w, right: c > 0 && (r === 0 ? !wordy : numeric(cell)) };
+            });
+            const h = 6 + 12 * Math.max(1, ...cells.map((c) => c.lines.length));
             need(h);
             if (r === 0) page.drawRectangle({ x: M.x, y: y - h, width: WIDTH, height: h, color: rgb(0.95, 0.96, 0.98) });
-            row.forEach((cell, c) => {
+            cells.forEach((cell, c) => {
               const x = c === 0 ? M.x + 6 : M.x + first + (c - 1) * rest;
-              const w = c === 0 ? first - 12 : rest - 6;
-              const text = wrap(cell, f, 9, w)[0] ?? '';
-              const tx = c === 0 ? x : x + w - measure(f, text, 9);
-              page.drawText(text, { x: tx, y: y - 12.5, size: 9, font: f, color: INK });
+              cell.lines.forEach((text, k) => {
+                const tx = cell.right ? x + cell.w - measure(f, text, 9) : x;
+                page.drawText(text, { x: tx, y: y - 12.5 - k * 12, size: 9, font: f, color: INK });
+              });
             });
             page.drawRectangle({ x: M.x, y: y - h, width: WIDTH, height: 0.5, color: LINE });
             y -= h;

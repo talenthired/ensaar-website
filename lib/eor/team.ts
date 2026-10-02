@@ -132,7 +132,7 @@ export async function issueEmployeeDocument(
 }
 
 /** Tick an onboarding checklist step, if the checklist is open and the step not yet done. */
-async function markStep(tx: Executor, employee: EorEmployee, step: string, by: string) {
+export async function markStep(tx: Executor, employee: EorEmployee, step: string, by: string) {
   if (!employee.employeeCase || employee.employeeCase.steps[step]) return;
   await tx`
     UPDATE ensaar_eor_employees

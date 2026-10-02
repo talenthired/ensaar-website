@@ -24,6 +24,7 @@ import { invoicePdf } from './invoice-pdf';
 import { invoiceIssuedEmail, invoiceOverdueStaffEmail, invoicePaidEmail, invoiceReminderEmail } from './email';
 import { ok, refuse, type Outcome } from './outcome';
 import { companyRecipients } from './portal-auth';
+import { remindStalePending } from './leave-store';
 import { runOutstandingReminders } from './reminders';
 
 /*
@@ -261,5 +262,6 @@ export async function runInvoiceReminders(now = new Date()): Promise<{ queued: n
 export async function billingTick(): Promise<void> {
   await runInvoiceReminders();
   await runOutstandingReminders();
+  await remindStalePending();
   await deliverDue(25);
 }

@@ -10,6 +10,8 @@ import { CompanyDetailsForm, CompanyDocuments, MasterAgreement, type Say } from 
 import { PortalBar, SignIn } from './PortalChrome';
 import { PortalBilling } from './PortalBilling';
 import { PortalHolidays } from './PortalHolidays';
+import { PortalLeave } from './PortalLeave';
+import { PortalConcerns } from './PortalConcerns';
 import { OwnershipDeclaration, StillNeeded } from './PortalOutstanding';
 import { PortalEmployees } from './PortalEmployees';
 
@@ -112,6 +114,7 @@ export function PortalApp() {
             { key: 'employees', label: 'Employees', count: awaiting },
             { key: 'agreement', label: 'Agreement' },
             { key: 'documents', label: 'Documents' },
+            { key: 'leave', label: 'Leave' },
             { key: 'holidays', label: 'Holidays' },
             { key: 'billing', label: 'Billing' },
           ]}
@@ -167,7 +170,12 @@ export function PortalApp() {
           </div>
         )}
 
-        {tab === 'employees' && <PortalEmployees view={view} say={say} onSigned={() => void load()} />}
+        {tab === 'employees' && (
+          <div className="space-y-6">
+            <PortalEmployees view={view} say={say} onSigned={() => void load()} />
+            {masterSigned(view.status) && <PortalConcerns say={say} />}
+          </div>
+        )}
 
         {tab === 'agreement' && (
           <section className="space-y-4">
@@ -180,6 +188,7 @@ export function PortalApp() {
           </section>
         )}
 
+        {tab === 'leave' && <PortalLeave say={say} />}
         {tab === 'holidays' && <PortalHolidays say={say} />}
 
         {tab === 'billing' && <PortalBilling say={say} />}

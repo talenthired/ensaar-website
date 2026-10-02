@@ -529,13 +529,15 @@ export async function getTemplateApproval(version = AGREEMENT_VERSION, sql: Exec
   return r ? { version: r.version, reviewer: r.reviewer, note: r.note, recordedBy: r.recorded_by, recordedAt: r.recorded_at.toISOString() } : null;
 }
 
-export async function recordTemplateApproval(input: { reviewer: string; note: string | null; recordedBy: string }): Promise<TemplateApproval> {
+/** Write-once sign-off for a template version: the agreement by default, or another key such as 'handbook:<version>'. */
+export async function recordTemplateApproval(input: { reviewer: string; note: string | null; recordedBy: string; version?: string }): Promise<TemplateApproval> {
+  const version = input.version ?? AGREEMENT_VERSION;
   await requireDatabase()`
     INSERT INTO ensaar_eor_template_approvals (version, reviewer, note, recorded_by)
-    VALUES (${AGREEMENT_VERSION}, ${input.reviewer}, ${input.note}, ${input.recordedBy})
+    VALUES (${version}, ${input.reviewer}, ${input.note}, ${input.recordedBy})
     ON CONFLICT (version) DO NOTHING
   `;
-  return (await getTemplateApproval())!;
+  return (await getTemplateApproval(version))!;
 }
 
 // --- The master agreement ---------------------------------------------------------------

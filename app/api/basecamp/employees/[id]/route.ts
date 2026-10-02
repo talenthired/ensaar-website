@@ -21,6 +21,9 @@ import { inviteEmployee } from '@/lib/eor/team-auth';
 import { holidayYear } from '@/lib/eor/years';
 import { remindEmployeeNow } from '@/lib/eor/reminders';
 import { employeeRecordsView } from '@/lib/eor/employee-records';
+import { handbookStatus } from '@/lib/eor/policies';
+import { adjustLeave, leaveSummary } from '@/lib/eor/leave-store';
+import { addNote, closeCase, issueLetter, listCases, openCase } from '@/lib/eor/conduct-store';
 import { requireDatabase } from '@/lib/db/client';
 import { emailConfigured } from '@/lib/notify/outbox';
 
@@ -36,7 +39,7 @@ export async function GET(request: NextRequest, context: Context) {
   const employee = await getEmployee(id);
   if (!employee) return NextResponse.json({ error: 'No such employee.' }, { status: 404 });
   const year = holidayYear(request.nextUrl.searchParams.get('year'));
-  const [company, scheduleText, voided, messages, documents, tax, holidays, records] = await Promise.all([
+  const [company, scheduleText, voided, messages, documents, tax, holidays, records, handbook, leave, conduct] = await Promise.all([
     getCompany(employee.companyId),
     getScheduleText(id),
     listVoidedSignatures(employee.companyId, id),
@@ -45,6 +48,9 @@ export async function GET(request: NextRequest, context: Context) {
     taxView(employee),
     holidayView(employee.companyId, year, 'staff'),
     employeeRecordsView(employee, 'staff'),
+    handbookStatus(id),
+    leaveSummary(employee, year),
+    listCases(id),
   ]);
   return NextResponse.json({
     employee,
@@ -54,6 +60,9 @@ export async function GET(request: NextRequest, context: Context) {
     messages: messages.filter((m) => m.kind.startsWith('eor.schedules')).slice(0, 10),
     documents,
     records,
+    handbook,
+    leave,
+    conduct,
     tax,
     holidays: { ...holidays, allowed: choicesAllowed(holidays.catalogue), perYear: HOLIDAYS_PER_YEAR },
     emailConfigured: emailConfigured(),
@@ -72,7 +81,7 @@ export async function POST(request: NextRequest, context: Context) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const action = String(body.action ?? '');
   const actor = actorName(gate.session);
-  if (['update', 'given_name', 'countersign', 'exit', 'cancel', 'issue_document', 'invite_employee', 'holiday_decision'].includes(action)) {
+  if (['update', 'given_name', 'countersign', 'exit', 'cancel', 'issue_document', 'invite_employee', 'holiday_decision', 'leave_adjust', 'conduct_open', 'conduct_note', 'conduct_letter', 'conduct_close'].includes(action)) {
     const refused = requireNamed(gate.session);
     if (refused) return refused;
   }
@@ -107,6 +116,25 @@ export async function POST(request: NextRequest, context: Context) {
         done: body.done === true,
       });
     // How the employee's documents greet them; does not touch the Schedule A.
+    // Corrective action (handbook section 14). Only Ensaar acts; letters go out in the signatory's name.
+    case 'conduct_open':
+      return done(await openCase(id, { reason: body.reason, summary: body.summary, by: actor }), 'eor.conduct.open', { reason: body.reason });
+    case 'conduct_note':
+      return done(await addNote(str(body.caseId, 64), { step: body.step, text: body.text, by: actor }), 'eor.conduct.note', { caseId: body.caseId, step: body.step });
+    case 'conduct_letter': {
+      const unsigned = requireSignatory(gate.session);
+      if (unsigned) return unsigned;
+      return done(
+        await issueLetter(str(body.caseId, 64), { step: body.step, details: body.details, expectation: body.expectation, dueDate: body.dueDate, lastDay: body.lastDay, basis: body.basis, signatory: signatoryLabel(gate.session) }),
+        'eor.conduct.letter',
+        { caseId: body.caseId, step: body.step },
+      );
+    }
+    case 'conduct_close':
+      return done(await closeCase(str(body.caseId, 64), { clientOutcome: body.clientOutcome, note: body.note, by: actor }), 'eor.conduct.close', { caseId: body.caseId });
+    // A change to the paid-leave balance that is not a request: opening balance, encashment, correction.
+    case 'leave_adjust':
+      return done(await adjustLeave(id, { year: body.year, days: body.days, reason: body.reason, by: actor }), 'eor.leave.adjust', { year: body.year, days: body.days });
     case 'given_name':
       return done(await setGivenName(id, body.givenName), 'eor.employee.given_name', { givenName: str(body.givenName, 60) || null });
     case 'owner':
